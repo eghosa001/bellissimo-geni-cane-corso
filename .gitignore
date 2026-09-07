@@ -1,0 +1,19 @@
+# Confidential / personal media — never commit
+*.opus
+*.ogg
+*.m4a
+
+# Medical / personal documents
+*medial*
+*medical*
+*clinical*
+*clerking*
+
+# System
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local
+*.log
+node_modules/
