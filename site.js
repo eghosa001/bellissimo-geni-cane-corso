@@ -2,6 +2,15 @@
 (function () {
   // Mobile menu (progressive enhancement; works on all pages with .mobile-nav-toggle).
   document.addEventListener('DOMContentLoaded', function () {
+    if (!document.querySelector('.skip-link')) {
+      var a = document.createElement('a');
+      a.href = '#main';
+      a.className = 'skip-link';
+      a.textContent = 'Skip to content';
+      document.body.insertBefore(a, document.body.firstChild);
+    }
+    var main = document.querySelector('main');
+    if (main && !main.id) main.id = 'main';
     var toggle = document.querySelector('.mobile-nav-toggle');
     var menu = document.querySelector('.mobile-menu');
     if (toggle && menu) {
@@ -32,5 +41,19 @@
     return (dogs || []).find(function (d) { return String(d.id).toLowerCase() === q; }) || null;
   }
 
-  window.BG = { esc: esc, loadJSON: loadJSON, dogById: dogById };
+  function validPhone(s) {
+    var digits = String(s || '').replace(/\D/g, '');
+    return digits.length >= 7 && digits.length <= 15;
+  }
+
+  function track(type, label) {
+    try {
+      var key = 'bg_analytics';
+      var arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.push({ t: type, l: String(label || '').slice(0, 80), at: new Date().toISOString() });
+      localStorage.setItem(key, JSON.stringify(arr.slice(-200)));
+    } catch (_) {}
+  }
+
+  window.BG = { esc: esc, loadJSON: loadJSON, dogById: dogById, validPhone: validPhone, track: track };
 })();
