@@ -31,11 +31,21 @@ jobs:
           echo "Checking Pages configuration for $GITHUB_REPO"
           curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/$GITHUB_REPO/pages || true
 
+      - name: Prepare publish directory
+        run: |
+          set -e
+          rm -rf build
+          mkdir -p build
+          cp -rp ./* ./build/
+          cp -rp ./.nojekyll ./build/ 2>/dev/null || true
+          rm -rf build/.git build/.github build/webhook build/build
+          echo "Publishing $(ls build | wc -l) entries (excludes .git/.github/webhook)"
+
       - name: Determine publish directory
         id: find_dir
         run: |
           set -e
-          for d in public dist build docs; do
+          for d in build public dist docs; do
             if [ -d "$d" ]; then
               echo "Found directory $d"
               echo "publish_dir=$d" >> $GITHUB_OUTPUT

@@ -8,6 +8,10 @@ export const STATUS = Object.freeze({
 
 export const REF_PATTERN = /^BG-\d{4}-[A-Z0-9]{4}$/;
 const ZW_RE = /[\u200B-\u200D\uFEFF]/g;
+const RATE_IP_MAX = 10;
+const RATE_IP_WINDOW = 60 * 60 * 1000;
+const RATE_PHONE_MAX = 5;
+const RATE_PHONE_WINDOW = 24 * 60 * 60 * 1000;
 
 export function strip(zero) {
   return String(zero == null ? '' : zero).replace(ZW_RE, '');
@@ -84,6 +88,15 @@ export function nextStatus(current, event) {
   }
 }
 
+export function lockDecision(current, now) {
+  if (!current) return { granted: true };
+  if (current.status === STATUS.SOLD) return { granted: false, reason: 'sold', holder: current.ref };
+  if (current.status === STATUS.RESERVED) return { granted: false, reason: 'reserved', holder: current.ref };
+  if (current.status === STATUS.CANCELLED) return { granted: true, previous: current.ref };
+  if (Number(current.until) && Number(current.until) > now) return { granted: false, reason: 'held', holder: current.ref };
+  return { granted: true, expired: true, previous: current.ref };
+}
+
 export async function verifyRecaptcha(secret, token, action) {
   if (!secret) return { passed: true, skipped: true };
   const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
@@ -96,7 +109,7 @@ export async function verifyRecaptcha(secret, token, action) {
   return { passed: ok, skipped: false, score: j.score, hostname: j.hostname };
 }
 
-async function json(res, status, payload) {
+function json(status, payload) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
@@ -138,6 +151,93 @@ async function notify(env, record) {
   }).catch(() => {});
 }
 
+async function checkRate(env, rawKey, max, windowMs) {
+  if (!env.RESERVATIONS) return { ok: true };
+  const key = 'rate:' + strip('' + rawKey);
+  const now = Date.now();
+  let rec = null;
+  try {
+    const raw = await env.RESERVATIONS.get(key);
+    if (raw) rec = JSON.parse(raw);
+  } catch (e) {}
+  const cur = rec && Number(rec.until) > now ? rec : { count: 0, until: now + windowMs };
+  if (cur.count >= max) return { ok: false, retryAfter: Math.max(1, Math.ceil((Number(cur.until) - now) / 1000)) };
+  await env.RESERVATIONS.put(key, JSON.stringify({ count: cur.count + 1, until: cur.until }), { expirationTtl: Math.ceil((cur.until - now) / 1000) + 60 });
+  return { ok: true };
+}
+
+function holdMs(env) {
+  const h = Number(env.RESERVATION_HOLD_HOURS || 72);
+  return (Number.isFinite(h) && h > 0 ? h : 72) * 60 * 60 * 1000;
+}
+
+export class PuppyLock {
+  constructor(state) {
+    this.state = state;
+  }
+
+  async fetch(request) {
+    let body = null;
+    try { body = await request.json(); } catch (e) {}
+    const op = body && body.op;
+    const ref = String(body && body.ref || '').toUpperCase();
+    if (request.method === 'GET') {
+      const s = await this.state.storage.get('state');
+      return json(200, { ok: true, held: !!(s && s.holder && s.until > Date.now()), holder: s && s.holder || null });
+    }
+    if (op === 'claim') {
+      const now = Date.now();
+      const holdMs = Number(body && body.holdMs) || 72 * 60 * 60 * 1000;
+      const s = await this.state.storage.get('state');
+      const d = lockDecision(s, now);
+      if (!d.granted) return json(409, { ok: false, reason: d.reason, holder: d.holder });
+      await this.state.storage.put('state', { holder: ref, status: STATUS.PAYMENT_PENDING, until: now + holdMs });
+      return json(200, { ok: true });
+    }
+    if (op === 'mark') {
+      const s = await this.state.storage.get('state');
+      if (!s || s.holder !== ref) return json(409, { ok: false });
+      const status = String(body && body.status || '').toUpperCase();
+      const next = status === STATUS.RESERVED ? { ...s, status: STATUS.RESERVED, until: 0 } : status === STATUS.SOLD ? { ...s, status: STATUS.SOLD, until: 0 } : s;
+      await this.state.storage.put('state', next);
+      return json(200, { ok: true });
+    }
+    if (op === 'check') {
+      const s = await this.state.storage.get('state');
+      const current = !!(s && s.holder === ref && {
+        [STATUS.RESERVED]: true, [STATUS.SOLD]: true,
+        [STATUS.PAYMENT_PENDING]: s.until > Date.now(), [STATUS.REQUESTED]: s.until > Date.now()
+      }[s.status]);
+      return json(200, { ok: true, current });
+    }
+    if (op === 'release') {
+      const s = await this.state.storage.get('state');
+      if (s && s.holder === ref) {
+        await this.state.storage.put('state', { ...s, status: STATUS.CANCELLED, until: 0 });
+        return json(200, { ok: true });
+      }
+      return json(200, { ok: false });
+    }
+    return json(400, { ok: false, error: 'bad_op' });
+  }
+}
+
+async function lockClient(env, puppyKey, ref, holdMs, op, status) {
+  if (!env.PUPPY_LOCK) return { ok: true, disabled: true };
+  try {
+    const id = env.PUPPY_LOCK.idFromName('puppy:' + String(puppyKey).toLowerCase());
+    const stub = env.PUPPY_LOCK.get(id);
+    const res = await stub.fetch('http://puppy/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op, ref, holdMs, status: status || null })
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: 'lock_unavailable' };
+  }
+}
+
 async function initiatePayment(env, data) {
   const provider = String(env.PAYMENT_PROVIDER || 'none').trim().toLowerCase();
   const amount = Number(env.RESERVATION_AMOUNT || 0);
@@ -176,18 +276,18 @@ async function hmacVerify(secret, body, expected) {
   }
 }
 
-async function verifyPaystack(env, body) {
-  const sig = body.get('x-paystack-signature') || '';
-  const ok = await hmacVerify(env.PAYSTACK_SECRET, body.get('text'), sig);
+async function verifyPaystack(env, raw, headers) {
+  const sig = headers.get('x-paystack-signature') || '';
+  const ok = await hmacVerify(env.PAYSTACK_SECRET, raw, sig);
   if (!ok) return { verified: false };
-  const j = JSON.parse(body.get('text'));
+  const j = JSON.parse(raw);
   if (j.event !== 'charge.success') return { verified: true, handled: false, ref: j.data && (j.data.reference || j.data.reference_code) };
   return { verified: true, handled: true, ref: j.data && j.data.reference, amount: Number(j.data.amount) / 100, currency: j.data.currency };
 }
 
-async function verifyFlutterwave(env, body) {
+async function verifyFlutterwave(env, raw) {
   if (!env.FLUTTERWAVE_SECRET) return { verified: false };
-  const j = await readJson(body.get('parsed'));
+  const j = JSON.parse(raw);
   const txId = j && (j.data && j.data.id || j.id);
   if (!txId) return { verified: false };
   const res = await fetch('https://api.flutterwave.com/v3/transactions/' + encodeURIComponent(txId) + '/verify', {
@@ -199,23 +299,41 @@ async function verifyFlutterwave(env, body) {
   return { verified: true, handled: true, ref: d.tx_ref, amount: Number(d.amount), currency: d.currency };
 }
 
+function parseCatalog(env) {
+  if (!env.PUPPY_CATALOG) return null;
+  try {
+    const list = JSON.parse(env.PUPPY_CATALOG);
+    if (Array.isArray(list)) return list.map(x => String(x).toLowerCase());
+  } catch (e) {}
+  return null;
+}
+
 async function handleReserve(req, env) {
   const input = await readJson(req);
-  if (!input) return json(null, 400, { ok: false, error: 'bad_json' });
-  if (String(input.action) !== 'reserve') return json(null, 400, { ok: false, error: 'bad_action' });
+  if (!input) return json(400, { ok: false, error: 'bad_json' });
+  if (String(input.action) !== 'reserve') return json(400, { ok: false, error: 'bad_action' });
   const data = input.data && input.data;
-  if (!data) return json(null, 400, { ok: false, error: 'missing_data' });
+  if (!data) return json(400, { ok: false, error: 'missing_data' });
   const norm = validateReservation(data);
-  if (norm.errors.length) return json(null, 422, { ok: false, error: 'validation', fields: norm.errors });
-  if (!verifyRefTimestamp(input.timestamp)) return json(null, 400, { ok: false, error: 'stale_timestamp' });
+  if (norm.errors.length) return json(422, { ok: false, error: 'validation', fields: norm.errors });
+  const catalog = parseCatalog(env);
+  if (catalog && !catalog.includes(String(norm.puppy).toLowerCase())) return json(422, { ok: false, error: 'puppy_unknown' });
+  if (!verifyRefTimestamp(input.timestamp)) return json(400, { ok: false, error: 'stale_timestamp' });
+  const ip = req.headers.get('CF-Connecting-IP') || req.headers.get('x-forwarded-for') || '';
+  const ipRate = await checkRate(env, 'ip:' + ip, RATE_IP_MAX, RATE_IP_WINDOW);
+  if (!ipRate.ok) return json(429, { ok: false, error: 'rate_limited', retryAfter: ipRate.retryAfter });
+  const phoneRate = await checkRate(env, 'phone:' + norm.phone, RATE_PHONE_MAX, RATE_PHONE_WINDOW);
+  if (!phoneRate.ok) return json(429, { ok: false, error: 'rate_limited', retryAfter: phoneRate.retryAfter });
   const ref = validRef(data.ref) || makeRef();
-  let existing = await kvGet(env, ref);
+  const existing = await kvGet(env, ref);
   if (existing) {
-    if (existing.status === STATUS.CANCELLED) return json(null, 409, { ok: false, error: 'ref_cancelled' });
-    return json(null, 200, { ok: true, ref, status: existing.status, payment_url: existing.payment_url || null });
+    if (existing.status === STATUS.CANCELLED) return json(409, { ok: false, error: 'ref_cancelled' });
+    return json(200, { ok: true, ref, status: existing.status, payment_url: existing.payment_url || null });
   }
+  const lock = await lockClient(env, norm.puppy, ref, holdMs(env), 'claim');
+  if (!lock.ok) return json(409, { ok: false, error: 'puppy_unavailable', reason: lock.reason || null });
   const cap = await verifyRecaptcha(env.RECAPTCHA_SECRET, input.token, 'reserve');
-  if (!cap.passed && !cap.skipped) return json(null, 403, { ok: false, error: 'captcha_failed', score: cap.score });
+  if (!cap.passed && !cap.skipped) return json(403, { ok: false, error: 'captcha_failed', score: cap.score });
   const payment = await initiatePayment(env, Object.assign({}, norm, { ref }));
   const status = payment.payment_url ? STATUS.PAYMENT_PENDING : STATUS.REQUESTED;
   const record = {
@@ -225,44 +343,59 @@ async function handleReserve(req, env) {
     phone: norm.phone,
     email: norm.email,
     message: norm.message,
-    ip: req.headers.get('CF-Connecting-IP') || null,
+    ip: ip || null,
     status,
     payment_url: payment.payment_url || null,
     provider: payment.provider || 'none',
     provider_ref: payment.provider_ref || null,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    hold_until: new Date(Date.now() + holdMs(env)).toISOString()
   };
-  await kvPut(env, ref, record);
+  const stored = await kvPut(env, ref, record);
+  if (!stored) {
+    await lockClient(env, norm.puppy, ref, 0, 'release');
+    return json(500, { ok: false, error: 'storage_error' });
+  }
   await notify(env, Object.assign({}, record, { last_event: 'reservation_requested' }));
-  return json(null, payment.payment_url || payment.error ? 201 : 201, { ok: true, ref, status, payment_url: payment.payment_url || null, provider: record.provider });
+  return json(201, { ok: true, ref, status, payment_url: payment.payment_url || null, provider: record.provider });
 }
 
 async function handlePayment(req, env) {
   const provider = String(env.PAYMENT_PROVIDER || 'none').trim().toLowerCase();
   const raw = await req.text();
-  const headers = new Headers();
-  req.headers.forEach((v, k) => headers.set(k, v));
-  const bag = { text: raw, parsed: null, get: (n) => req.headers.get(n) };
   let verified = { verified: false };
-  if (provider === 'paystack') verified = await verifyPaystack(env, bag);
-  else if (provider === 'flutterwave') {
-    try { bag.parsed = JSON.parse(raw); } catch (e) {}
-    verified = await verifyFlutterwave(env, bag);
+  try {
+    if (provider === 'paystack') verified = await verifyPaystack(env, raw, req.headers);
+    else if (provider === 'flutterwave') verified = await verifyFlutterwave(env, raw);
+  } catch (e) {
+    verified = { verified: false };
   }
-  if (!verified.verified) return json(null, 401, { ok: false, error: 'bad_signature' });
-  if (!verified.handled) return json(null, 200, { ok: true, handled: false });
+  if (!verified.verified) return json(401, { ok: false, error: 'bad_signature' });
+  if (!verified.handled) return json(200, { ok: true, handled: false });
   const ref = validRef(verified.ref);
-  if (!ref) return json(null, 400, { ok: false, error: 'unknown_ref' });
+  if (!ref) return json(400, { ok: false, error: 'unknown_ref' });
   const record = await kvGet(env, ref);
-  if (!record) return json(null, 404, { ok: false, error: 'not_found' });
+  if (!record) return json(404, { ok: false, error: 'not_found' });
+  if (record.status !== STATUS.PAYMENT_PENDING) return json(200, { ok: true, ref, status: record.status, ignored: true });
   const expected = Number(env.RESERVATION_AMOUNT || 0);
-  if (expected && Number(verified.amount) && Math.abs(Number(verified.amount) - expected) > 0.01) {
-    return json(null, 402, { ok: false, error: 'amount_mismatch', received: verified.amount });
+  const paidAmount = Number(verified.amount);
+  if (expected && (!Number.isFinite(paidAmount) || Math.abs(paidAmount - expected) > 0.01)) {
+    return json(402, { ok: false, error: 'amount_mismatch', received: paidAmount });
   }
+  const expectedCurrency = String(env.PAYMENT_CURRENCY || 'NGN').trim().toUpperCase();
+  if (verified.currency && String(verified.currency).toUpperCase() !== expectedCurrency) {
+    return json(402, { ok: false, error: 'currency_mismatch', received: verified.currency });
+  }
+  const ownerCheck = await lockClient(env, record.puppy, ref, 0, 'check');
+  if (ownerCheck.ok === false) return json(409, { ok: false, error: 'lock_unavailable' });
+  if (ownerCheck.current === false) return json(409, { ok: false, error: 'puppy_lock_lost' });
   const status = nextStatus(record.status, { payment_confirmed: true });
-  await kvPut(env, ref, Object.assign({}, record, { status, paid_amount: verified.amount, paid_currency: verified.currency, paid_at: new Date().toISOString() }));
-  await notify(env, Object.assign({}, record, { status, last_event: 'payment_confirmed' }));
-  return json(null, 200, { ok: true, ref, status });
+  const updated = Object.assign({}, record, { status, paid_amount: paidAmount, paid_currency: verified.currency, paid_at: new Date().toISOString() });
+  const stored = await kvPut(env, ref, updated);
+  if (!stored) return json(500, { ok: false, error: 'storage_error' });
+  await lockClient(env, record.puppy, ref, 0, 'mark', status);
+  await notify(env, Object.assign({}, updated, { last_event: 'payment_confirmed' }));
+  return json(200, { ok: true, ref, status });
 }
 
 export default {
@@ -275,11 +408,11 @@ export default {
       });
     }
     if (request.method === 'GET' && url.pathname === '/webhook/health') {
-      return json(null, 200, { ok: true, ts: Date.now() });
+      return json(200, { ok: true, ts: Date.now() });
     }
-    if (request.method !== 'POST') return json(null, 405, { ok: false, error: 'method_not_allowed' });
+    if (request.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
     if (url.pathname === '/webhook' || url.pathname === '/webhook/reserve') return handleReserve(request, env);
     if (url.pathname === '/webhook/payment') return handlePayment(request, env);
-    return json(null, 404, { ok: false, error: 'not_found' });
+    return json(404, { ok: false, error: 'not_found' });
   }
 };

@@ -2,6 +2,14 @@ name = "bellissimo-geni-webhook"
 main = "handler.js"
 compatibility_date = "2024-12-01"
 
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PuppyLock"]
+
+[[durable_objects.bindings]]
+name = "PUPPY_LOCK"
+class_name = "PuppyLock"
+
 [[kv_namespaces]]
 binding = "RESERVATIONS"
 id = ""
@@ -11,3 +19,4 @@ preview_id = ""
 PAYMENT_PROVIDER = "none"
 RESERVATION_AMOUNT = "0"
 PAYMENT_CURRENCY = "NGN"
+RESERVATION_HOLD_HOURS = "72"

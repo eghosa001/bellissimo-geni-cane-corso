@@ -14,7 +14,7 @@
 </head>
 <body>
 <header class="site-header">
-<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA</small></span></a>
+<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA</small></span></a>
 <nav class="desktop-nav" aria-label="Primary"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html" aria-current="page">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="contact.html">Contact</a></nav>
 <button class="mobile-nav-toggle" aria-expanded="false">Menu</button>
 <a class="nav-cta" href="reserve.html">Reserve</a>
@@ -27,14 +27,14 @@
 <section class="grid-3" id="list"></section>
 <section id="litters" style="margin-top:40px"></section>
 </main>
-<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA â€¢ EST. 2023</small></div></div><div class="foot-nav"><a href="dogs.html">Our Dogs</a><a href="pedigree.html">Pedigree</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>Â© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
+<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="dogs.html">Our Dogs</a><a href="pedigree.html">Pedigree</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
 <script>
 (function(){
 var list=document.getElementById('list'),f=document.getElementById('f'),lit=document.getElementById('litters');
 function pill(s){return '<span class="pill '+s.toLowerCase().replace(/ /g,'-')+'">'+BG.esc(s)+'</span>';}
 function render(data){var items=(data.puppies||[]).filter(function(p){return !f.value||p.status===f.value;});
-list.innerHTML=items.length?items.map(function(p){return '<article class="card">'+pill(p.status)+'<h3>'+BG.esc(p.name)+'</h3><span class="meta">'+BG.esc(p.sex||'')+' â€¢ '+BG.esc(p.colour||'Colour TBC')+'</span><p>'+BG.esc(p.notes||'')+'</p><p><strong>'+BG.esc(p.priceNote||'Price on enquiry')+'</strong></p><div class="row"><a class="btn gold" href="reserve.html?puppy='+encodeURIComponent(p.id)+'">Reserve this puppy</a></div></article>';}).join(''):'<p>No puppies in this status right now. Join the priority list via Contact.</p>';
+list.innerHTML=items.length?items.map(function(p){return '<article class="card">'+pill(p.status)+'<h3>'+BG.esc(p.name)+'</h3><span class="meta">'+BG.esc(p.sex||'')+' • '+BG.esc(p.colour||'Colour TBC')+'</span><p>'+BG.esc(p.notes||'')+'</p><p><strong>'+BG.esc(p.priceNote||'Price on enquiry')+'</strong></p><div class="row"><a class="btn gold" href="reserve.html?puppy='+encodeURIComponent(p.id)+'">Reserve this puppy</a></div></article>';}).join(''):'<p>No puppies in this status right now. Join the priority list via Contact.</p>';
 lit.innerHTML='<h2 style="font:600 40px var(--serif)">Upcoming litters</h2>'+(data.litters||[]).map(function(l){return '<div class="card" style="margin-top:14px"><span class="meta">'+BG.esc(l.status||'')+'</span><h3>'+BG.esc(l.name)+'</h3><p>'+BG.esc(l.notes||'')+'</p><div class="row"><a class="btn ghost" href="contact.html">Join priority list</a></div></div>';}).join('');}
 f.addEventListener('change',function(){BG.loadJSON('data/puppies.json').then(render);});
 BG.loadJSON('data/puppies.json').then(render).catch(function(){list.innerHTML='<div class="notice">Could not load puppy records.</div>';});

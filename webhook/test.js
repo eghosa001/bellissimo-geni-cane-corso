@@ -9,7 +9,8 @@ import {
   validRef,
   validateReservation,
   verifyRefTimestamp,
-  nextStatus
+  nextStatus,
+  lockDecision
 } from './handler.js';
 
 test('strip removes zero-width chars', () => {
@@ -57,4 +58,14 @@ test('status transitions', () => {
   assert.equal(nextStatus(STATUS.RESERVED, { cancelled: true }), STATUS.CANCELLED);
   assert.equal(nextStatus(STATUS.RESERVED, { balance_paid: true }), STATUS.SOLD);
   assert.equal(nextStatus(STATUS.SOLD, {}), STATUS.SOLD);
+});
+
+test('puppy lock decisions', () => {
+  const now = Date.now();
+  assert.deepEqual(lockDecision(null, now).granted, true);
+  assert.deepEqual(lockDecision({ status: STATUS.SOLD, ref: 'BG-2026-X1', until: 0 }, now), { granted: false, reason: 'sold', holder: 'BG-2026-X1' });
+  assert.deepEqual(lockDecision({ status: STATUS.RESERVED, ref: 'BG-2026-X2', until: 0 }, now).granted, false);
+  assert.deepEqual(lockDecision({ status: STATUS.CANCELLED, ref: 'BG-2026-X3', until: 0 }, now).granted, true);
+  assert.deepEqual(lockDecision({ status: STATUS.PAYMENT_PENDING, ref: 'BG-2026-X4', until: now + 60000 }, now).granted, false);
+  assert.deepEqual(lockDecision({ status: STATUS.PAYMENT_PENDING, ref: 'BG-2026-X5', until: now - 1000 }, now).granted, true);
 });
