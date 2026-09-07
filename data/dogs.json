@@ -1,77 +1,126 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generationSupport": 7,
-  "notes": "Development records only. Replace with verified Bellissimo Geni kennel data before launch.",
+  "notes": "Development records only (voice-note example: Henry/Harry/Bella). Replace with verified Bellissimo Geni kennel data, photos and registration before launch. Never invent ancestry.",
   "dogs": [
     {
       "id": "henry",
       "name": "Henry",
       "sex": "male",
+      "dateOfBirth": "",
       "colour": "Black",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development",
       "sireId": "harry",
       "damId": "bella",
-      "status": "development"
+      "bloodline": "Demonstration line only",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration profile from client voice-note example. Replace with Henry's real record and photograph."
     },
     {
       "id": "harry",
       "name": "Harry",
       "sex": "male",
+      "dateOfBirth": "",
       "colour": "Black",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development — sire of Henry (example)",
       "sireId": "bruno",
       "damId": "luna",
-      "status": "development"
+      "bloodline": "Demonstration line only",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration sire record. Replace with verified data."
     },
     {
       "id": "bella",
       "name": "Bella",
       "sex": "female",
+      "dateOfBirth": "",
       "colour": "Fawn",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development — dam of Henry (example)",
       "sireId": "marco",
       "damId": "rosa",
-      "status": "development"
+      "bloodline": "Demonstration line only",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration dam record. Replace with verified data."
     },
     {
       "id": "bruno",
       "name": "Bruno",
       "sex": "male",
+      "dateOfBirth": "",
       "colour": "Black",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development",
       "sireId": null,
       "damId": null,
-      "status": "development"
+      "bloodline": "",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration ancestor. Ancestry ends here until verified records are supplied."
     },
     {
       "id": "luna",
       "name": "Luna",
       "sex": "female",
+      "dateOfBirth": "",
       "colour": "Grey",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development",
       "sireId": null,
       "damId": null,
-      "status": "development"
+      "bloodline": "",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration ancestor. Ancestry ends here until verified records are supplied."
     },
     {
       "id": "marco",
       "name": "Marco",
       "sex": "male",
+      "dateOfBirth": "",
       "colour": "Black",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development",
       "sireId": null,
       "damId": null,
-      "status": "development"
+      "bloodline": "",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration ancestor. Ancestry ends here until verified records are supplied."
     },
     {
       "id": "rosa",
       "name": "Rosa",
       "sex": "female",
+      "dateOfBirth": "",
       "colour": "Fawn",
       "photo": "",
+      "gallery": [],
+      "registration": "",
+      "status": "development",
       "sireId": null,
       "damId": null,
-      "status": "development"
+      "bloodline": "",
+      "health": "",
+      "achievements": "",
+      "bio": "Demonstration ancestor. Ancestry ends here until verified records are supplied."
     }
   ]
 }

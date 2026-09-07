@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "notes": "Development records only. Replace names, prices, photos, litter dates and statuses with verified kennel data before launch. Prices are intentionally enquiry-only until the client confirms final pricing.",
+  "litters": [
+    {
+      "id": "litter-2026-a",
+      "name": "Next Generation — Litter A",
+      "sireId": "harry",
+      "damId": "bella",
+      "whelpDate": "",
+      "status": "COMING SOON",
+      "notes": "Upcoming litter placeholder. Publish real whelp date and parent links when confirmed."
+    }
+  ],
+  "puppies": [
+    {
+      "id": "puppy-demo-m1",
+      "name": "Demo Male — Black",
+      "sex": "male",
+      "colour": "Black",
+      "dateOfBirth": "",
+      "litterId": "",
+      "sireId": "harry",
+      "damId": "bella",
+      "photo": "",
+      "priceNGN": null,
+      "priceNote": "Price on enquiry",
+      "status": "AVAILABLE",
+      "registration": "",
+      "notes": "Demonstration card. Replace with real puppy photo, lineage and availability."
+    },
+    {
+      "id": "puppy-demo-f1",
+      "name": "Demo Female — Fawn",
+      "sex": "female",
+      "colour": "Fawn",
+      "dateOfBirth": "",
+      "litterId": "",
+      "sireId": "harry",
+      "damId": "bella",
+      "photo": "",
+      "priceNGN": null,
+      "priceNote": "Price on enquiry",
+      "status": "AVAILABLE",
+      "registration": "",
+      "notes": "Demonstration card. Replace with real puppy photo, lineage and availability."
+    },
+    {
+      "id": "puppy-demo-next",
+      "name": "Next Litter Priority",
+      "sex": "either",
+      "colour": "",
+      "dateOfBirth": "",
+      "litterId": "litter-2026-a",
+      "sireId": "harry",
+      "damId": "bella",
+      "photo": "",
+      "priceNGN": null,
+      "priceNote": "Join the list",
+      "status": "COMING SOON",
+      "registration": "",
+      "notes": "Priority list for the next confirmed litter."
+    }
+  ],
+  "statuses": ["AVAILABLE", "PAYMENT PENDING", "RESERVED", "SOLD", "COMING SOON", "UNAVAILABLE"]
+}

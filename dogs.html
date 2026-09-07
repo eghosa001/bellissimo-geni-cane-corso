@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our Dogs | Bellissimo Geni Cane Corso</title>
+<meta name="description" content="Meet the Bellissimo Geni Cane Corso dogs. Search males and females, open profiles, and follow Sire and Dam links.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA</small></span></a>
+<nav class="desktop-nav" aria-label="Primary"><a href="index.html">Home</a><a href="dogs.html" aria-current="page">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="contact.html">Contact</a></nav>
+<button class="mobile-nav-toggle" aria-expanded="false">Menu</button>
+<a class="nav-cta" href="reserve.html">Reserve</a>
+</header>
+<nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
+<main class="wrap">
+<div class="page-hero"><p class="eyebrow">OUR DOGS</p><h1>Foundation <em>dogs.</em></h1><p>Search the kennel's males and females. Open a profile to see Sire and Dam, then follow the lineage. Records shown are development placeholders until verified kennel data is supplied.</p></div>
+<div class="notice"><strong>Development data:</strong> profiles for Henry, Harry and Bella are voice-note examples. Photos, dates of birth, registration and health claims will be replaced with verified records before launch.</div>
+<div class="toolbar"><input id="q" placeholder="Search dogs…" aria-label="Search dogs"><select id="sex" aria-label="Filter by sex"><option value="">All</option><option value="male">Males</option><option value="female">Females</option></select></div>
+<section id="profile"></section>
+<section class="grid-3" id="list" aria-live="polite"></section>
+</main>
+<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="index.html">Home</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
+<script src="site.js"></script>
+<script>
+(function(){
+var list=document.getElementById('list'),q=document.getElementById('q'),sex=document.getElementById('sex'),prof=document.getElementById('profile'),DOGS=[];
+function card(d){return '<article class="card"><span class="meta">'+BG.esc(d.sex||'')+' • '+BG.esc(d.colour||'')+'</span><h3>'+BG.esc(d.name)+'</h3><p>'+BG.esc(d.bio||'')+'</p><div class="row"><a class="btn ghost" href="dogs.html?dog='+encodeURIComponent(d.id)+'">Open profile</a><a class="btn ghost" href="pedigree.html?dog='+encodeURIComponent(d.name)+'">Pedigree</a></div></article>';}
+function renderList(){var term=q.value.trim().toLowerCase(),s=sex.value;var items=DOGS.filter(function(d){if(s&&d.sex!==s)return false;if(term&&d.name.toLowerCase().indexOf(term)<0)return false;return true;});list.innerHTML=items.length?items.map(card).join(''):'<p>No dogs match. Try another search.</p>';}
+function renderProfile(id){if(!id){prof.innerHTML='';return;}var d=BG.dogById(DOGS,id);if(!d){prof.innerHTML='<div class="notice">Dog not found.</div>';return;}var sire=BG.dogById(DOGS,d.sireId),dam=BG.dogById(DOGS,d.damId);
+prof.innerHTML='<article class="profile"><div class="photo"><div><p class="eyebrow">PHOTO PENDING</p><h3>'+BG.esc(d.name)+'</h3><p style="font-size:12px;color:#5b4a27">Client photograph to be supplied</p></div></div><div><p class="eyebrow">DOG PROFILE</p><h2 style="font:600 46px var(--serif);margin:0 0 10px">'+BG.esc(d.name)+'</h2><dl class="dl"><dt>Sex</dt><dd>'+BG.esc(d.sex||'—')+'</dd><dt>Colour</dt><dd>'+BG.esc(d.colour||'—')+'</dd><dt>Date of birth</dt><dd>'+BG.esc(d.dateOfBirth||'To be confirmed')+'</dd><dt>Registration</dt><dd>'+BG.esc(d.registration||'To be confirmed')+'</dd><dt>Status</dt><dd>'+BG.esc(d.status||'')+'</dd><dt>Sire</dt><dd>'+(sire?'<a href="dogs.html?dog='+sire.id+'"><strong>'+BG.esc(sire.name)+'</strong></a>':'Not recorded')+'</dd><dt>Dam</dt><dd>'+(dam?'<a href="dogs.html?dog='+dam.id+'"><strong>'+BG.esc(dam.name)+'</strong></a>':'Not recorded')+'</dd><dt>Health</dt><dd>'+BG.esc(d.health||'Published only after verification')+'</dd></dl><p>'+BG.esc(d.bio||'')+'</p><div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.name)+'">View full pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div></article>';
+prof.scrollIntoView({behavior:'smooth',block:'start'});}
+q.addEventListener('input',renderList);sex.addEventListener('change',renderList);
+BG.loadJSON('data/dogs.json').then(function(j){DOGS=j.dogs||[];var id=new URLSearchParams(location.search).get('dog');renderProfile(id);renderList();}).catch(function(){list.innerHTML='<div class="notice">Could not load dog records.</div>';});
+})();
+</script>
+</body>
+</html>
