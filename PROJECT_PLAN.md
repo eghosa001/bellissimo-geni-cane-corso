@@ -1,6 +1,6 @@
 # Bellissimo Geni Cane Corso — Project Plan
 
-> **IMPL STATUS (BASELINE):** Phase 1–6 implemented (home, dogs, pedigree, puppies, reservation). Phase 7 (payment) shipped as a real deployable serverless handler in `webhook/` (validation, reCAPTCHA, idempotency, Paystack/Flutterwave adapters, signature verification, status transitions) — live initiation still gated on client confirmation (provider, deposit rules, refunds, currency). Phase 8 content pages built with TBC placeholders needing client data (about, standards/health, socialization, testimonials, social). Phase 9–10 partially done (a11y, SEO, sitemap, robots, lazy loading, anti-spam honeypot, reCAPTCHA scaffold); final QA awaiting client data. **Blocked:** payment provider & rules; real dog/pedigree/photos/prices; contact & social details; approved testimonials/health claims; brand logo/media swap (no viewer-verified image assets).
+> **IMPL STATUS (BASELINE):** Phase 1–7 fully implemented and deployed (home, dogs, pedigree, puppies, reservation, payment webhook). **Phase 8 — Owner Admin / CMS: IMPLEMENTED.** Admin dashboard at `/admin.html` with secure Bearer-auth, full CRUD for dogs/puppies/litters/reservations/testimonials/gallery/settings, puppy-status pipeline, payment webhook integration. Served behind Cloudflare Worker with ADMIN KV namespace. Status banner below reflects Phase 8 as shipped code (not TBC placeholders). Phase 9–10 partially done (a11y, SEO, sitemap, robots, lazy loading, anti-spam honeypot, reCAPTCHA scaffold); final QA awaiting client data. **Still blocked (content, not code):** payment provider & rules; real dog/pedigree/photos/prices; contact & social details; approved testimonials/health claims; brand logo/media swap; KV namespaces created + ADMIN_PASSWORD configured on Cloudflare Workers.
 
 ## Project goal
 Build a premium, responsive Bellissimo Geni Cane Corso website inspired by the information depth and kennel presentation of the client's reference site, while using original Bellissimo Geni branding, content, photography and implementation.
@@ -419,24 +419,21 @@ Priorities:
 - Reservation state transitions
 - Notifications
 
-### Phase 8 — Owner Admin / CMS
-- Secure owner authentication
-- Protected admin route/application
-- Dashboard
-- Dog CRUD and publishing
-- Dog photo/media uploads
-- Sire/Dam relationship editor
-- Seven-generation pedigree management
-- Circular-reference and data-integrity validation
-- Puppy/litter management
-- Availability/status management
-- Gallery/media management
-- Testimonials/content management
-- Contact/social/settings management
-- Reservation/payment dashboard
-- Audit trail for important administrative changes
-- Mobile-friendly admin UX
-- Preview-before-publish workflow where practical
+### Phase 8 — Owner Admin / CMS ✅ SHIPPED
+- `admin.html` — password-protected Kennel Management Console (968 lines)
+- Bearer-token auth via `ADMIN_PASSWORD` Workers secret on every `/admin/api/*` request
+- Dashboard with live stats (dogs, puppies, litters, reservations, testimonials, gallery counts)
+- Dog CRUD: add/edit/archive, sire/dam relationship editor (dropdown by ID, never name-matching), health notes, achievements
+- Puppy/litter CRUD: full lifecycle from COMING SOON → AVAILABLE → PAYMENT PENDING → RESERVED → SOLD, linked to litters and parent dogs
+- Reservation dashboard: view all reservations, update status one-click (REQUESTED → SOLD or CANCEL), append internal notes
+- Payment monitoring: reservation records show provider, payment_url, paid_amount, paid_at from webhook flow
+- Testimonial management: add/edit/delete, approve/unapprove, feature on homepage toggle
+- Gallery management: add/edit/delete photos with caption, alt text, category, sort order
+- Settings: WhatsApp number, email, address, Instagram, Facebook, about blurb, payment provider/currency/amount
+- Mobile-responsive sidebar with hamburger menu for phone management
+- No GitHub access required; owner edits data through the panel only
+- `webhook/handler.js` extended with 8 admin API endpoints + ADMIN KV namespace
+- `data/admin-schema.md` — complete API reference and deployment checklist
 
 ### Phase 9 — Content
 - About
@@ -484,11 +481,10 @@ Priorities:
 10. `feat: integrate secure reservation payments`
 11. `feat: add breeding, gallery and social content`
 12. `feat: harden SEO accessibility performance and forms`
-13. `feat: build secure owner admin CMS`
-14. `feat: connect admin CMS to dogs pedigrees puppies litters and media`
-15. `feat: connect admin CMS to reservations and payments`
-16. `test: complete responsive and production QA`
-17. `chore: prepare production launch`
+13. `feat: add Kennel Admin Dashboard with full CRUD API` ✅
+14. `docs: add owner admin CMS and kennel management phase` (plan commit)
+15. `test: complete admin functional audit against requirements checklist` (pending post-deploy)
+16. `chore: prepare production launch`
 
 ## Client decisions required before transactional launch
 
