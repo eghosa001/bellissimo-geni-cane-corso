@@ -1,5 +1,7 @@
 # Bellissimo Geni Cane Corso — Project Plan
 
+> **IMPL STATUS (BASELINE):** Phase 1–6 implemented (home, dogs, pedigree, puppies, reservation). Phase 7 (payment) is a **STUB** gated on client confirmation — see `webhook/README.md`. Phase 8 content pages built with TBC placeholders needing client data (about, standards/health, socialization, testimonials, social). Phase 9–10 partially done (a11y, SEO, sitemap, robots, lazy loading, anti-spam honeypot, reCAPTCHA scaffold); server-side validation + payment webhook + final QA pending client decisions. **Blocked:** payment provider & rules; real dog/pedigree/photos/prices; contact & social details; approved testimonials/health claims.
+
 ## Project goal
 Build a premium, responsive Bellissimo Geni Cane Corso website inspired by the information depth and kennel presentation of the client's reference site, while using original Bellissimo Geni branding, content, photography and implementation.
 
