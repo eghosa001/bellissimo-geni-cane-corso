@@ -13,6 +13,17 @@ const RATE_IP_WINDOW = 60 * 60 * 1000;
 const RATE_PHONE_MAX = 5;
 const RATE_PHONE_WINDOW = 24 * 60 * 60 * 1000;
 
+// ─── Admin KV namespace keys ────────────────────────────────────────────────
+const ADMIN_KEYS = {
+  dogs:        'admin:dogs',
+  puppies:     'admin:puppies',
+  litters:     'admin:litters',
+  testimonials:'admin:testimonials',
+  settings:    'admin:settings',
+  gallery:     'admin:gallery',
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 export function strip(zero) {
   return String(zero == null ? '' : zero).replace(ZW_RE, '');
 }
@@ -117,29 +128,35 @@ function json(status, payload) {
 }
 
 async function readJson(request) {
-  try {
-    return await request.json();
-  } catch (e) {
-    return null;
-  }
+  try { return await request.json(); } catch (e) { return null; }
 }
 
-async function kvGet(env, ref) {
+async function kvGet(env, key) {
   try {
-    const raw = await env.RESERVATIONS.get(ref);
+    const raw = await env.ADMIN.get(key);
     return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
-async function kvPut(env, ref, record) {
+async function kvPut(env, key, value) {
   try {
-    await env.RESERVATIONS.put(ref, JSON.stringify(record), { expirationTtl: 60 * 60 * 24 * 180 });
+    await env.ADMIN.put(key, JSON.stringify(value));
     return true;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
+}
+
+async function kvList(env, prefix) {
+  const results = [];
+  let cursor;
+  do {
+    const page = await env.ADMIN.list({ prefix, limit: 100, cursor });
+    for (const item of page.keys) {
+      const raw = await env.ADMIN.get(item.name);
+      if (raw) results.push(JSON.parse(raw));
+    }
+    cursor = page.cursor;
+  } while (cursor);
+  return results;
 }
 
 async function notify(env, record) {
@@ -152,17 +169,17 @@ async function notify(env, record) {
 }
 
 async function checkRate(env, rawKey, max, windowMs) {
-  if (!env.RESERVATIONS) return { ok: true };
+  if (!env.ADMIN) return { ok: true };
   const key = 'rate:' + strip('' + rawKey);
   const now = Date.now();
   let rec = null;
   try {
-    const raw = await env.RESERVATIONS.get(key);
+    const raw = await env.ADMIN.get(key);
     if (raw) rec = JSON.parse(raw);
   } catch (e) {}
   const cur = rec && Number(rec.until) > now ? rec : { count: 0, until: now + windowMs };
   if (cur.count >= max) return { ok: false, retryAfter: Math.max(1, Math.ceil((Number(cur.until) - now) / 1000)) };
-  await env.RESERVATIONS.put(key, JSON.stringify({ count: cur.count + 1, until: cur.until }), { expirationTtl: Math.ceil((cur.until - now) / 1000) + 60 });
+  await env.ADMIN.put(key, JSON.stringify({ count: cur.count + 1, until: cur.until }), { expirationTtl: Math.ceil((cur.until - now) / 1000) + 60 });
   return { ok: true };
 }
 
@@ -171,11 +188,23 @@ function holdMs(env) {
   return (Number.isFinite(h) && h > 0 ? h : 72) * 60 * 60 * 1000;
 }
 
-export class PuppyLock {
-  constructor(state) {
-    this.state = state;
-  }
+// ─── Admin auth middleware ───────────────────────────────────────────────────
+function isAdminRequest(request) {
+  const url = new URL(request.url);
+  return url.pathname.startsWith('/admin/api/');
+}
 
+function adminAuth(request, env) {
+  const pw = env.ADMIN_PASSWORD;
+  if (!pw) return { ok: false, reason: 'unconfigured' };
+  const auth = request.headers.get('Authorization') || '';
+  if (auth === 'Bearer ' + pw) return { ok: true };
+  return { ok: false, reason: 'unauthorized' };
+}
+
+// ─── Puppy Lock DO ───────────────────────────────────────────────────────────
+export class PuppyLock {
+  constructor(state) { this.state = state; }
   async fetch(request) {
     let body = null;
     try { body = await request.json(); } catch (e) {}
@@ -198,7 +227,9 @@ export class PuppyLock {
       const s = await this.state.storage.get('state');
       if (!s || s.holder !== ref) return json(409, { ok: false });
       const status = String(body && body.status || '').toUpperCase();
-      const next = status === STATUS.RESERVED ? { ...s, status: STATUS.RESERVED, until: 0 } : status === STATUS.SOLD ? { ...s, status: STATUS.SOLD, until: 0 } : s;
+      const next = status === STATUS.RESERVED ? { ...s, status: STATUS.RESERVED, until: 0 }
+                 : status === STATUS.SOLD   ? { ...s, status: STATUS.SOLD,   until: 0 }
+                 : s;
       await this.state.storage.put('state', next);
       return json(200, { ok: true });
     }
@@ -233,11 +264,10 @@ async function lockClient(env, puppyKey, ref, holdMs, op, status) {
       body: JSON.stringify({ op, ref, holdMs, status: status || null })
     });
     return await res.json();
-  } catch (e) {
-    return { ok: false, error: 'lock_unavailable' };
-  }
+  } catch (e) { return { ok: false, error: 'lock_unavailable' }; }
 }
 
+// ─── Payment helpers (unchanged from original) ────────────────────────────────
 async function initiatePayment(env, data) {
   const provider = String(env.PAYMENT_PROVIDER || 'none').trim().toLowerCase();
   const amount = Number(env.RESERVATION_AMOUNT || 0);
@@ -259,7 +289,8 @@ async function initiatePayment(env, data) {
       body: JSON.stringify(body)
     });
     const j = await res.json();
-    return j && j.status ? { provider, payment_url: j.data.authorization_url, provider_ref: data.ref } : { provider, payment_url: null, provider_ref: null, error: 'provider_rejected' };
+    return j && j.status ? { provider, payment_url: j.data.authorization_url, provider_ref: data.ref }
+                        : { provider, payment_url: null, provider_ref: null, error: 'provider_rejected' };
   }
   return { provider: 'none', payment_url: null, provider_ref: null };
 }
@@ -271,9 +302,7 @@ async function hmacVerify(secret, body, expected) {
     const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
     const got = btoa(String.fromCharCode.apply(null, new Uint8Array(mac)));
     return got === expected;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
 }
 
 async function verifyPaystack(env, raw, headers) {
@@ -308,6 +337,7 @@ function parseCatalog(env) {
   return null;
 }
 
+// ─── Reservation handlers (webhook) ──────────────────────────────────────────
 async function handleReserve(req, env) {
   const input = await readJson(req);
   if (!input) return json(400, { ok: false, error: 'bad_json' });
@@ -325,7 +355,7 @@ async function handleReserve(req, env) {
   const phoneRate = await checkRate(env, 'phone:' + norm.phone, RATE_PHONE_MAX, RATE_PHONE_WINDOW);
   if (!phoneRate.ok) return json(429, { ok: false, error: 'rate_limited', retryAfter: phoneRate.retryAfter });
   const ref = validRef(data.ref) || makeRef();
-  const existing = await kvGet(env, ref);
+  const existing = await kvGet(env, 'reservation:' + ref);
   if (existing) {
     if (existing.status === STATUS.CANCELLED) return json(409, { ok: false, error: 'ref_cancelled' });
     return json(200, { ok: true, ref, status: existing.status, payment_url: existing.payment_url || null });
@@ -337,27 +367,20 @@ async function handleReserve(req, env) {
   const payment = await initiatePayment(env, Object.assign({}, norm, { ref }));
   const status = payment.payment_url ? STATUS.PAYMENT_PENDING : STATUS.REQUESTED;
   const record = {
-    ref,
-    puppy: norm.puppy,
-    name: norm.name,
-    phone: norm.phone,
-    email: norm.email,
-    message: norm.message,
-    ip: ip || null,
-    status,
-    payment_url: payment.payment_url || null,
-    provider: payment.provider || 'none',
-    provider_ref: payment.provider_ref || null,
+    ref, puppy: norm.puppy, name: norm.name, phone: norm.phone,
+    email: norm.email, message: norm.message, ip: ip || null,
+    status, payment_url: payment.payment_url || null,
+    provider: payment.provider || 'none', provider_ref: payment.provider_ref || null,
     created_at: new Date().toISOString(),
     hold_until: new Date(Date.now() + holdMs(env)).toISOString()
   };
-  const stored = await kvPut(env, ref, record);
+  const stored = await kvPut(env, 'reservation:' + ref, record);
   if (!stored) {
     await lockClient(env, norm.puppy, ref, 0, 'release');
     return json(500, { ok: false, error: 'storage_error' });
   }
   await notify(env, Object.assign({}, record, { last_event: 'reservation_requested' }));
-  return json(201, { ok: true, ref, status, payment_url: payment.payment_url || null, provider: record.provider });
+  return json(211, { ok: true, ref, status, payment_url: payment.payment_url || null, provider: record.provider });
 }
 
 async function handlePayment(req, env) {
@@ -367,14 +390,12 @@ async function handlePayment(req, env) {
   try {
     if (provider === 'paystack') verified = await verifyPaystack(env, raw, req.headers);
     else if (provider === 'flutterwave') verified = await verifyFlutterwave(env, raw);
-  } catch (e) {
-    verified = { verified: false };
-  }
+  } catch (e) { verified = { verified: false }; }
   if (!verified.verified) return json(401, { ok: false, error: 'bad_signature' });
   if (!verified.handled) return json(200, { ok: true, handled: false });
   const ref = validRef(verified.ref);
   if (!ref) return json(400, { ok: false, error: 'unknown_ref' });
-  const record = await kvGet(env, ref);
+  const record = await kvGet(env, 'reservation:' + ref);
   if (!record) return json(404, { ok: false, error: 'not_found' });
   if (record.status !== STATUS.PAYMENT_PENDING) return json(200, { ok: true, ref, status: record.status, ignored: true });
   const expected = Number(env.RESERVATION_AMOUNT || 0);
@@ -391,28 +412,360 @@ async function handlePayment(req, env) {
   if (ownerCheck.current === false) return json(409, { ok: false, error: 'puppy_lock_lost' });
   const status = nextStatus(record.status, { payment_confirmed: true });
   const updated = Object.assign({}, record, { status, paid_amount: paidAmount, paid_currency: verified.currency, paid_at: new Date().toISOString() });
-  const stored = await kvPut(env, ref, updated);
+  const stored = await kvPut(env, 'reservation:' + ref, updated);
   if (!stored) return json(500, { ok: false, error: 'storage_error' });
   await lockClient(env, record.puppy, ref, 0, 'mark', status);
   await notify(env, Object.assign({}, updated, { last_event: 'payment_confirmed' }));
   return json(200, { ok: true, ref, status });
 }
 
+// ─── Admin CRUD handlers ─────────────────────────────────────────────────────
+async function handleAdminDogs(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+
+  if (req.method === 'GET') {
+    if (id) {
+      const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+      const dog = dogs.find(d => d.id === id);
+      return json(200, dog ? { ok: true, data: dog } : { ok: false, error: 'not_found' });
+    }
+    const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+    return json(200, { ok: true, data: dogs.sort((a, b) => a.name.localeCompare(b.name)) });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+    if (id) {
+      const idx = dogs.findIndex(d => d.id === id);
+      if (idx === -1) return json(404, { ok: false, error: 'not_found' });
+      const updated = { ...dogs[idx], ...body, id };
+      await kvPut(env, ADMIN_KEYS.dogs + ':' + id, updated);
+      return json(200, { ok: true, data: updated });
+    }
+    const newId = 'dog-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const dog = { id: newId, sireId: body.sireId || null, damId: body.damId || null, ...body };
+    await kvPut(env, ADMIN_KEYS.dogs + ':' + newId, dog);
+    return json(201, { ok: true, data: dog });
+  }
+
+  if (req.method === 'DELETE' && id) {
+    await env.ADMIN.delete(ADMIN_KEYS.dogs + ':' + id);
+    return json(200, { ok: true });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminPuppies(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+
+  if (req.method === 'GET') {
+    if (id) {
+      const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
+      const pup = pups.find(p => p.id === id);
+      return json(200, pup ? { ok: true, data: pup } : { ok: false, error: 'not_found' });
+    }
+    const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
+    const litters = await kvList(env, ADMIN_KEYS.litters + ':');
+    const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+    return json(200, { ok: true, data: pups, litters, dogs });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    if (id) {
+      const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
+      const idx = pups.findIndex(p => p.id === id);
+      if (idx === -1) return json(404, { ok: false, error: 'not_found' });
+      const updated = { ...pups[idx], ...body, id };
+      await kvPut(env, ADMIN_KEYS.puppies + ':' + id, updated);
+      return json(200, { ok: true, data: updated });
+    }
+    const newId = 'puppy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const puppy = { id: newId, sireId: body.sireId || null, damId: body.damId || null, litterId: body.litterId || '', ...body };
+    await kvPut(env, ADMIN_KEYS.puppies + ':' + newId, puppy);
+    return json(201, { ok: true, data: puppy });
+  }
+
+  if (req.method === 'DELETE' && id) {
+    await env.ADMIN.delete(ADMIN_KEYS.puppies + ':' + id);
+    return json(200, { ok: true });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminLitters(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+
+  if (req.method === 'GET') {
+    const litters = await kvList(env, ADMIN_KEYS.litters + ':');
+    return json(200, { ok: true, data: litters });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    if (id) {
+      const list = await kvList(env, ADMIN_KEYS.litters + ':');
+      const idx = list.findIndex(l => l.id === id);
+      if (idx === -1) return json(404, { ok: false, error: 'not_found' });
+      const updated = { ...list[idx], ...body, id };
+      await kvPut(env, ADMIN_KEYS.litters + ':' + id, updated);
+      return json(200, { ok: true, data: updated });
+    }
+    const newId = 'litter-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const litter = { id: newId, sireId: body.sireId || null, damId: body.damId || null, ...body };
+    await kvPut(env, ADMIN_KEYS.litters + ':' + newId, litter);
+    return json(201, { ok: true, data: litter });
+  }
+
+  if (req.method === 'DELETE' && id) {
+    await env.ADMIN.delete(ADMIN_KEYS.litters + ':' + id);
+    return json(200, { ok: true });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminReservations(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+  const action = url.searchParams.get('action');
+
+  if (req.method === 'GET') {
+    if (id) {
+      const rec = await kvGet(env, 'reservation:' + id);
+      return json(200, rec ? { ok: true, data: rec } : { ok: false, error: 'not_found' });
+    }
+    const all = await kvList(env, 'reservation:');
+    return json(200, { ok: true, data: all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) });
+  }
+
+  if (req.method === 'POST' && id && action) {
+    const rec = await kvGet(env, 'reservation:' + id);
+    if (!rec) return json(404, { ok: false, error: 'not_found' });
+    const body = await readJson(req) || {};
+
+    if (action === 'update-status') {
+      const status = String(body.status || '').toUpperCase();
+      if (![STATUS.REQUESTED, STATUS.PAYMENT_PENDING, STATUS.RESERVED, STATUS.SOLD, STATUS.CANCELLED].includes(status)) {
+        return json(400, { ok: false, error: 'invalid_status' });
+      }
+      const updated = Object.assign({}, rec, { status, updated_at: new Date().toISOString() });
+      await kvPut(env, 'reservation:' + id, updated);
+      if ([STATUS.RESERVED, STATUS.SOLD].includes(status)) {
+        await lockClient(env, rec.puppy, id, 0, 'mark', status);
+      }
+      return json(200, { ok: true, data: updated });
+    }
+
+    if (action === 'add-note') {
+      const notes = Array.isArray(rec.notes) ? rec.notes : [];
+      notes.push({ text: sanitizeText(body.note, 500), at: new Date().toISOString(), by: 'admin' });
+      const updated = Object.assign({}, rec, { notes });
+      await kvPut(env, 'reservation:' + id, updated);
+      return json(200, { ok: true, data: updated });
+    }
+
+    if (action === 'delete') {
+      await env.ADMIN.delete('reservation:' + id);
+      return json(200, { ok: true });
+    }
+
+    return json(400, { ok: false, error: 'unknown_action' });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminTestimonials(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+
+  if (req.method === 'GET') {
+    const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
+    return json(200, { ok: true, data: items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    if (id) {
+      const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
+      const idx = items.findIndex(t => t.id === id);
+      if (idx === -1) return json(404, { ok: false, error: 'not_found' });
+      const updated = { ...items[idx], ...body, id };
+      await kvPut(env, ADMIN_KEYS.testimonials + ':' + id, updated);
+      return json(200, { ok: true, data: updated });
+    }
+    const newId = 'testi-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const item = { id: newId, featured: false, approved: true, ...body };
+    await kvPut(env, ADMIN_KEYS.testimonials + ':' + newId, item);
+    return json(201, { ok: true, data: item });
+  }
+
+  if (req.method === 'DELETE' && id) {
+    await env.ADMIN.delete(ADMIN_KEYS.testimonials + ':' + id);
+    return json(200, { ok: true });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminGallery(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+
+  if (req.method === 'GET') {
+    const items = await kvList(env, ADMIN_KEYS.gallery + ':');
+    return json(200, { ok: true, data: items });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    if (id) {
+      const items = await kvList(env, ADMIN_KEYS.gallery + ':');
+      const idx = items.findIndex(g => g.id === id);
+      if (idx === -1) return json(404, { ok: false, error: 'not_found' });
+      const updated = { ...items[idx], ...body, id };
+      await kvPut(env, ADMIN_KEYS.gallery + ':' + id, updated);
+      return json(200, { ok: true, data: updated });
+    }
+    const newId = 'gal-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const item = { id: newId, caption: '', alt: '', category: 'general', order: 0, ...body };
+    await kvPut(env, ADMIN_KEYS.gallery + ':' + newId, item);
+    return json(201, { ok: true, data: item });
+  }
+
+  if (req.method === 'DELETE' && id) {
+    await env.ADMIN.delete(ADMIN_KEYS.gallery + ':' + id);
+    return json(200, { ok: true });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminSettings(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+
+  if (req.method === 'GET') {
+    const settings = await kvGet(env, ADMIN_KEYS.settings);
+    return json(200, { ok: true, data: settings || {} });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    const settings = await kvGet(env, ADMIN_KEYS.settings) || {};
+    const updated = Object.assign(settings, body);
+    await kvPut(env, ADMIN_KEYS.settings, updated);
+    return json(200, { ok: true, data: updated });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminStats(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+
+  const dogs      = await kvList(env, ADMIN_KEYS.dogs + ':');
+  const puppies   = await kvList(env, ADMIN_KEYS.puppies + ':');
+  const litters   = await kvList(env, ADMIN_KEYS.litters + ':');
+  const reservations = await kvList(env, 'reservation:');
+  const testimonials = await kvList(env, ADMIN_KEYS.testimonials + ':');
+  const gallery   = await kvList(env, ADMIN_KEYS.gallery + ':');
+
+  const statusCounts = {};
+  puppies.forEach(p => { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1; });
+
+  const recentReservations = reservations
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 10);
+
+  return json(200, {
+    ok: true,
+    stats: {
+      totalDogs: dogs.length,
+      totalPuppies: puppies.length,
+      totalLitters: litters.length,
+      totalReservations: reservations.length,
+      totalTestimonials: testimonials.length,
+      totalGallery: gallery.length,
+      puppyStatuses: statusCounts,
+      recentReservations
+    }
+  });
+}
+
+// ─── Main fetch ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
     if (request.method === 'OPTIONS') {
       return new Response('', {
         status: 204,
-        headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Access-Control-Max-Age': '86400' }
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+          'Access-Control-Max-Age': '86400'
+        }
       });
     }
+
+    // ── Public health endpoint ──
     if (request.method === 'GET' && url.pathname === '/webhook/health') {
       return json(200, { ok: true, ts: Date.now() });
     }
+
+    // ── Admin API routes ──
+    if (url.pathname.startsWith('/admin/api/')) {
+      const segment = url.pathname.replace('/admin/api/', '').split('/')[0];
+      switch (segment) {
+        case 'dogs':       return handleAdminDogs(request, env);
+        case 'puppies':    return handleAdminPuppies(request, env);
+        case 'litters':    return handleAdminLitters(request, env);
+        case 'reservations': return handleAdminReservations(request, env);
+        case 'testimonials': return handleAdminTestimonials(request, env);
+        case 'gallery':    return handleAdminGallery(request, env);
+        case 'settings':   return handleAdminSettings(request, env);
+        case 'stats':      return handleAdminStats(request, env);
+        default:           return json(404, { ok: false, error: 'not_found' });
+      }
+    }
+
+    // ── Admin panel (serve admin.html) ──
+    if (url.pathname === '/admin' || url.pathname === '/admin/') {
+      return new Response('', { status: 404 }); // served as static asset from GitHub Pages
+    }
+
+    // ── Webhook endpoints ──
     if (request.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
     if (url.pathname === '/webhook' || url.pathname === '/webhook/reserve') return handleReserve(request, env);
     if (url.pathname === '/webhook/payment') return handlePayment(request, env);
+
     return json(404, { ok: false, error: 'not_found' });
   }
 };

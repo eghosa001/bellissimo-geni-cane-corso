@@ -15,6 +15,11 @@ binding = "RESERVATIONS"
 id = ""
 preview_id = ""
 
+[[kv_namespaces]]
+binding = "ADMIN"
+id = ""
+preview_id = ""
+
 [vars]
 PAYMENT_PROVIDER = "none"
 RESERVATION_AMOUNT = "0"

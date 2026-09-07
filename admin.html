@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bellissimo Geni — Kennel Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+/* ── Admin Shell ─────────────────────────────────────────────────────────── */
+:root{--ink:#10100f;--paper:#f4f1ea;--muted:#655f56;--gold:#c7a35a;--line:rgba(16,16,15,.13);--dark:#121211;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Inter',Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}
+
+/* ── Login Screen ────────────────────────────────────────────────────────── */
+.login-screen{min-height:100vh;display:grid;place-items:center;background:var(--dark)}
+.login-box{background:var(--paper);border:1px solid var(--line);padding:48px 40px;width:100%;max-width:400px}
+.login-box h1{font:600 clamp(28px,4vw,40px)/.95 var(--serif);letter-spacing:-.03em;margin-bottom:6px}
+.login-box .sub{color:var(--muted);font-size:12px;letter-spacing:.14em;margin-bottom:32px}
+.login-box label{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:20px}
+.login-box input{width:100%;border:1px solid var(--line);padding:14px 16px;background:#fff;margin-top:6px;outline:none;font-size:15px}
+.login-box input:focus{border-color:var(--gold)}
+.login-box .btn-login{margin-top:28px;width:100%;padding:14px;background:var(--gold);border:0;font-weight:800;font-size:13px;letter-spacing:.08em;cursor:pointer;color:#10100f}
+.login-box .login-err{margin-top:14px;font-size:12px;color:#b33;min-height:18px}
+
+/* ── Admin Layout ────────────────────────────────────────────────────────── */
+.admin-wrap{display:none;height:100vh;overflow:hidden}
+.admin-wrap.active{display:flex}
+
+/* Sidebar */
+.sidebar{width:240px;min-width:240px;background:var(--dark);color:#e8e4dc;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.sidebar-brand{padding:22px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-brand .mark{width:36px;height:36px;border:1px solid var(--gold);display:grid;place-items:center;font-family:var(--serif);font-size:14px;color:var(--gold);margin-bottom:10px}
+.sidebar-brand b{display:block;font-size:10px;letter-spacing:.18em;color:#c8c0b0}
+.sidebar-brand small{display:block;font-size:8px;letter-spacing:.16em;color:#655f56;margin-top:2px}
+.sidebar-nav{flex:1;padding:12px 0}
+.nav-section{font-size:9px;letter-spacing:.2em;color:#555;padding:16px 20px 6px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:600;color:#a8a49a;cursor:pointer;border-left:2px solid transparent;transition:all .15s}
+.nav-item:hover{color:#e8e4dc;background:rgba(255,255,255,.04)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(199,163,90,.06)}
+.nav-item .count{margin-left:auto;font-size:10px;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:10px;font-weight:700;color:#888}
+.nav-item.active .count{background:rgba(199,163,90,.15);color:var(--gold)}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#555}
+.btn-logout{background:transparent;border:1px solid rgba(255,255,255,.15);color:#888;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;letter-spacing:.06em}
+.btn-logout:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Main area */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:60px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:#fff;flex-shrink:0}
+.topbar h2{font:600 20px var(--serif);letter-spacing:-.02em}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-date{font-size:11px;color:var(--muted)}
+.content-scroll{flex:1;overflow-y:auto;padding:32px}
+
+/* ── Cards & Panels ──────────────────────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:#fff;border:1px solid var(--line);padding:20px 22px}
+.stat-card .num{font:600 clamp(28px,4vw,38px)/.95 var(--serif);color:var(--ink);letter-spacing:-.02em}
+.stat-card .label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px;font-weight:700}
+.stat-card .label a{color:var(--gold);text-decoration:underline}
+
+.panel{background:#fff;border:1px solid var(--line);margin-bottom:24px}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)}
+.panel-header h3{font:600 16px var(--serif);letter-spacing:-.01em}
+.panel-body{padding:22px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;font-size:12px;font-weight:800;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;letter-spacing:.03em}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#10100f}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-sm{padding:7px 12px;font-size:11px}
+.btn-del{background:#b33;border-color:#b33;color:#fff}
+.btn-del:hover{background:#a22}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Tables */
+.datatable{width:100%;border-collapse:collapse;font-size:13px}
+.datatable th{text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;padding:10px 14px;border-bottom:1px solid var(--line);background:#faf8f4}
+.datatable td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.datatable tr:last-child td{border-bottom:0}
+.datatable tr:hover td{background:#faf8f4}
+.datatable .name{font:600 14px var(--serif);letter-spacing:-.01em}
+.datatable .muted{color:var(--muted);font-size:12px}
+.pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.12em;padding:4px 9px;border:1px solid var(--line);text-transform:uppercase}
+.pill.available{background:#e6f0e3;border-color:#9dbf9a;color:#2d5a27}
+.pill.reserved{background:#f7ecd2;border-color:var(--gold);color:#7a5f0e}
+.pill.sold{background:#eee;color:#888}
+.pill.unavailable{background:#eee;color:#888}
+.pill.coming-soon{background:#e8e4da}
+.pill.payment-pending{background:#f7ecd2;border-color:var(--gold)}
+.pill.development{background:#f0ebe0;color:#777}
+.pill.featured{background:var(--gold);border-color:var(--gold);color:#10100f}
+.pill.approved{background:#e6f0e3;border-color:#9dbf9a}
+.pill.unapproved{background:#f5f0e6;border-color:#d4c9a8}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid .full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{border:1px solid var(--line);padding:11px 14px;background:#faf8f4;outline:none;font-size:14px;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);background:#fff}
+.field textarea{resize:vertical;min-height:80px}
+.field .hint{font-size:11px;color:var(--muted)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,16,15,.55);z-index:100;display:none;place-items:center;padding:20px}
+.modal-overlay.open{display:grid}
+.modal{background:var(--paper);border:1px solid var(--line);width:100%;max-width:680px;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line)}
+.modal-head h3{font:600 20px var(--serif);letter-spacing:-.02em}
+.modal-close{background:transparent;border:0;font-size:18px;cursor:pointer;color:var(--muted);padding:4px 8px}
+.modal-close:hover{color:var(--ink)}
+.modal-body{padding:24px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--line);background:#fff}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#f4f1ea;padding:14px 20px;font-size:13px;font-weight:600;z-index:200;transform:translateY(80px);opacity:0;transition:all .3s ease}
+.toast.show{transform:none;opacity:1}
+.toast.err{background:#b33}
+
+/* Search bar in panel */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.toolbar input,.toolbar select{border:1px solid var(--line);padding:10px 14px;background:#fff;min-width:160px;outline:none}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--gold)}
+
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{width:200px;min-width:200px}
+  .form-grid{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .sidebar{position:fixed;left:-260px;z-index:90;transition:left .25s}
+  .sidebar.open{left:0}
+  .content-scroll{padding:20px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .mobile-toggle{display:inline-flex !important}
+}
+.mobile-toggle{display:none !important;border:1px solid var(--line);background:#fff;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer}
+.overlay-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:80}
+.overlay-bg.open{display:block}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:48px;height:48px;border:1.5px solid var(--gold);display:inline-grid;place-items:center;font-family:var(--serif);font-size:20px;color:var(--gold);margin-bottom:12px">BG</div>
+      <h1>Kennel Admin</h1>
+      <p class="sub">BELLISSIMO GENI • NIGERIA</p>
+    </div>
+    <label>Password</label>
+    <input type="password" id="loginPw" placeholder="Enter admin password" autocomplete="current-password">
+    <button class="btn-login" id="loginBtn">Sign In</button>
+    <p class="login-err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN DASHBOARD ══════════════ -->
+<div class="admin-wrap" id="adminWrap">
+  <div class="overlay-bg" id="overlayBg"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark">BG</div>
+      <b>BELLISSIMO GENI</b>
+      <small>CANe CORSO • NIGERIA</small>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" data-page="dashboard">Dashboard</div>
+      <div class="nav-section">Dogs</div>
+      <div class="nav-item" data-page="dogs">All Dogs<span class="count" id="dogCount">0</span></div>
+      <div class="nav-item" data-page="add-dog">Add Dog</div>
+      <div class="nav-section">Puppies</div>
+      <div class="nav-item" data-page="puppies">All Puppies<span class="count" id="pupCount">0</span></div>
+      <div class="nav-item" data-page="litters">Litters</div>
+      <div class="nav-item" data-page="add-puppy">Add Puppy</div>
+      <div class="nav-section">Sales</div>
+      <div class="nav-item" data-page="reservations">Reservations<span class="count" id="resCount">0</span></div>
+      <div class="nav-section">Content</div>
+      <div class="nav-item" data-page="testimonials">Testimonials</div>
+      <div class="nav-item" data-page="gallery">Gallery</div>
+      <div class="nav-item" data-page="settings">Settings</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" id="logoutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="mobile-toggle" id="mobileToggle">☰ Menu</button>
+        <h2 id="pageTitle">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topDate"></span>
+      </div>
+    </header>
+    <div class="content-scroll" id="contentArea"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL ══════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<!-- ══════════════ TOAST ══════════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const API_BASE = window.BG_WEBHOOK_URL || '';
+let adminPW = localStorage.getItem('bg_admin_pw') || '';
+let currentPuppyCatalog = [];
+let currentDogs = [];
+
+// ── Auth ────────────────────────────────────────────────────────────────────
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginPw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('bg_admin_pw');
+  document.getElementById('loginScreen').style.display='';
+  document.getElementById('adminWrap').classList.remove('active');
+});
+async function doLogin() {
+  const pw = document.getElementById('loginPw').value;
+  if (!pw) return;
+  try {
+    const r = await fetch(API_BASE + '/admin/api/stats', {
+      headers: { 'Authorization': 'Bearer ' + pw }
+    });
+    const j = await r.json();
+    if (j.ok) {
+      adminPW = pw;
+      localStorage.setItem('bg_admin_pw', pw);
+      showAdmin();
+    } else {
+      document.getElementById('loginErr').textContent = j.error === 'unauthorized' ? 'Incorrect password.' : 'Connection error.';
+    }
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'Could not reach server.';
+  }
+}
+function showAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminWrap').classList.add('active');
+  document.getElementById('topDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'short',day:'numeric'});
+  if(adminPW) loadAllData();
+}
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+const navItems = document.querySelectorAll('.nav-item[data-page]');
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    navItems.forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    const page = item.dataset.page;
+    document.getElementById('pageTitle').textContent = item.textContent.replace(/\d+/,'').trim() || page;
+    closeMobile();
+    renderPage(page);
+  });
+});
+
+const mobileToggle = document.getElementById('mobileToggle');
+const sidebar = document.getElementById('sidebar');
+const overlayBg = document.getElementById('overlayBg');
+mobileToggle.addEventListener('click', () => { sidebar.classList.toggle('open'); overlayBg.classList.toggle('open'); });
+overlayBg.addEventListener('click', closeMobile);
+function closeMobile() { sidebar.classList.remove('open'); overlayBg.classList.remove('open'); }
+
+// ── HTTP helpers ────────────────────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
+  if (adminPW) headers['Authorization'] = 'Bearer ' + adminPW;
+  const r = await fetch(API_BASE + path, { ...opts, headers });
+  return r.json();
+}
+
+async function loadAllData() {
+  const [dogsRes, pupsRes, resRes] = await Promise.all([
+    apiFetch('/admin/api/dogs'),
+    apiFetch('/admin/api/puppies'),
+    apiFetch('/admin/api/reservations')
+  ]);
+  currentDogs = dogsRes.data || [];
+  const pups = pupsRes.data || [];
+  currentPuppyCatalog = pups.map(p => p.id);
+  document.getElementById('dogCount').textContent = currentDogs.length;
+  document.getElementById('pupCount').textContent = pups.length;
+  document.getElementById('resCount').textContent = (resRes.data||[]).length;
+  renderPage('dashboard');
+}
+
+// ── Page router ─────────────────────────────────────────────────────────────
+async function renderPage(page) {
+  const area = document.getElementById('contentArea');
+  area.innerHTML = '<p class="muted" style="padding:40px;text-align:center">Loading…</p>';
+  switch(page) {
+    case 'dashboard':   area.innerHTML = await renderDashboard(); break;
+    case 'dogs':        area.innerHTML = await renderDogsList(); break;
+    case 'add-dog':     area.innerHTML = await renderDogForm(null); break;
+    case 'puppies':     area.innerHTML = await renderPuppiesList(); break;
+    case 'litters':     area.innerHTML = await renderLittersList(); break;
+    case 'add-puppy':   area.innerHTML = await renderPuppyForm(null); break;
+    case 'reservations':area.innerHTML = await renderReservationsList(); break;
+    case 'testimonials':area.innerHTML = await renderTestimonialsList(); break;
+    case 'gallery':     area.innerHTML = await renderGalleryList(); break;
+    case 'settings':    area.innerHTML = await renderSettings(); break;
+    default:            area.innerHTML = '<p class="muted" style="padding:40px">Unknown page.</p>';
+  }
+}
+
+// ── Dashboard ───────────────────────────────────────────────────────────────
+function renderDashboard() {
+  return apiFetch('/admin/api/stats').then(async j => {
+    const s = j.stats || {};
+    const sc = s.puppyStatuses || {};
+    let puppyRows = '';
+    for(const [k,v] of Object.entries(sc)) {
+      const cls = k.toLowerCase().replace(/ /g,'-');
+      puppyRows += `<tr><td><span class="pill ${cls}">${k}</span></td><td><strong>${v}</strong></td></tr>`;
+    }
+    const recentRows = (s.recentReservations||[]).map(r => `
+      <tr>
+        <td><span class="pill ${r.status.toLowerCase().replace(/ /g,'-')}">${r.status}</span></td>
+        <td class="name">${esc(r.name||'')}</td>
+        <td class="muted">${esc(r.phone||'')}</td>
+        <td class="muted">${esc(r.puppy||'')}</td>
+        <td class="muted">${r.created_at?new Date(r.created_at).toLocaleDateString():''}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="muted" style="text-align:center">No reservations yet</td></tr>';
+    return `
+      <div class="stats-row">
+        <div class="stat-card"><div class="num">${s.totalDogs||0}</div><div class="label">Dogs</div></div>
+        <div class="stat-card"><div class="num">${s.totalPuppies||0}</div><div class="label">Puppies</div></div>
+        <div class="stat-card"><div class="num">${s.totalLitters||0}</div><div class="label">Litters</div></div>
+        <div class="stat-card"><div class="num">${s.totalReservations||0}</div><div class="label">Reservations</div></div>
+        <div class="stat-card"><div class="num">${s.totalTestimonials||0}</div><div class="label">Testimonials</div></div>
+        <div class="stat-card"><div class="num">${s.totalGallery||0}</div><div class="label">Gallery Photos</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="panel">
+          <div class="panel-header"><h3>Puppy Status Overview</h3><a href="#" onclick="navigate('puppies');return false" style="font-size:11px;color:var(--gold);font-weight:700">View all →</a></div>
+          <table class="datatable"><tbody>${puppyRows}</tbody></table>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Recent Reservations</h3><a href="#" onclick="navigate('reservations');return false" style="font-size:11px;color:var(--gold);font-weight:700">View all →</a></div>
+          <table class="datatable"><thead><tr><th>Status</th><th>Name</th><th>Phone</th><th>Puppy</th><th>Date</th></tr></thead><tbody>${recentRows}</tbody></table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-header"><h3>Quick Actions</h3></div>
+        <div class="panel-body"><div class="btn-group">
+          <button class="btn btn-gold" onclick="navigate('add-dog')">+ Add New Dog</button>
+          <button class="btn btn-gold" onclick="navigate('add-puppy')">+ Add New Puppy</button>
+          <button class="btn" onclick="navigate('litters')">Manage Litters</button>
+          <button class="btn" onclick="navigate('testimonials')">Add Testimonial</button>
+          <button class="btn" onclick="navigate('gallery')">Upload Gallery Photo</button>
+        </div></div>
+      </div>`;
+  });
+}
+
+// ── Dogs List ───────────────────────────────────────────────────────────────
+function renderDogsList() {
+  const rows = (currentDogs||[]).map(d => `
+    <tr>
+      <td class="name">${esc(d.name||'—')}</td>
+      <td><span class="pill ${(d.sex||'').toLowerCase()}">${(d.sex||'—').toUpperCase()}</span></td>
+      <td class="muted">${esc(d.colour||'—')}</td>
+      <td class="muted">${esc(d.status||'—')}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-ghost" onclick="editDog('${d.id}')">Edit</button>
+          <button class="btn btn-sm btn-del" onclick="deleteDog('${d.id}','${esc(d.name)}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" class="muted" style="text-align:center;padding:40px">No dogs registered yet. <a href="#" onclick="navigate(\'add-dog\');return false" style="color:var(--gold)">Add your first dog →</a></td></tr>';
+  return `
+    <div class="toolbar">
+      <input id="dogSearch" placeholder="Search dogs…" oninput="filterDogs(this.value)">
+      <select id="dogSexFilter" onchange="filterDogs()">
+        <option value="">All Sexes</option><option value="male">Males</option><option value="female">Females</option>
+      </select>
+      <button class="btn btn-gold" onclick="navigate('add-dog')">+ Add Dog</button>
+    </div>
+    <div class="panel"><div class="panel-body" style="padding:0;overflow-x:auto">
+      <table class="datatable"><thead><tr><th>Name</th><th>Sex</th><th>Colour</th><th>Status</th><th>Actions</th></tr></thead><tbody id="dogTableBody">${rows}</tbody></table>
+    </div></div>`;
+}
+function filterDogs(term) {
+  term = (term||'').toLowerCase();
+  const sex = document.getElementById('dogSexFilter')?.value || '';
+  const filtered = (currentDogs||[]).filter(d => {
+    if(sex && d.sex !== sex) return false;
+    if(term && !(d.name||'').toLowerCase().includes(term)) return false;
+    return true;
+  });
+  const tbody = document.getElementById('dogTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="name">${esc(d.name||'—')}</td>
+      <td><span class="pill ${(d.sex||'').toLowerCase()}">${(d.sex||'').toUpperCase()}</span></td>
+      <td class="muted">${esc(d.colour||'—')}</td>
+      <td class="muted">${esc(d.status||'—')}</td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editDog('${d.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deleteDog('${d.id}','${esc(d.name)}')">Delete</button></div></td>
+    </tr>`).join('') || '<tr><td colspan="5" class="muted" style="text-align:center">No dogs found</td></tr>';
+}
+window.editDog = async function(id) {
+  const j = await apiFetch('/admin/api/dogs?id=' + encodeURIComponent(id));
+  if(!j.ok) { toast('Dog not found','err'); return; }
+  openModal('Edit Dog', await renderDogForm(j.data));
+};
+window.deleteDog = async function(id, name) {
+  if(!confirm('Delete ' + name + '? This cannot be undone.')) return;
+  await apiFetch('/admin/api/dogs?id='+encodeURIComponent(id),{method:'DELETE'});
+  toast('Dog deleted'); loadAllData();
+};
+
+function renderDogForm(dog) {
+  const isEdit = !!dog;
+  const sireOpts = (currentDogs||[]).map(d=>`<option value="${d.id}" ${dog&&dog.sireId===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
+  const damOpts = (currentDogs||[]).map(d=>`<option value="${d.id}" ${dog&&dog.damId===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
+  return `
+    <div class="panel">
+      <div class="panel-header"><h3>${isEdit?'Edit Dog':'Add New Dog'}</h3><a href="#" onclick="navigate('dogs');return false" class="btn btn-sm btn-ghost">Back to Dogs</a></div>
+      <div class="panel-body">
+        <form id="dogForm" onsubmit="saveDog(event,'${isEdit?dog.id:''}')">
+          <div class="form-grid">
+            <div class="field"><label>Name *</label><input name="name" required value="${esc(dog?.name||'')}"></div>
+            <div class="field"><label>Sex *</label><select name="sex" required><option value="" ${!dog?.sex?'selected':''}>Select…</option><option value="male" ${dog?.sex==='male'?'selected':''}>Male</option><option value="female" ${dog?.sex==='female'?'selected':''}>Female</option></select></div>
+            <div class="field"><label>Colour</label><input name="colour" value="${esc(dog?.colour||'')}"></div>
+            <div class="field"><label>Date of Birth</label><input type="date" name="dateOfBirth" value="${dog?.dateOfBirth||''}"></div>
+            <div class="field"><label>Sire</label><select name="sireId"><option value="">None</option>${sireOpts}</select></div>
+            <div class="field"><label>Dam</label><select name="damId"><option value="">None</option>${damOpts}</select></div>
+            <div class="field"><label>Registration</label><input name="registration" value="${esc(dog?.registration||'')}"><span class="hint">AKC / KC / other</span></div>
+            <div class="field"><label>Status</label><select name="status"><option value="active" ${dog?.status==='active'||!dog?.status?'selected':''}>Active</option><option value="retired" ${dog?.status==='retired'?'selected':''}>Retired</option><option value="development" ${dog?.status==='development'?'selected':''}>Development</option></select></div>
+            <div class="field full"><label>Photo URL</label><input name="photo" value="${esc(dog?.photo||'')}" placeholder="https://…"><span class="hint">Direct URL to uploaded image</span></div>
+            <div class="field full"><label>Bio</label><textarea name="bio" rows="3">${esc(dog?.bio||'')}</textarea></div>
+            <div class="field full"><label>Health Notes</label><textarea name="health" rows="2">${esc(dog?.health||'')}</textarea></div>
+            <div class="field full"><label>Achievements</label><input name="achievements" value="${esc(dog?.achievements||'')}"></div>
+          </div>
+          <div style="margin-top:20px"><button type="submit" class="btn btn-gold">${isEdit?'Save Changes':'Create Dog'}</button></div>
+        </form>
+      </div>
+    </div>`;
+}
+async function saveDog(e, id) {
+  e.preventDefault();
+  const f = e.target;
+  const body = {};
+  ['name','sex','colour','dateOfBirth','sireId','damId','registration','status','photo','bio','health','achievements'].forEach(k => {
+    if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
+  });
+  const url = id ? '/admin/api/dogs?id='+encodeURIComponent(id) : '/admin/api/dogs';
+  const method = id ? 'POST' : 'POST';
+  const j = await apiFetch(url, { method, body: JSON.stringify(body) });
+  if(j.ok) { toast(id?'Dog updated':'Dog created'); closeModal(); loadAllData(); }
+  else toast(j.error||'Failed','err');
+}
+
+// ── Puppies List ────────────────────────────────────────────────────────────
+function renderPuppiesList() {
+  const litters = []; // loaded inline
+  return `
+    <div class="toolbar">
+      <input id="pupSearch" placeholder="Search puppies…" oninput="filterPups(this.value)">
+      <select id="pupStatusFilter" onchange="filterPups()">
+        <option value="">All Statuses</option>
+        <option value="AVAILABLE">Available</option>
+        <option value="RESERVED">Reserved</option>
+        <option value="SOLD">Sold</option>
+        <option value="COMING SOON">Coming Soon</option>
+        <option value="PAYMENT PENDING">Payment Pending</option>
+      </select>
+      <button class="btn btn-gold" onclick="navigate('add-puppy')">+ Add Puppy</button>
+      <button class="btn" onclick="navigate('litters')">Manage Litters</button>
+    </div>
+    <div id="puppiesContent"><p class="muted" style="padding:20px">Loading…</p></div>`;
+}
+window.filterPups = function(term) {
+  const status = document.getElementById('pupStatusFilter')?.value || '';
+  term = (term||'').toLowerCase();
+  const filtered = (currentPups||[]).filter(p => {
+    if(status && p.status !== status) return false;
+    if(term && !(p.name||'').toLowerCase().includes(term) && !(p.colour||'').toLowerCase().includes(term)) return false;
+    return true;
+  });
+  const tbody = document.getElementById('pupTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = filtered.map(p => {
+    const cls = p.status.toLowerCase().replace(/ /g,'-');
+    const dog = currentDogs.find(d=>d.id===p.sireId);
+    return `<tr>
+      <td class="name">${esc(p.name||'—')}</td>
+      <td><span class="pill ${cls}">${p.status}</span></td>
+      <td class="muted">${esc(p.colour||'—')}</td>
+      <td class="muted">${esc(p.sex||'—')}</td>
+      <td class="muted">${esc(dog?dog.name:(p.sireId||'—'))}</td>
+      <td class="muted">${p.priceNote?esc(p.priceNote):(p.priceNGN?'₦'+Number(p.priceNGN).toLocaleString():'—')}</td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editPuppy('${p.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deletePuppy('${p.id}','${esc(p.name)}')">Delete</button></div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="muted" style="text-align:center">No puppies found</td></tr>';
+};
+
+let currentPups = [];
+async function refreshPuppies() {
+  const j = await apiFetch('/admin/api/puppies');
+  currentPups = j.data || [];
+  const litters = j.litters || [];
+  // build litter options
+  const litterOpt = (litters||[]).map(l=>`<option value="${l.id}" ${currentPups[0]?.litterId===l.id?'selected':''}>${esc(l.name||l.id)}</option>`).join('');
+  const rows = (currentPups||[]).map(p => {
+    const cls = p.status.toLowerCase().replace(/ /g,'-');
+    const dog = currentDogs.find(d=>d.id===p.sireId);
+    return `<tr>
+      <td class="name">${esc(p.name||'—')}</td>
+      <td><span class="pill ${cls}">${p.status}</span></td>
+      <td class="muted">${esc(p.colour||'—')}</td>
+      <td class="muted">${esc(p.sex||'—')}</td>
+      <td class="muted">${esc(dog?dog.name:(p.sireId||'—'))}</td>
+      <td class="muted">${p.priceNote?esc(p.priceNote):(p.priceNGN?'₦'+Number(p.priceNGN).toLocaleString():'—')}</td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editPuppy('${p.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deletePuppy('${p.id}','${esc(p.name)}')">Delete</button></div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="muted" style="text-align:center">No puppies registered yet</td></tr>';
+
+  document.getElementById('puppiesContent').innerHTML = `
+    <div class="panel"><div class="panel-body" style="padding:0;overflow-x:auto">
+      <table class="datatable"><thead><tr><th>Name</th><th>Status</th><th>Colour</th><th>Sex</th><th>Sire</th><th>Price</th><th>Actions</th></tr></thead><tbody id="pupTableBody">${rows}</tbody></table>
+    </div></div>`;
+  document.getElementById('pupCount').textContent = currentPups.length;
+}
+
+window.editPuppy = async function(id) {
+  const j = await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id));
+  if(!j.ok){toast('Puppy not found','err');return;}
+  openModal('Edit Puppy', await renderPuppyForm(j.data));
+};
+window.deletePuppy = async function(id, name) {
+  if(!confirm('Delete '+name+'?'))return;
+  await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id),{method:'DELETE'});
+  toast('Puppy deleted'); refreshPuppies();
+};
+
+function renderPuppyForm(pup) {
+  const isEdit = !!pup;
+  const dogOpts = (currentDogs||[]).map(d=>`<option value="${d.id}" ${pup&&pup.sireId===d.id?'selected':''}>${esc(d.name)} (${d.sex})</option>`).join('');
+  const litterOpts = (currentPups||[]).filter(p=>p.litterId).map(p=>`<option value="${p.litterId}" ${pup&&pup.litterId===p.litterId?'selected':''}>${p.litterId}</option>`).join('');
+  const statuses = ['AVAILABLE','PAYMENT PENDING','RESERVED','SOLD','COMING SOON','UNAVAILABLE'];
+  const statusOpts = statuses.map(s=>`<option value="${s}" ${pup&&pup.status===s?'selected':''}>${s}</option>`).join('');
+  return `
+    <div class="panel">
+      <div class="panel-header"><h3>${isEdit?'Edit Puppy':'Add New Puppy'}</h3><a href="#" onclick="navigate('puppies');return false" class="btn btn-sm btn-ghost">Back</a></div>
+      <div class="panel-body">
+        <form id="puppyForm" onsubmit="savePuppy(event,'${isEdit?pup.id:''}')">
+          <div class="form-grid">
+            <div class="field"><label>Puppy Name *</label><input name="name" required value="${esc(pup?.name||'')}"></div>
+            <div class="field"><label>Sex *</label><select name="sex" required><option value="">Select…</option><option value="male" ${pup?.sex==='male'?'selected':''}>Male</option><option value="female" ${pup?.sex==='female'?'selected':''}>Female</option></select></div>
+            <div class="field"><label>Colour</label><input name="colour" value="${esc(pup?.colour||'')}"></div>
+            <div class="field"><label>Date of Birth</label><input type="date" name="dateOfBirth" value="${pup?.dateOfBirth||''}"></div>
+            <div class="field"><label>Sire</label><select name="sireId"><option value="">None</option>${dogOpts}</select></div>
+            <div class="field"><label>Dam</label><select name="damId"><option value="">None</option>${dogOpts}</select></div>
+            <div class="field"><label>Litter ID</label><input name="litterId" value="${esc(pup?.litterId||'')}" placeholder="litter-2026-a"></div>
+            <div class="field"><label>Status</label><select name="status">${statusOpts}</select></div>
+            <div class="field"><label>Price (NGN)</label><input name="priceNGN" type="number" value="${pup?.priceNGN||''}" placeholder="Leave empty for price-on-enquiry"></div>
+            <div class="field"><label>Price Note</label><input name="priceNote" value="${esc(pup?.priceNote||'')}" placeholder="e.g. ₦5,000,000"></div>
+            <div class="field full"><label>Photo URL</label><input name="photo" value="${esc(pup?.photo||'')}" placeholder="https://…"></div>
+            <div class="field full"><label>Notes</label><textarea name="notes" rows="2">${esc(pup?.notes||'')}</textarea></div>
+          </div>
+          <div style="margin-top:20px"><button type="submit" class="btn btn-gold">${isEdit?'Save Changes':'Create Puppy'}</button></div>
+        </form>
+      </div>
+    </div>`;
+}
+async function savePuppy(e, id) {
+  e.preventDefault();
+  const f = e.target;
+  const body = {};
+  ['name','sex','colour','dateOfBirth','sireId','damId','litterId','status','priceNGN','priceNote','photo','notes'].forEach(k => {
+    if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
+  });
+  if(body.priceNGN) body.priceNGN = Number(body.priceNGN) || null;
+  const url = id ? '/admin/api/puppies?id='+encodeURIComponent(id) : '/admin/api/puppies';
+  const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
+  if(j.ok) { toast(id?'Puppy updated':'Puppy created'); closeModal(); refreshPuppies(); }
+  else toast(j.error||'Failed','err');
+}
+
+// ── Litters ─────────────────────────────────────────────────────────────────
+async function renderLittersList() {
+  const j = await apiFetch('/admin/api/litters');
+  const litters = j.data || [];
+  const rows = litters.map(l => {
+    const sire = currentDogs.find(d=>d.id===l.sireId);
+    const dam = currentDogs.find(d=>d.id===l.damId);
+    const pups = (currentPups||[]).filter(p=>p.litterId===l.id);
+    return `<tr>
+      <td class="name">${esc(l.name||l.id)}</td>
+      <td class="muted">${sire?sire.name:'—'} × ${dam?dam.name:'—'}</td>
+      <td class="muted">${l.whelpDate||'—'}</td>
+      <td><span class="pill ${(l.status||'coming-soon').toLowerCase().replace(/ /g,'-')}">${l.status||'COMING SOON'}</span></td>
+      <td class="muted">${pups.length} puppy${pups.length!==1?'s':''}</td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editLitter('${l.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deleteLitter('${l.id}','${esc(l.name||l.id)}')">Delete</button></div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="muted" style="text-align:center;padding:40px">No litters registered</td></tr>';
+  return `
+    <div class="toolbar"><button class="btn btn-gold" onclick="editLitter(null)">+ New Litter</button></div>
+    <div class="panel"><div class="panel-body" style="padding:0;overflow-x:auto">
+      <table class="datatable"><thead><tr><th>Name</th><th>Sire × Dam</th><th>Whelp Date</th><th>Status</th><th>Puppies</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+    </div></div>`;
+}
+window.editLitter = async function(id) {
+  let litter = null;
+  if(id) {
+    const j = await apiFetch('/admin/api/litters?id='+id);
+    if(!j.ok){toast('Litter not found','err');return;}
+    litter = j.data;
+  }
+  const dogOpts = (currentDogs||[]).map(d=>`<option value="${d.id}" ${litter&&litter.sireId===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
+  const modalHtml = `
+    <div class="panel" style="margin:0">
+      <div class="panel-header"><h3>${id?'Edit Litter':'New Litter'}</h3></div>
+      <div class="panel-body">
+        <form onsubmit="saveLitter(event,'${id||''}')">
+          <div class="form-grid">
+            <div class="field full"><label>Litter Name *</label><input name="name" required value="${esc(litter?.name||'')}"></div>
+            <div class="field"><label>Sire</label><select name="sireId"><option value="">None</option>${dogOpts}</select></div>
+            <div class="field"><label>Dam</label><select name="damId"><option value="">None</option>${dogOpts}</select></div>
+            <div class="field"><label>Whelp Date</label><input type="date" name="whelpDate" value="${litter?.whelpDate||''}"></div>
+            <div class="field"><label>Status</label><select name="status"><option value="COMING SOON" ${litter?.status==='COMING SOON'?'selected':''}>Coming Soon</option><option value="ACTIVE" ${litter?.status==='ACTIVE'?'selected':''}>Active</option><option value="CLOSED" ${litter?.status==='CLOSED'?'selected':''}>Closed</option></select></div>
+            <div class="field full"><label>Notes</label><textarea name="notes" rows="2">${esc(litter?.notes||'')}</textarea></div>
+          </div>
+          <div style="margin-top:16px"><button type="submit" class="btn btn-gold">${id?'Save Changes':'Create Litter'}</button></div>
+        </form>
+      </div>
+    </div>`;
+  openModal(id?'Edit Litter':'New Litter', modalHtml);
+};
+async function saveLitter(e, id) {
+  e.preventDefault();
+  const f = e.target;
+  const body = {};
+  ['name','sireId','damId','whelpDate','status','notes'].forEach(k => {
+    if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
+  });
+  const url = id ? '/admin/api/litters?id='+encodeURIComponent(id) : '/admin/api/litters';
+  const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
+  if(j.ok) { toast(id?'Litter updated':'Litter created'); closeModal(); refreshPuppies(); }
+  else toast(j.error||'Failed','err');
+}
+window.deleteLitter = async function(id, name) {
+  if(!confirm('Delete litter '+name+'?'))return;
+  await apiFetch('/admin/api/litters?id='+encodeURIComponent(id),{method:'DELETE'});
+  toast('Litter deleted'); refreshPuppies();
+};
+
+// ── Reservations ────────────────────────────────────────────────────────────
+async function renderReservationsList() {
+  const j = await apiFetch('/admin/api/reservations');
+  const res = j.data || [];
+  const rows = res.map(r => `
+    <tr>
+      <td><span class="pill ${r.status.toLowerCase().replace(/ /g,'-')}">${r.status}</span></td>
+      <td class="name">${esc(r.ref||'—')}</td>
+      <td class="name">${esc(r.name||'—')}</td>
+      <td class="muted">${esc(r.phone||'—')}</td>
+      <td class="muted">${esc(r.email||'—')}</td>
+      <td class="muted">${esc(r.puppy||'—')}</td>
+      <td class="muted">${r.created_at?new Date(r.created_at).toLocaleDateString():''}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-ghost" onclick="updateResStatus('${r.ref}')">Update Status</button>
+          <button class="btn btn-sm btn-del" onclick="deleteRes('${r.ref}','${esc(r.name)}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" class="muted" style="text-align:center;padding:40px">No reservations yet</td></tr>';
+  return `
+    <div class="panel">
+      <div class="panel-header"><h3>All Reservations <span class="muted" style="font-weight:400;font-size:12px">(${res.length})</span></h3></div>
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="datatable"><thead><tr><th>Status</th><th>Ref</th><th>Name</th><th>Phone</th><th>Email</th><th>Puppy</th><th>Date</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+}
+window.updateResStatus = async function(ref) {
+  const current = (await apiFetch('/admin/api/reservations?id='+encodeURIComponent(ref))).data;
+  if(!current) return;
+  const statuses = ['REQUESTED','PAYMENT_PENDING','RESERVED','SOLD','CANCELLED'];
+  const html = `
+    <div class="panel" style="margin:0">
+      <div class="panel-header"><h3>Update: ${esc(current.ref)}</h3></div>
+      <div class="panel-body">
+        <div class="form-grid" style="margin-bottom:20px">
+          <div class="field"><label>Current Status</label><span class="pill ${current.status.toLowerCase().replace(/ /g,'-')}">${current.status}</span></div>
+          <div class="field"><label>Puppy</label><span>${esc(current.puppy||'—')}</span></div>
+          <div class="field"><label>Name</label><span>${esc(current.name||'—')}</span></div>
+          <div class="field"><label>Phone</label><span>${esc(current.phone||'—')}</span></div>
+        </div>
+        <form onsubmit="doUpdateResStatus(event,'${ref}')">
+          <div class="field"><label>New Status</label><select name="status">${statuses.map(s=>`<option value="${s}" ${current.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+          <div style="margin-top:16px"><button type="submit" class="btn btn-gold">Update</button></div>
+        </form>
+      </div>
+    </div>`;
+  openModal('Update Reservation — '+ref, html);
+};
+async function doUpdateResStatus(e, ref) {
+  e.preventDefault();
+  const status = e.target.status.value;
+  const j = await apiFetch('/admin/api/reservations?id='+encodeURIComponent(ref)+'&action=update-status',{method:'POST',body:JSON.stringify({status})});
+  if(j.ok) { toast('Status updated'); closeModal(); renderPage('reservations'); }
+  else toast(j.error||'Failed','err');
+}
+window.deleteRes = async function(ref, name) {
+  if(!confirm('Delete reservation '+ref+' ('+name+')?'))return;
+  await apiFetch('/admin/api/reservations?id='+encodeURIComponent(ref)+'&action=delete',{method:'POST'});
+  toast('Reservation deleted'); renderPage('reservations');
+};
+
+// ── Testimonials ────────────────────────────────────────────────────────────
+async function renderTestimonialsList() {
+  const j = await apiFetch('/admin/api/testimonials');
+  const items = j.data || [];
+  const rows = items.map(t => `
+    <tr>
+      <td>${t.featured?'<span class="pill featured">★ Featured</span>':'—'}</td>
+      <td class="name">${esc(t.name||'—')}</td>
+      <td class="muted">${esc((t.rating||0)+'/5' || '—')}</td>
+      <td>${t.approved?'<span class="pill approved">Approved</span>':'<span class="pill unapproved">Unapproved</span>'}</td>
+      <td class="muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.text?.slice(0,80)||'—')}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-ghost" onclick="toggleFeatured('${t.id}',${!t.featured})">${t.featured?'Unfeature':'Feature'}</button>
+          <button class="btn btn-sm btn-ghost" onclick="toggleApproved('${t.id}',${!t.approved})">${t.approved?'Unapprove':'Approve'}</button>
+          <button class="btn btn-sm btn-del" onclick="deleteTesti('${t.id}','${esc(t.name)}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6" class="muted" style="text-align:center;padding:40px">No testimonials yet</td></tr>';
+  return `
+    <div class="toolbar">
+      <button class="btn btn-gold" onclick="addTestimonial()">+ Add Testimonial</button>
+    </div>
+    <div class="panel">
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="datatable"><thead><tr><th>Featured</th><th>Name</th><th>Rating</th><th>Status</th><th>Preview</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+}
+window.addTestimonial = async function() {
+  openModal('Add Testimonial', `
+    <div class="panel" style="margin:0">
+      <div class="panel-body">
+        <form onsubmit="saveTestimonial(event)">
+          <div class="form-grid">
+            <div class="field"><label>Owner Name *</label><input name="name" required></div>
+            <div class="field"><label>Rating (1–5)</label><input name="rating" type="number" min="1" max="5" value="5"></div>
+            <div class="field full"><label>Testimonial Text *</label><textarea name="text" rows="4" required></textarea></div>
+            <div class="field full"><label>Source (optional)</label><input name="source" placeholder="e.g. Google Review, WhatsApp"></div>
+          </div>
+          <div style="margin-top:16px" class="btn-group">
+            <button type="submit" class="btn btn-gold">Save Testimonial</button>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" name="featured" style="width:auto"> Feature on homepage</label>
+          </div>
+        </form>
+      </div>
+    </div>`);
+};
+async function saveTestimonial(e) {
+  e.preventDefault();
+  const f = e.target;
+  const body = {
+    name: f.name.value.trim(),
+    rating: parseInt(f.rating.value)||5,
+    text: f.text.value.trim(),
+    source: f.source?.value?.trim()||'',
+    featured: f.featured?.checked||false,
+    approved: true
+  };
+  const j = await apiFetch('/admin/api/testimonials',{method:'POST',body:JSON.stringify(body)});
+  if(j.ok) { toast('Testimonial added'); closeModal(); renderPage('testimonials'); }
+  else toast(j.error||'Failed','err');
+}
+window.toggleFeatured = async function(id, val) {
+  await apiFetch('/admin/api/testimonials?id='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({featured:val})});
+  renderPage('testimonials');
+};
+window.toggleApproved = async function(id, val) {
+  await apiFetch('/admin/api/testimonials?id='+encodeURIComponent(id),{method:'POST',body:JSON.stringify({approved:val})});
+  renderPage('testimonials');
+};
+window.deleteTesti = async function(id, name) {
+  if(!confirm('Delete testimonial from '+name+'?'))return;
+  await apiFetch('/admin/api/testimonials?id='+encodeURIComponent(id),{method:'DELETE'});
+  toast('Deleted'); renderPage('testimonials');
+};
+
+// ── Gallery ─────────────────────────────────────────────────────────────────
+async function renderGalleryList() {
+  const j = await apiFetch('/admin/api/gallery');
+  const items = j.data || [];
+  const rows = items.map(g => `
+    <tr>
+      <td><img src="${esc(g.url||'')}" style="width:60px;height:40px;object-fit:cover;border:1px solid var(--line)" onerror="this.style.display='none'"></td>
+      <td class="name">${esc(g.caption||'—')}</td>
+      <td class="muted">${esc(g.category||'general')}</td>
+      <td class="muted">${g.order??'—'}</td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editGalleryItem('${g.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deleteGalleryItem('${g.id}')">Delete</button></div></td>
+    </tr>`).join('') || '<tr><td colspan="5" class="muted" style="text-align:center;padding:40px">No gallery photos yet</td></tr>';
+  return `
+    <div class="toolbar">
+      <button class="btn btn-gold" onclick="addGalleryItem()">+ Add Photo</button>
+    </div>
+    <div class="panel">
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="datatable"><thead><tr><th>Image</th><th>Caption</th><th>Category</th><th>Order</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+}
+window.addGalleryItem = function() {
+  openModal('Add Gallery Photo', `
+    <div class="panel" style="margin:0">
+      <div class="panel-body">
+        <form onsubmit="saveGalleryItem(event)">
+          <div class="form-grid">
+            <div class="field full"><label>Image URL *</label><input name="url" required placeholder="https://…"></div>
+            <div class="field"><label>Caption</label><input name="caption"></div>
+            <div class="field"><label>Alt Text</label><input name="alt"></div>
+            <div class="field"><label>Category</label><select name="category"><option value="general">General</option><option value="dogs">Dogs</option><option value="puppies">Puppies</option><option value="kennel">Kennel</option></select></div>
+            <div class="field"><label>Order</label><input name="order" type="number" value="0"></div>
+          </div>
+          <div style="margin-top:16px"><button type="submit" class="btn btn-gold">Add Photo</button></div>
+        </form>
+      </div>
+    </div>`);
+};
+window.editGalleryItem = async function(id) {
+  const j = await apiFetch('/admin/api/gallery?id='+encodeURIComponent(id));
+  if(!j.ok)return;
+  const g = j.data;
+  openModal('Edit Gallery Photo', `
+    <div class="panel" style="margin:0">
+      <div class="panel-body">
+        <form onsubmit="saveGalleryItem(event,'${id}')">
+          <div class="form-grid">
+            <div class="field full"><label>Image URL</label><input name="url" value="${esc(g.url||'')}"></div>
+            <div class="field"><label>Caption</label><input name="caption" value="${esc(g.caption||'')}"></div>
+            <div class="field"><label>Alt Text</label><input name="alt" value="${esc(g.alt||'')}"></div>
+            <div class="field"><label>Category</label><select name="category"><option value="general" ${g.category==='general'?'selected':''}>General</option><option value="dogs" ${g.category==='dogs'?'selected':''}>Dogs</option><option value="puppies" ${g.category==='puppies'?'selected':''}>Puppies</option><option value="kennel" ${g.category==='kennel'?'selected':''}>Kennel</option></select></div>
+            <div class="field"><label>Order</label><input name="order" type="number" value="${g.order??0}"></div>
+          </div>
+          <div style="margin-top:16px"><button type="submit" class="btn btn-gold">Save</button></div>
+        </form>
+      </div>
+    </div>`);
+};
+async function saveGalleryItem(e, id) {
+  e.preventDefault();
+  const f = e.target;
+  const body = { url:f.url.value.trim(), caption:f.caption?.value?.trim()||'', alt:f.alt?.value?.trim()||'', category:f.category.value, order:parseInt(f.order?.value||0) };
+  const url = id ? '/admin/api/gallery?id='+encodeURIComponent(id) : '/admin/api/gallery';
+  const j = await apiFetch(url, { method:'POST', body:JSON.stringify(body) });
+  if(j.ok) { toast(id?'Updated':'Added'); closeModal(); renderPage('gallery'); }
+  else toast(j.error||'Failed','err');
+}
+window.deleteGalleryItem = async function(id) {
+  if(!confirm('Delete this photo?'))return;
+  await apiFetch('/admin/api/gallery?id='+encodeURIComponent(id),{method:'DELETE'});
+  toast('Deleted'); renderPage('gallery');
+};
+
+// ── Settings ────────────────────────────────────────────────────────────────
+async function renderSettings() {
+  const j = await apiFetch('/admin/api/settings');
+  const s = j.data || {};
+  return `
+    <div class="panel">
+      <div class="panel-header"><h3>Kennel Settings</h3></div>
+      <div class="panel-body">
+        <form onsubmit="saveSettings(event)">
+          <div class="form-grid">
+            <div class="field"><label>WhatsApp Number</label><input name="whatsapp" value="${esc(s.whatsapp||'')}"><span class="hint">e.g. 2348012345678</span></div>
+            <div class="field"><label>Email</label><input name="email" value="${esc(s.email||'')}"></div>
+            <div class="field full"><label>Physical Address</label><input name="address" value="${esc(s.address||'')}"></div>
+            <div class="field"><label>Instagram Handle</label><input name="instagram" value="${esc(s.instagram||'')}"></div>
+            <div class="field"><label>Facebook URL</label><input name="facebook" value="${esc(s.facebook||'')}"></div>
+            <div class="field full"><label>About Blurb (homepage intro)</label><textarea name="aboutBlurb" rows="3">${esc(s.aboutBlurb||'')}</textarea></div>
+          </div>
+          <div style="margin-top:20px" class="btn-group">
+            <button type="submit" class="btn btn-gold">Save Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h3>Payment Configuration</h3></div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div class="field"><label>Provider</label><select name="paymentProvider"><option value="none" ${s.paymentProvider==='none'||!s.paymentProvider?'selected':''}>None</option><option value="paystack" ${s.paymentProvider==='paystack'?'selected':''}>Paystack</option><option value="flutterwave" ${s.paymentProvider==='flutterwave'?'selected':''}>Flutterwave</option></select></div>
+          <div class="field"><label>Currency</label><input name="currency" value="${esc(s.currency||'NGN')}"></div>
+          <div class="field"><label>Reservation Amount</label><input name="reservationAmount" type="number" value="${s.reservationAmount||''}"></div>
+          <div class="field"><label>Hold Hours</label><input name="holdHours" type="number" value="${s.holdHours||72}"><span class="hint">How long a reservation holds a puppy</span></div>
+        </div>
+        <p class="muted" style="margin-top:12px;font-size:11px">⚠ Payment keys must be set as Cloudflare Workers secrets, not here. Contact the developer for key configuration.</p>
+      </div>
+    </div>`;
+}
+async function saveSettings(e) {
+  e.preventDefault();
+  const f = e.target;
+  const body = {};
+  ['whatsapp','email','address','instagram','facebook','aboutBlurb','paymentProvider','currency','reservationAmount','holdHours'].forEach(k => {
+    if(f[k]) body[k] = f[k].value.trim();
+  });
+  if(body.reservationAmount) body.reservationAmount = Number(body.reservationAmount);
+  if(body.holdHours) body.holdHours = Number(body.holdHours);
+  const j = await apiFetch('/admin/api/settings',{method:'POST',body:JSON.stringify(body)});
+  if(j.ok) toast('Settings saved'); else toast(j.error||'Failed','err');
+}
+
+// ── Modal ───────────────────────────────────────────────────────────────────
+function openModal(title, html) {
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-head"><h3>${title}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">${html}</div>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+window.closeModal = function() {
+  document.getElementById('modalOverlay').classList.remove('open');
+};
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if(e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// ── Toast ───────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type==='err'?' err':'');
+  setTimeout(()=> t.className = 'toast', 3000);
+}
+
+// ── Escaper ─────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Nav helper ──────────────────────────────────────────────────────────────
+function navigate(page) {
+  const item = document.querySelector('.nav-item[data-page="'+page+'"]');
+  if(item) item.click();
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+(function(){
+  const storedPw = localStorage.getItem('bg_admin_pw');
+  if(storedPw) {
+    adminPW = storedPw;
+    showAdmin();
+  }
+})();
+</script>
+</body>
+</html>
