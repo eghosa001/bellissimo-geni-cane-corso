@@ -22,6 +22,9 @@ Everything the client must supply before launch. Fill each field; return this fi
 | TikTok handle | @ |
 | Facebook page | |
 | YouTube (optional) | |
+| Google Business profile (for a reviews/homepage embed) | |
+| Registrations / memberships / licenses worth displaying (registry, licensed-kennel status, awarding body, titles) | |
+| Third-party pedigree database links (optional external trust signal) | |
 | Website production domain | |
 
 ## 2. Payment & reservation rules (Phase 7 — required to go live)
@@ -107,6 +110,8 @@ Client name: ____________   Date: ____________
 |---|---|
 | WhatsApp number | `app.js`, `reserve.html`, `contact.html` (3 places) |
 | Contact/social | `contact.html`, `social.html`, footer, JSON-LD |
+| Social-proof widgets (Google reviews, Instagram feed) | homepage + `social.html` (widgets added once handles/profile exist) |
+| Registrations / credentials | footer badges, `about.html`, `standards.html` |
 | Dog records | `data/dogs.json` (+ `pedigree.html`/`dogs.html` render automatically) |
 | Puppy records | `data/puppies.json` (+ `puppies.html`, `reserve.html`, homepage render automatically) |
 | Photos | `/images/*`, gallery + dog/puppy photo fields, WebP/AVIF |
