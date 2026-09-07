@@ -25,6 +25,7 @@
 <label>Phone / WhatsApp<input name="phone" required autocomplete="tel" placeholder="0800 000 0000"></label>
 <label>I am interested in<select name="interest"><option>Male puppy</option><option>Female puppy</option><option>Either / best match</option><option>Pedigree information</option><option>Next litter priority list</option><option>Other</option></select></label>
 <label>Message<textarea name="message" rows="5" placeholder="Home setup, experience, preferred timing, dog you searched (e.g. Henry)"></textarea></label>
+<div style="position:absolute;left:-9999px" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 <button class="btn gold" type="submit">Prepare WhatsApp message →</button>
 <p class="hint" id="note">Demo mode: kennel WhatsApp number, address, hours and social links to be confirmed.</p>
 </form>
@@ -41,7 +42,10 @@
 (function(){
 var N='2348000000000',f=document.getElementById('apply'),note=document.getElementById('note');
 f.addEventListener('submit',function(e){e.preventDefault();var d=new FormData(f);
-var t=['Hello Bellissimo Geni,','', 'Name: '+d.get('name'),'Phone: '+d.get('phone'),'Interested in: '+d.get('interest'),'Message: '+(d.get('message')||'—')].join('\n');
+if(String(d.get('website')||'').trim()){return;}
+var phone=String(d.get('phone')||'').trim();if(!BG.validPhone(phone)){note.textContent='Please enter a valid phone/WhatsApp number.';return;}
+BG.track('contact_submit',d.get('interest'));
+var t=['Hello Bellissimo Geni,','', 'Name: '+d.get('name'),'Phone: '+phone,'Interested in: '+d.get('interest'),'Message: '+(d.get('message')||'—')].join('\n');
 if(N==='2348000000000'){note.textContent='Demo mode: replace the WhatsApp number in contact.html before launch. Your message was prepared but not sent.';return;}
 window.open('https://wa.me/'+N+'?text='+encodeURIComponent(t),'_blank','noopener');});
 })();

@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reserve a Puppy | Bellissimo Geni Cane Corso</title>
 <meta name="description" content="Reserve a Bellissimo Geni Cane Corso puppy. Get a traceable reservation reference and confirm via WhatsApp. Online payment activates after provider confirmation.">
+<meta property="og:title" content="Reserve | Bellissimo Geni Cane Corso">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="site.css">
+<script>window.RECAPTCHA_SITE_KEY = '';</script>
+<script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
 </head>
 <body>
 <header class="site-header">
@@ -30,7 +33,9 @@
 <label>Phone / WhatsApp<input name="phone" required autocomplete="tel" placeholder="0800 000 0000"></label>
 <label>Email (optional)<input name="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
 <label>Message<textarea name="message" rows="3" placeholder="Experience with guardian breeds, home setup, timing"></textarea></label>
+<div style="position:absolute;left:-9999px" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 <label style="font-weight:400"><input type="checkbox" id="terms" required style="width:auto"> I understand this creates an enquiry-based reservation request, not an automatic payment or guarantee, and I agree to be contacted about availability, terms and next steps.</label>
+<div id="captcha-status" class="hint" style="margin-top:6px"></div>
 <button class="btn gold" type="submit">Generate reservation reference →</button>
 </form>
 <div id="summary" style="margin-top:22px"></div>
@@ -40,19 +45,32 @@
 <script src="site.js"></script>
 <script>
 (function(){
-var WHATSAPP_NUMBER='2348000000000';
-var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint'),form=document.getElementById('resForm'),sum=document.getElementById('summary'),PUPS=[];
+var WHATSAPP_NUMBER='2348000000000',form=document.getElementById('resForm'),sum=document.getElementById('summary'),note=document.getElementById('note');
+var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'';
+var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
+var PUPPS=[];
 function ref(){var d=new Date();return 'BG-'+d.getFullYear()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
-function fill(){var pre=new URLSearchParams(location.search).get('puppy');sel.innerHTML=PUPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' — '+BG.esc(p.status)+' — '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');upd();}
-function upd(){var p=PUPS.find(function(x){return x.id===sel.value;});hint.textContent=p?((p.notes||'')+' Sire/dam: '+(p.sireId||'—')+' / '+(p.damId||'—')):'';}
+function fill(){var pre=new URLSearchParams(location.search).get('puppy');sel.innerHTML=PUPPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' — '+BG.esc(p.status)+' — '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');upd();}
+function upd(){var p=PUPPS.find(function(x){return x.id===sel.value;});hint.textContent=p?((p.notes||'')+' Sire/dam: '+(p.sireId||'—')+' / '+(p.damId||'—')):'';}
 sel.addEventListener('change',upd);
-form.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(form);var p=PUPS.find(function(x){return x.id===sel.value;});if(!p)return;
-var r=ref();var rec={ref:r,puppy:p.id,puppyName:p.name,name:String(fd.get('name')),phone:String(fd.get('phone')),email:String(fd.get('email')),message:String(fd.get('message')),at:new Date().toISOString(),status:'REQUESTED'};
-try{var all=JSON.parse(localStorage.getItem('bg_reservations')||'[]');all.push(rec);localStorage.setItem('bg_reservations',JSON.stringify(all));}catch(_){}
-var text=['Hello Bellissimo Geni, I would like to reserve a puppy.','', 'Reference: '+r,'Puppy: '+p.name+' ('+p.id+')','Name: '+rec.name,'Phone: '+rec.phone,'Message: '+(rec.message||'—')].join('\n');
-sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(r)+'</strong> — '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">'+(WHATSAPP_NUMBER==='2348000000000'?'<span class="hint">Demo mode: replace WHATSAPP_NUMBER in reserve.html before launch.</span>':'<a class="btn gold" target="_blank" rel="noopener" href="https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(text)+'">Confirm via WhatsApp →</a>')+'<a class="btn ghost" href="contact.html">Contact instead</a></div>';
-sum.scrollIntoView({behavior:'smooth'});});
-BG.loadJSON('data/puppies.json').then(function(j){PUPS=j.puppies||[];fill();});
+form.addEventListener('submit',function(e){
+e.preventDefault();
+var fd=new FormData(form);var p=PUPPS.find(function(x){return x.id===sel.value;});if(!p)return;
+var name=String(fd.get('name')).trim(),phone=String(fd.get('phone')).trim(),email=String(fd.get('email')||'').trim(),msg=String(fd.get('message')||'').trim(),terms=document.getElementById('terms').checked,hpot=String(fd.get('website')||'').trim();
+if(hpot){return;}
+if(!terms){sum.innerHTML='<div class="notice">You must accept the terms before generating a reference.</div>';sum.scrollIntoView({behavior:'smooth'});return;}
+if(!BG.validPhone(phone)){sum.innerHTML='<div class="notice">Please enter a valid phone/WhatsApp number (7–15 digits).</div>';sum.scrollIntoView({behavior:'smooth'});return;}
+var rec={ref:ref(),puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,at:new Date().toISOString(),status:'REQUESTED',ip:null};
+try{var all=JSON.parse(localStorage.getItem('bg_reservations')||'[]');all.push(rec);localStorage.setItem('bg_reservations',JSON.stringify(all));}catch(err){}
+var text=['Hello Bellissimo Geni, I would like to reserve a puppy.','','Reference: '+rec.ref,'Puppy: '+p.name+' ('+p.id+')','Name: '+name,'Phone: '+phone,'Message: '+(msg||'—')].join('\n');
+sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(rec.ref)+'</strong> — '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" target="_blank" rel="noopener" href="https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(text)+'">Confirm via WhatsApp →</a><a class="btn ghost" href="contact.html">Contact instead</a></div>';
+BG.track('reservation_request',p.id);
+var payload={action:'reserve',version:2,data:{puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,ref:rec.ref,status:'REQUESTED'},timestamp:rec.at};
+function postWebhook(token){try{fetch('/webhook',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},payload,{token:token||null})).replace(/\u200B/g,'')}).catch(function(){});}catch(err){}}
+if(RECAPTCHA_SITE_KEY&&typeof grecaptcha!=='undefined'){grecaptcha.ready(function(){grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'reserve'}).then(function(token){BG.track('captcha_success',p.id);postWebhook(token);});});}
+else{setTimeout(function(){postWebhook(null);},500);}
+});
+BG.loadJSON('data/puppies.json').then(function(j){PUPPS=j.puppies||[];fill();});
 })();
 </script>
 </body>
