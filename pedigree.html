@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search the Bellissimo Geni Cane Corso pedigree and explore connected family lines.">
+  <meta name="theme-color" content="#10100f">
+  <title>Pedigree | Bellissimo Geni Cane Corso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .pedigree-page{max-width:1320px;margin:auto;padding:90px 7vw 120px}.pedigree-search{max-width:760px;margin:30px auto 70px;display:flex;gap:10px}.pedigree-search input{flex:1;min-width:0;border:1px solid var(--line);background:#fff;padding:16px 18px;outline:none}.pedigree-search input:focus{border-color:var(--gold)}.search-button{border:0;background:var(--ink);color:#fff;padding:0 25px;font-weight:800;cursor:pointer}.search-status{text-align:center;color:var(--muted);font-size:12px;min-height:20px;margin-top:-55px;margin-bottom:45px}.dog-result{display:none;background:#ebe7de;padding:28px;margin:0 auto 55px;max-width:760px}.dog-result.active{display:block}.dog-result h2{font:600 48px var(--serif);margin:0 0 5px}.dog-meta{color:var(--muted);font-size:12px}.pedigree-shell{overflow:auto;padding:15px 0 35px}.generation-label{text-align:center;font-size:9px;letter-spacing:.2em;color:var(--gold);font-weight:800;margin:25px 0 12px}.generation{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:24px;max-width:760px;margin:0 auto}..parent-card{background:#fff;border:1px solid var(--line);padding:22px;position:relative}.parent-card a{display:block}.parent-card .role{font-size:9px;letter-spacing:.18em;color:var(--gold);font-weight:800}.parent-card strong{display:block;font:600 29px var(--serif);margin:4px 0}.parent-card small{color:var(--muted);font-size:11px}..parent-card:hover{border-color:var(--gold)}.ancestry-note{text-align:center;color:var(--muted);font-size:11px;margin:25px auto;max-width:680px}.demo-warning{background:#f1e4c8;border-left:3px solid var(--gold);padding:14px 16px;font-size:11px;color:#5b4a27;max-width:760px;margin:0 auto 35px}.back-link{display:inline-block;margin-bottom:30px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+    @media(max-width:600px){.pedigree-page{padding:65px 5vw 90px}.pedigree-search{flex-direction:column}.search-button{padding:15px}.generation{grid-template-columns:1fr;gap:12px}.pedigree-shell{overflow:visible}.dog-result h2{font-size:40px}}
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html" aria-label="Bellissimo Geni home"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA</small></span></a>
+  <nav class="desktop-nav" aria-label="Primary navigation"><a href="index.html#puppies">Puppies</a><a href="index.html#dogs">Our Dogs</a><a href="pedigree.html" aria-current="page">Pedigree</a><a href="index.html#standards">Our Standard</a><a href="index.html#contact">Contact</a></nav>
+  <a class="nav-cta" href="index.html#puppies">View Puppies</a>
+</header>
+<main class="pedigree-page">
+  <a class="back-link" href="index.html">← Back to Bellissimo Geni</a>
+  <div style="text-align:center"><p class="eyebrow">BELLISSIMO GENI PEDIGREE</p><h1 style="font:600 clamp(58px,8vw,112px) var(--serif);letter-spacing:-.04em">Trace the <em>lineage.</em></h1><p style="max-width:680px;margin:25px auto;color:var(--muted)">Search for a dog and follow its Sire and Dam through the family. The production data model is designed to support up to seven generations where verified records exist.</p></div>
+  <div class="demo-warning"><strong>Development data:</strong> Henry, Harry and Bella are demonstration records based on the client's voice-note example. They will be replaced by the kennel's real dog and pedigree records before launch.</div>
+  <form class="pedigree-search" id="pedigree-search"><input id="dog-search" name="dog" autocomplete="off" placeholder="Search a dog, e.g. Henry" aria-label="Search a dog"><button class="search-button" type="submit">Search</button></form>
+  <p class="search-status" id="search-status" aria-live="polite"></p>
+  <section class="dog-result" id="dog-result" aria-live="polite"></section>
+  <section class="pedigree-shell" id="pedigree-shell" aria-label="Dog pedigree"></section>
+</main>
+<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><p>Premium Cane Corso. Responsible ownership. Lasting companionship.</p><a href="index.html">Home</a></footer>
+<script>
+const DOGS={
+  henry:{id:'henry',name:'Henry',sex:'Male',colour:'Black',sire:'harry',dam:'bella'},
+  harry:{id:'harry',name:'Harry',sex:'Male',colour:'Black',sire:'bruno',dam:'luna'},
+  bella:{id:'bella',name:'Bella',sex:'Female',colour:'Fawn',sire:'marco',dam:'rosa'},
+  bruno:{id:'bruno',name:'Bruno',sex:'Male',colour:'Black',sire:null,dam:null},
+  luna:{id:'luna',name:'Luna',sex:'Female',colour:'Grey',sire:null,dam:null},
+  marco:{id:'marco',name:'Marco',sex:'Male',colour:'Black',sire:null,dam:null},
+  rosa:{id:'rosa',name:'Rosa',sex:'Female',colour:'Fawn',sire:null,dam:null}
+};
+const searchForm=document.querySelector('#pedigree-search');
+const input=document.querySelector('#dog-search');
+const status=document.querySelector('#search-status');
+const result=document.querySelector('#dog-result');
+const shell=document.querySelector('#pedigree-shell');
+function findDog(term){const q=term.trim().toLowerCase();if(!q)return null;return Object.values(DOGS).find(d=>d.name.toLowerCase()===q)||Object.values(DOGS).find(d=>d.name.toLowerCase().includes(q));}
+function card(id,role){const dog=id&&DOGS[id];if(!dog)return `<div class="parent-card"><span class="role">${role}</span><strong>Not recorded</strong><small>This parent has not been supplied.</small></div>`;return `<article class="parent-card"><a href="?dog=${encodeURIComponent(dog.name)}"><span class="role">${role}</span><strong>${dog.name}</strong><small>${dog.sex} • ${dog.colour}</small></a></article>`;}
+function render(start){if(!start){status.textContent='No dog found. Try another name.';result.classList.remove('active');shell.innerHTML='';return;}status.textContent='';result.classList.add('active');result.innerHTML=`<p class="eyebrow">DOG PROFILE</p><h2>${start.name}</h2><p class="dog-meta">${start.sex} • ${start.colour} • Pedigree record</p>`;shell.innerHTML='';let current=[start],seen=new Set([start.id]);for(let generation=1;generation<=7;generation++){const parents=[];current.forEach(d=>{if(d.sire&&DOGS[d.sire])parents.push({id:d.sire,role:'SIRE'});if(d.dam&&DOGS[d.dam])parents.push({id:d.dam,role:'DAM'});});if(!parents.length){shell.insertAdjacentHTML('beforeend',generation===1?'<p class="ancestry-note">No parent records are currently attached to this dog.</p>':'<p class="ancestry-note">The available verified pedigree ends here.</p>');break;}const unique=parents.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});if(!unique.length)break;shell.insertAdjacentHTML('beforeend',`<div class="generation-label">GENERATION ${generation} • ${generation===1?'PARENTS':generation===2?'GRANDPARENTS':'ANCESTRY'}</div><div class="generation">${unique.map(p=>card(p.id,p.role)).join('')}</div>`);current=unique.map(p=>DOGS[p.id]);}}
+searchForm.addEventListener('submit',e=>{e.preventDefault();const dog=findDog(input.value);render(dog);});
+const initial=new URLSearchParams(location.search).get('dog');if(initial){input.value=initial;render(findDog(initial));}
+</script>
+</body>
+</html>
