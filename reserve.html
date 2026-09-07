@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -6,6 +6,8 @@
 <title>Reserve a Puppy | Bellissimo Geni Cane Corso</title>
 <meta name="description" content="Reserve a Bellissimo Geni Cane Corso puppy. Get a traceable reservation reference and confirm via WhatsApp. Online payment activates after provider confirmation.">
 <meta property="og:title" content="Reserve | Bellissimo Geni Cane Corso">
+<meta property="og:url" content="https://eghosa001.github.io/bellissimo-geni-cane-corso/reserve.html">
+<link rel="canonical" href="https://eghosa001.github.io/bellissimo-geni-cane-corso/reserve.html">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="site.css">
 <script>window.RECAPTCHA_SITE_KEY = '';window.BG_WEBHOOK_URL = '';</script>
@@ -13,18 +15,18 @@
 </head>
 <body>
 <header class="site-header">
-<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA</small></span></a>
+<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA</small></span></a>
 <nav class="desktop-nav" aria-label="Primary"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="contact.html">Contact</a></nav>
 <button class="mobile-nav-toggle" aria-expanded="false">Menu</button>
 <a class="nav-cta" href="puppies.html">View Puppies</a>
 </header>
 <nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
 <main class="wrap">
-<div class="page-hero"><p class="eyebrow">RESERVATION</p><h1>Reserve with <em>confidence.</em></h1><p>Puppy → details → reference → confirmation. No card details are collected on this site. Payment activates only after the kennel confirms provider and deposit rules.</p></div>
-<div class="notice"><strong>Payment status:</strong> enquiry-based reservation is live. Secure online payment (provider, deposit amount, refunds, balance rules) is pending client confirmation — see <a href="breeding.html">breeding programme</a>.</div>
+<div class="page-hero"><p class="eyebrow">RESERVATION</p><h1>Reserve with <em>confidence.</em></h1><p>Puppy â†’ details â†’ reference â†’ confirmation. No card details are collected on this site. Payment activates only after the kennel confirms provider and deposit rules.</p></div>
+<div class="notice"><strong>Payment status:</strong> enquiry-based reservation is live. Secure online payment (provider, deposit amount, refunds, balance rules) is pending client confirmation â€” see <a href="breeding.html">breeding programme</a>.</div>
 <div class="form-card">
 <div id="step1">
-<label for="puppy">1 — Choose your puppy</label>
+<label for="puppy">1 â€” Choose your puppy</label>
 <select id="puppy"></select>
 <p class="hint" id="puppyHint"></p>
 </div>
@@ -36,12 +38,12 @@
 <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 <label style="font-weight:400"><input type="checkbox" id="terms" required style="width:auto"> I understand this creates an enquiry-based reservation request, not an automatic payment or guarantee, and I agree to be contacted about availability, terms and next steps.</label>
 <div id="captcha-status" class="hint" style="margin-top:6px"></div>
-<button class="btn gold" type="submit">Generate reservation reference →</button>
+<button class="btn gold" type="submit">Generate reservation reference â†’</button>
 </form>
 <div id="summary" style="margin-top:22px"></div>
 </div>
 </main>
-<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="puppies.html">Puppies</a><a href="breeding.html">Breeding</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
+<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA â€¢ EST. 2023</small></div></div><div class="foot-nav"><a href="puppies.html">Puppies</a><a href="breeding.html">Breeding</a><a href="contact.html">Contact</a></div><p>Â© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
 <script>
 (function(){
@@ -50,8 +52,8 @@ var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'',WEBHOOK_URL=window.BG_WEBHO
 var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
 var PUPPS=[];
 function ref(){var d=new Date();return 'BG-'+d.getFullYear()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
-function fill(){var pre=new URLSearchParams(location.search).get('puppy');sel.innerHTML=PUPPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' — '+BG.esc(p.status)+' — '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');upd();}
-function upd(){var p=PUPPS.find(function(x){return x.id===sel.value;});hint.textContent=p?((p.notes||'')+' Sire/dam: '+(p.sireId||'—')+' / '+(p.damId||'—')):'';}
+function fill(){var pre=new URLSearchParams(location.search).get('puppy');sel.innerHTML=PUPPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' â€” '+BG.esc(p.status)+' â€” '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');upd();}
+function upd(){var p=PUPPS.find(function(x){return x.id===sel.value;});hint.textContent=p?((p.notes||'')+' Sire/dam: '+(p.sireId||'â€”')+' / '+(p.damId||'â€”')):'';}
 sel.addEventListener('change',upd);
 form.addEventListener('submit',function(e){
 e.preventDefault();
@@ -59,14 +61,14 @@ var fd=new FormData(form);var p=PUPPS.find(function(x){return x.id===sel.value;}
 var name=String(fd.get('name')).trim(),phone=String(fd.get('phone')).trim(),email=String(fd.get('email')||'').trim(),msg=String(fd.get('message')||'').trim(),terms=document.getElementById('terms').checked,hpot=String(fd.get('website')||'').trim();
 if(hpot){return;}
 if(!terms){sum.innerHTML='<div class="notice">You must accept the terms before generating a reference.</div>';sum.scrollIntoView({behavior:'smooth'});return;}
-if(!BG.validPhone(phone)){sum.innerHTML='<div class="notice">Please enter a valid phone/WhatsApp number (7–15 digits).</div>';sum.scrollIntoView({behavior:'smooth'});return;}
+if(!BG.validPhone(phone)){sum.innerHTML='<div class="notice">Please enter a valid phone/WhatsApp number (7â€“15 digits).</div>';sum.scrollIntoView({behavior:'smooth'});return;}
 var rec={ref:ref(),puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,at:new Date().toISOString(),status:'REQUESTED',ip:null};
 try{var all=JSON.parse(localStorage.getItem('bg_reservations')||'[]');all.push(rec);localStorage.setItem('bg_reservations',JSON.stringify(all));}catch(err){}
-var text=['Hello Bellissimo Geni, I would like to reserve a puppy.','','Reference: '+rec.ref,'Puppy: '+p.name+' ('+p.id+')','Name: '+name,'Phone: '+phone,'Message: '+(msg||'—')].join('\n');
-sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(rec.ref)+'</strong> — '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" target="_blank" rel="noopener" href="https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(text)+'">Confirm via WhatsApp →</a><a class="btn ghost" href="contact.html">Contact instead</a></div>';
+var text=['Hello Bellissimo Geni, I would like to reserve a puppy.','','Reference: '+rec.ref,'Puppy: '+p.name+' ('+p.id+')','Name: '+name,'Phone: '+phone,'Message: '+(msg||'â€”')].join('\n');
+sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(rec.ref)+'</strong> â€” '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" target="_blank" rel="noopener" href="https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(text)+'">Confirm via WhatsApp â†’</a><a class="btn ghost" href="contact.html">Contact instead</a></div>';
 BG.track('reservation_request',p.id);
 var payload={action:'reserve',version:2,data:{puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,ref:rec.ref,status:'REQUESTED'},timestamp:rec.at};
-function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},payload,{token:token||null})).replace(/\u200B/g,'')}).then(function(r){return r.json().catch(function(){return null;});}).then(function(j){if(j&&j.payment_url){sum.insertAdjacentHTML('beforeend','<p class="hint">Online payment is ready: <a class="btn gold" target="_blank" rel="noopener" href="'+BG.esc(j.payment_url)+'">Pay deposit to confirm →</a></p>');}}).catch(function(){});}catch(err){}}
+function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},payload,{token:token||null})).replace(/\u200B/g,'')}).then(function(r){return r.json().catch(function(){return null;});}).then(function(j){if(j&&j.payment_url){sum.insertAdjacentHTML('beforeend','<p class="hint">Online payment is ready: <a class="btn gold" target="_blank" rel="noopener" href="'+BG.esc(j.payment_url)+'">Pay deposit to confirm â†’</a></p>');}}).catch(function(){});}catch(err){}}
 if(RECAPTCHA_SITE_KEY&&typeof grecaptcha!=='undefined'){grecaptcha.ready(function(){grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'reserve'}).then(function(token){BG.track('captcha_success',p.id);postWebhook(token);});});}
 else{setTimeout(function(){postWebhook(null);},500);}
 });

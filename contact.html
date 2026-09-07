@@ -1,16 +1,20 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Contact & Apply | Bellissimo Geni Cane Corso</title>
 <meta name="description" content="Contact Bellissimo Geni Cane Corso. Apply for a puppy, ask about pedigrees or join the next-litter priority list.">
+<meta property="og:title" content="Contact | Bellissimo Geni Cane Corso">
+<meta property="og:url" content="https://eghosa001.github.io/bellissimo-geni-cane-corso/contact.html">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://eghosa001.github.io/bellissimo-geni-cane-corso/contact.html">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
 <header class="site-header">
-<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA</small></span></a>
+<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA</small></span></a>
 <nav class="desktop-nav" aria-label="Primary"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="contact.html" aria-current="page">Contact</a></nav>
 <button class="mobile-nav-toggle" aria-expanded="false">Menu</button>
 <a class="nav-cta" href="reserve.html">Reserve</a>
@@ -26,17 +30,17 @@
 <label>I am interested in<select name="interest"><option>Male puppy</option><option>Female puppy</option><option>Either / best match</option><option>Pedigree information</option><option>Next litter priority list</option><option>Other</option></select></label>
 <label>Message<textarea name="message" rows="5" placeholder="Home setup, experience, preferred timing, dog you searched (e.g. Henry)"></textarea></label>
 <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-<button class="btn gold" type="submit">Prepare WhatsApp message →</button>
+<button class="btn gold" type="submit">Prepare WhatsApp message â†’</button>
 <p class="hint" id="note">Demo mode: kennel WhatsApp number, address, hours and social links to be confirmed.</p>
 </form>
 </div>
 <div>
-<div class="card"><span class="meta">KENNEL DETAILS — TBC</span><h3>Visit / contact placeholders</h3><p>Location: Nigeria (exact address TBC)<br>Phone / WhatsApp: TBC<br>Hours: TBC<br>Instagram / TikTok / Facebook: TBC</p><p class="hint">Do not publish until the client approves every detail.</p></div>
+<div class="card"><span class="meta">KENNEL DETAILS â€” TBC</span><h3>Visit / contact placeholders</h3><p>Location: Nigeria (exact address TBC)<br>Phone / WhatsApp: TBC<br>Hours: TBC<br>Instagram / TikTok / Facebook: TBC</p><p class="hint">Do not publish until the client approves every detail.</p></div>
 <div class="card" style="margin-top:16px"><span class="meta">SOCIAL HUB</span><h3>Follow the lineage</h3><p>Social embeds go here once handles are confirmed. Until then, use WhatsApp enquiry for the fastest response.</p><div class="row"><a class="btn ghost" href="gallery.html">See gallery</a><a class="btn ghost" href="pedigree.html">Search pedigree</a></div></div>
 </div>
 </div>
 </main>
-<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="index.html">Home</a><a href="puppies.html">Puppies</a><a href="reserve.html">Reserve</a><a href="pedigree.html">Pedigree</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
+<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA â€¢ EST. 2023</small></div></div><div class="foot-nav"><a href="index.html">Home</a><a href="puppies.html">Puppies</a><a href="reserve.html">Reserve</a><a href="pedigree.html">Pedigree</a></div><p>Â© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
 <script>
 (function(){
@@ -45,7 +49,7 @@ f.addEventListener('submit',function(e){e.preventDefault();var d=new FormData(f)
 if(String(d.get('website')||'').trim()){return;}
 var phone=String(d.get('phone')||'').trim();if(!BG.validPhone(phone)){note.textContent='Please enter a valid phone/WhatsApp number.';return;}
 BG.track('contact_submit',d.get('interest'));
-var t=['Hello Bellissimo Geni,','', 'Name: '+d.get('name'),'Phone: '+phone,'Interested in: '+d.get('interest'),'Message: '+(d.get('message')||'—')].join('\n');
+var t=['Hello Bellissimo Geni,','', 'Name: '+d.get('name'),'Phone: '+phone,'Interested in: '+d.get('interest'),'Message: '+(d.get('message')||'â€”')].join('\n');
 if(N==='2348000000000'){note.textContent='Demo mode: replace the WhatsApp number in contact.html before launch. Your message was prepared but not sent.';return;}
 window.open('https://wa.me/'+N+'?text='+encodeURIComponent(t),'_blank','noopener');});
 })();

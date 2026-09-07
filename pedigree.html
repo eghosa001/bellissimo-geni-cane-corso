@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -6,6 +6,8 @@
 <meta name="description" content="Search the Bellissimo Geni Cane Corso pedigree and explore connected family lines up to seven generations.">
 <meta name="theme-color" content="#10100f">
 <meta property="og:title" content="Pedigree | Bellissimo Geni Cane Corso">
+<meta property="og:url" content="https://eghosa001.github.io/bellissimo-geni-cane-corso/pedigree.html">
+<link rel="canonical" href="https://eghosa001.github.io/bellissimo-geni-cane-corso/pedigree.html">
 <meta property="og:description" content="Search a dog, open its profile, follow Sire and Dam through the family tree.">
 <title>Pedigree | Bellissimo Geni Cane Corso</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,22 +22,22 @@
 </head>
 <body>
 <header class="site-header">
-<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA</small></span></a>
+<a class="brand" href="index.html"><span class="brand-mark">BG</span><span><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA</small></span></a>
 <nav class="desktop-nav" aria-label="Primary"><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html" aria-current="page">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="contact.html">Contact</a></nav>
 <button class="mobile-nav-toggle" aria-expanded="false">Menu</button>
 <a class="nav-cta" href="reserve.html">Reserve</a>
 </header>
 <nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
 <main class="pedigree-page">
-<a class="back-link" href="index.html">← Back to Bellissimo Geni</a>
+<a class="back-link" href="index.html">â† Back to Bellissimo Geni</a>
 <div style="text-align:center"><p class="eyebrow">BELLISSIMO GENI PEDIGREE</p><h1 style="font:600 clamp(58px,8vw,112px) var(--serif);letter-spacing:-.04em">Trace the <em>lineage.</em></h1><p style="max-width:680px;margin:25px auto;color:var(--muted)">Search for a dog and follow its Sire and Dam through the family. Data loads from verified kennel records and supports up to seven generations.</p></div>
-<div class="demo-warning"><strong>Development data:</strong> Henry, Harry and Bella are demonstration records from the client's voice-note example. They will be replaced by real records and photographs before launch. Missing parents are shown honestly — never invented.</div>
+<div class="demo-warning"><strong>Development data:</strong> Henry, Harry and Bella are demonstration records from the client's voice-note example. They will be replaced by real records and photographs before launch. Missing parents are shown honestly â€” never invented.</div>
 <form class="pedigree-search" id="pedigree-search"><input id="dog-search" name="dog" autocomplete="off" placeholder="Search a dog, e.g. Henry" aria-label="Search a dog"><button class="search-button" type="submit">Search</button></form>
 <p class="search-status" id="search-status" aria-live="polite"></p>
 <section class="dog-result" id="dog-result" aria-live="polite"></section>
 <section class="pedigree-shell" id="pedigree-shell" aria-label="Dog pedigree"></section>
 </main>
-<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
+<footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO â€¢ NIGERIA â€¢ EST. 2023</small></div></div><div class="foot-nav"><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>Â© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
 <script>
 (function(){
@@ -44,12 +46,12 @@ var DOGS=FALLBACK, byId={};
 function index(){byId={};DOGS.forEach(function(d){byId[String(d.id).toLowerCase()]=d;});}
 function findDog(term){var q=String(term||'').trim().toLowerCase();if(!q)return null;return DOGS.find(function(d){return d.name.toLowerCase()===q;})||DOGS.find(function(d){return d.name.toLowerCase().indexOf(q)>=0;});}
 var form=document.getElementById('pedigree-search'),input=document.getElementById('dog-search'),status=document.getElementById('search-status'),result=document.getElementById('dog-result'),shell=document.getElementById('pedigree-shell');
-function card(id,role){var dog=id&&byId[String(id).toLowerCase()];if(!dog)return '<div class="parent-card"><span class="role">'+BG.esc(role)+'</span><strong>Not recorded</strong><small>This parent has not been supplied.</small></div>';return '<article class="parent-card"><a href="?dog='+encodeURIComponent(dog.name)+'"><span class="role">'+BG.esc(role)+'</span><strong>'+BG.esc(dog.name)+'</strong><small>'+BG.esc(dog.sex||'')+' • '+BG.esc(dog.colour||'')+'</small></a></article>';}
-function render(start){if(!start){status.textContent='No dog found. Try Henry, Harry or Bella.';result.classList.remove('active');shell.innerHTML='';return;}status.textContent='';result.classList.add('active');result.innerHTML='<p class="eyebrow">DOG PROFILE</p><h2>'+BG.esc(start.name)+'</h2><p class="dog-meta">'+BG.esc(start.sex||'')+' • '+BG.esc(start.colour||'')+' • Pedigree record</p><p style="margin-top:12px"><a href="dogs.html?dog='+encodeURIComponent(start.id)+'">Open full profile →</a></p>';shell.innerHTML='';var current=[start],seen={};seen[String(start.id).toLowerCase()]=1;
+function card(id,role){var dog=id&&byId[String(id).toLowerCase()];if(!dog)return '<div class="parent-card"><span class="role">'+BG.esc(role)+'</span><strong>Not recorded</strong><small>This parent has not been supplied.</small></div>';return '<article class="parent-card"><a href="?dog='+encodeURIComponent(dog.name)+'"><span class="role">'+BG.esc(role)+'</span><strong>'+BG.esc(dog.name)+'</strong><small>'+BG.esc(dog.sex||'')+' â€¢ '+BG.esc(dog.colour||'')+'</small></a></article>';}
+function render(start){if(!start){status.textContent='No dog found. Try Henry, Harry or Bella.';result.classList.remove('active');shell.innerHTML='';return;}status.textContent='';result.classList.add('active');result.innerHTML='<p class="eyebrow">DOG PROFILE</p><h2>'+BG.esc(start.name)+'</h2><p class="dog-meta">'+BG.esc(start.sex||'')+' â€¢ '+BG.esc(start.colour||'')+' â€¢ Pedigree record</p><p style="margin-top:12px"><a href="dogs.html?dog='+encodeURIComponent(start.id)+'">Open full profile â†’</a></p>';shell.innerHTML='';var current=[start],seen={};seen[String(start.id).toLowerCase()]=1;
 for(var g=1;g<=7;g++){var parents=[];current.forEach(function(d){if(d.sireId&&byId[String(d.sireId).toLowerCase()])parents.push({id:d.sireId,role:'SIRE'});if(d.damId&&byId[String(d.damId).toLowerCase()])parents.push({id:d.damId,role:'DAM'});});
 if(!parents.length){shell.insertAdjacentHTML('beforeend',g===1?'<p class="ancestry-note">No parent records are currently attached to this dog.</p>':'<p class="ancestry-note">The available verified pedigree ends here.</p>');break;}
 var unique=parents.filter(function(p){var k=String(p.id).toLowerCase();if(seen[k])return false;seen[k]=1;return true;});if(!unique.length)break;
-shell.insertAdjacentHTML('beforeend','<div class="generation-label">GENERATION '+g+' • '+(g===1?'PARENTS':g===2?'GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+unique.map(function(p){return card(p.id,p.role);}).join('')+'</div>');
+shell.insertAdjacentHTML('beforeend','<div class="generation-label">GENERATION '+g+' â€¢ '+(g===1?'PARENTS':g===2?'GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+unique.map(function(p){return card(p.id,p.role);}).join('')+'</div>');
 current=unique.map(function(p){return byId[String(p.id).toLowerCase()];});}}
 form.addEventListener('submit',function(e){e.preventDefault();render(findDog(input.value));});
 index();
