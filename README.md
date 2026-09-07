@@ -2,6 +2,10 @@
 
 Premium responsive kennel website for Bellissimo Geni Cane Corso, Nigeria.
 
+## Before launch — client needs to complete
+
+See **[CLIENT_INTAKE.md](CLIENT_INTAKE.md)** — a fill-in form covering payment/rules, dog & puppy records, contact/social details, photos, content and security keys. Everything pending launch is sourced from that file.
+
 ## Pages
 
 - `index.html` — Home: hero, story, featured dogs/puppies, lineage CTA, standards, bloodlines, gallery preview, owner stories (TBC), reservation CTA, enquiry form
