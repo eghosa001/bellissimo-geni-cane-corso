@@ -5,12 +5,13 @@
 ## Project goal
 Build a premium, responsive Bellissimo Geni Cane Corso website inspired by the information depth and kennel presentation of the client's reference site, while using original Bellissimo Geni branding, content, photography and implementation.
 
-The website is a lead-generation and trust platform with four core experiences:
+The website is a lead-generation and trust platform with five core experiences:
 
 1. Discover Bellissimo Geni and its dogs.
 2. Explore real puppies and litters.
 3. Search and navigate multi-generation dog pedigrees.
 4. Reserve a puppy and, once payment rules/provider are confirmed, pay a reservation amount securely.
+5. Give the kennel owner a secure, easy-to-use private admin area for managing dogs, pedigrees, puppies, photos, litters, reservations and site content without editing code.
 
 ## Client requirements captured from voice notes
 
@@ -32,6 +33,159 @@ The website is a lead-generation and trust platform with four core experiences:
 ### Puppies
 - Include puppy reservation functionality.
 - Reservation should be connected to payment rather than being enquiry-only.
+
+## Owner Admin / Content Management System
+
+The public website must be backed by a **secure private owner administration area** so the kennel owner can maintain the website without editing HTML, JavaScript, JSON or GitHub files.
+
+### Admin access
+- Private `/admin` application or equivalent protected admin route.
+- Secure authentication with strong password requirements and session/token protection.
+- Owner-only access by default; do not expose management functions to public visitors.
+- No GitHub credentials or payment credentials stored in the browser.
+- Server-side authorization for every administrative operation.
+- Logout/session expiry and protection against unauthorized access.
+- Do not store raw card/payment credentials.
+- Provide an audit trail for important changes where practical.
+
+### Admin dashboard
+The dashboard should provide clear sections for:
+
+- Dashboard / overview
+- Dogs
+- Pedigrees / bloodlines
+- Puppies
+- Litters
+- Reservations
+- Gallery / media
+- Testimonials
+- Site content
+- Contact/social settings
+- Payment/reservation settings
+- Account/security settings
+
+### Dog management
+Owner should be able to:
+- Add a dog.
+- Edit a dog.
+- Archive/unpublish a dog without deleting historical relationships.
+- Upload and replace the main dog photograph.
+- Upload multiple gallery photographs.
+- Set name, sex, date of birth, colour and registration details.
+- Set status.
+- Add approved biography, bloodline and achievement information.
+- Add substantiated health/testing information.
+- Select the dog's Sire and Dam from existing records.
+- Create a new parent record when required.
+- Preview the public profile before publishing.
+- Publish/unpublish changes.
+
+### Pedigree management
+The admin interface should make pedigree maintenance visual and simple:
+
+```text
+Create/Edit Dog
+   -> Select Sire
+   -> Select Dam
+   -> Save
+   -> Pedigree engine automatically traverses ancestry
+```
+
+Requirements:
+- Stable dog IDs.
+- Sire/Dam relationships stored by ID, never by fragile display-name matching.
+- Support at least seven generations.
+- Search existing dogs while selecting parents.
+- Show the resulting ancestry tree before publishing.
+- Detect circular references.
+- Avoid duplicate/conflicting records where possible.
+- Clearly distinguish unknown/missing ancestry from verified ancestry.
+- Never invent pedigree information.
+
+### Puppy and litter management
+Owner should be able to:
+- Create a litter.
+- Link litter Sire and Dam.
+- Add puppies individually.
+- Upload puppy photographs.
+- Set sex, colour, date of birth, registration and other approved details.
+- Set price or enquiry-only pricing.
+- Set availability date.
+- Change status between AVAILABLE, PAYMENT PENDING, RESERVED, SOLD, COMING SOON and UNAVAILABLE.
+- Publish/unpublish a puppy.
+- See which puppy is linked to each reservation.
+- Prevent accidental deletion of puppies with historical reservations.
+
+### Media management
+The owner should not need to edit code to change imagery.
+
+Admin media features:
+- Upload dog photos.
+- Upload puppy photos.
+- Upload litter photos.
+- Upload kennel/facility photos.
+- Upload gallery images.
+- Add captions/alt text.
+- Reorder gallery images.
+- Replace images without breaking public URLs where practical.
+- Automatically create optimized web formats/sizes where practical.
+- Validate supported file types and file sizes.
+- Keep originals/private uploads protected where appropriate.
+
+### Reservations and payments
+The admin area should show:
+- New reservations.
+- Customer details required for the reservation process.
+- Puppy reserved.
+- Reservation reference.
+- Payment status.
+- Reservation status.
+- Date/time.
+- Provider transaction reference where applicable.
+- Notes/actions for the kennel owner.
+
+Owner actions must respect the reservation/payment state machine. Manual overrides should require appropriate authorization and should be auditable.
+
+Recommended flow:
+
+```text
+Public Puppy Profile
+  -> Reserve
+  -> Reservation Form
+  -> Summary
+  -> Payment
+  -> Verified Payment/Webhook
+  -> Reservation Confirmed
+  -> Owner sees confirmed reservation in Admin
+```
+
+### Site content management
+Where practical, owner-editable content should include:
+- About/kennel story.
+- Breeding philosophy.
+- Standards and care information.
+- Health/testing information.
+- Socialization program.
+- Contact details.
+- WhatsApp number.
+- Email.
+- Address/location text.
+- Opening/contact hours.
+- Social-media links.
+- Testimonials.
+- Homepage featured content.
+
+Sensitive technical settings, secrets, API keys and payment-provider credentials must remain server-side and must never be editable as plain frontend content.
+
+### Admin UX requirements
+The admin should be:
+- Mobile-friendly so the owner can manage the kennel from a phone.
+- Fast and simple enough for non-technical use.
+- Consistent with the premium Bellissimo Geni brand without sacrificing usability.
+- Built around forms, search, filters, previews and clear save/publish states.
+- Explicit about destructive actions.
+- Able to show success/error feedback.
+- Designed so an owner can add a dog and its pedigree/photo without developer assistance.
 
 ## Recommended product architecture
 
@@ -143,7 +297,6 @@ Do not store card details on the Bellissimo Geni website. A supported payment pr
 12. Contact / application.
 
 ## Content and media requirements
-
 Client supplies:
 - Logo
 - Dog photographs
@@ -162,7 +315,27 @@ No demo puppy names, prices, pedigree claims or unsupported health claims should
 
 ## Technical direction
 
-Current project is dependency-free HTML/CSS/JavaScript and GitHub Pages compatible. Keep the front end lightweight, but introduce structured data and a small backend/serverless layer when reservations/payment require persistence and secure payment verification.
+Current project is dependency-free HTML/CSS/JavaScript and GitHub Pages compatible. Keep the front end lightweight, but introduce a structured backend/database, authentication, media storage and serverless/API layer when the owner CMS and transactional features are implemented.
+
+Recommended production architecture:
+
+```text
+Public Website
+      |
+      v
+Secure API / Serverless Backend
+      |
+      +---- Database (dogs, pedigrees, puppies, litters, reservations, content)
+      |
+      +---- Media Storage (photos/gallery)
+      |
+      +---- Payment Provider
+      |
+      +---- Email/notification service
+      |
+      v
+Private Owner Admin
+```
 
 Priorities:
 - Mobile-first responsive UI
@@ -175,8 +348,10 @@ Priorities:
 - Sitemap and robots.txt
 - Open Graph/social sharing
 - Secure server-side validation for transactional features
+- Secure authentication and authorization for admin
 - Payment webhook verification
 - No secrets in frontend code
+- Audit logging for sensitive admin/payment operations where practical
 - Analytics for puppy views, applications, reservations and WhatsApp/contact clicks
 
 ## Development phases
@@ -244,7 +419,26 @@ Priorities:
 - Reservation state transitions
 - Notifications
 
-### Phase 8 — Content
+### Phase 8 — Owner Admin / CMS
+- Secure owner authentication
+- Protected admin route/application
+- Dashboard
+- Dog CRUD and publishing
+- Dog photo/media uploads
+- Sire/Dam relationship editor
+- Seven-generation pedigree management
+- Circular-reference and data-integrity validation
+- Puppy/litter management
+- Availability/status management
+- Gallery/media management
+- Testimonials/content management
+- Contact/social/settings management
+- Reservation/payment dashboard
+- Audit trail for important administrative changes
+- Mobile-friendly admin UX
+- Preview-before-publish workflow where practical
+
+### Phase 9 — Content
 - About
 - Breeding program
 - Standards
@@ -253,8 +447,9 @@ Priorities:
 - Gallery
 - Testimonials
 - Social links
+- Migrate approved existing demo/TBC content into owner-managed records
 
-### Phase 9 — SEO/performance/accessibility
+### Phase 10 — SEO/performance/accessibility
 - Metadata
 - Structured data
 - Sitemap/robots
@@ -262,12 +457,16 @@ Priorities:
 - Accessibility audit
 - Responsive QA
 - Performance audit
+- Admin accessibility/usability audit
 
-### Phase 10 — Security and launch
+### Phase 11 — Security and launch
 - Form hardening
 - Spam protection
+- Authentication/authorization review
+- Media upload security review
 - Payment security review
 - Backup/access review
+- Data recovery strategy
 - Production deployment
 - Final client acceptance
 
@@ -285,8 +484,11 @@ Priorities:
 10. `feat: integrate secure reservation payments`
 11. `feat: add breeding, gallery and social content`
 12. `feat: harden SEO accessibility performance and forms`
-13. `test: complete responsive and production QA`
-14. `chore: prepare production launch`
+13. `feat: build secure owner admin CMS`
+14. `feat: connect admin CMS to dogs pedigrees puppies litters and media`
+15. `feat: connect admin CMS to reservations and payments`
+16. `test: complete responsive and production QA`
+17. `chore: prepare production launch`
 
 ## Client decisions required before transactional launch
 
@@ -301,7 +503,8 @@ Priorities:
 - Final puppy prices
 - Final dog/pedigree records
 - Final contact and social links
+- Admin owner account/contact for secure account setup (never request or commit the owner's password)
 
 ## Scope principle
 
-The pedigree database and reservation/payment workflow are major product features, not cosmetic additions. They should be architected deliberately rather than bolted onto the static homepage later.
+The pedigree database, owner CMS and reservation/payment workflow are major product features, not cosmetic additions. They should be architected deliberately rather than bolted onto the static homepage later. The kennel owner must ultimately be able to maintain core business content and dog/pedigree/media records independently, while transactional and security-sensitive operations remain protected by the backend.
