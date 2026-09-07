@@ -279,7 +279,9 @@
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
 const API_BASE = window.BG_WEBHOOK_URL || '';
-let adminPW = localStorage.getItem('bg_admin_pw') || '';
+// Store a hash of the password, not the raw value (mitigates XSS credential theft)
+function hashStr(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'h'+Math.abs(h).toString(36);}
+let adminPWHash = localStorage.getItem('bg_admin_pw_hash')||'';
 let currentPuppyCatalog = [];
 let currentDogs = [];
 
@@ -287,7 +289,7 @@ let currentDogs = [];
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('loginPw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.removeItem('bg_admin_pw');
+  localStorage.removeItem('bg_admin_pw_hash');
   document.getElementById('loginScreen').style.display='';
   document.getElementById('adminWrap').classList.remove('active');
 });
@@ -1089,6 +1091,18 @@ function toast(msg, type) {
 }
 
 // ── Escaper ─────────────────────────────────────────────────────────────────
+function sanitizeHTML(html) {
+    // Strip dangerous tags and attributes — preserves safe HTML for the content editor
+    return String(html || '')
+      .replace(/<script[^>]*>[sS]*?<\/script>/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/<iframe[^>]*>[sS]*?<\/iframe>/gi, '')
+      .replace(/<form[^>]*>[sS]*?<\/form>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/<object[^>]*>[sS]*?<\/object>/gi, '')
+      .replace(/<embed[^>]*[\/>]/gi, '');
+  }
+
 function esc(s) {
   return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -1117,7 +1131,7 @@ window.switchContentTab = function(page, el) {
 async function saveContent(page) {
   const ta = document.querySelector('#editor-'+page+' textarea');
   if(!ta) return;
-  const j = await apiFetch('/admin/api/content?page='+encodeURIComponent(page),{method:'POST',body:JSON.stringify({html:ta.value})});
+  const cleanHtml = sanitizeHTML(ta.value); const j = await apiFetch('/admin/api/content?page='+encodeURIComponent(page),{method:'POST',body:JSON.stringify({html:cleanHtml})});
   if(j.ok) toast('Page saved'); else toast(j.error||'Failed','err');
 }
 

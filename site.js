@@ -73,5 +73,17 @@
     } catch (_) {}
   }
 
-  window.BG = { esc: esc, loadJSON: loadJSON, dogById: dogById, validPhone: validPhone, track: track };
+  // Admin API data loader — falls back to local JSON if API unavailable
+  function loadAdminJSON(path, fallbackPath) {
+    var apiBase = window.BG_WEBHOOK_URL || '';
+    if (apiBase) {
+      return fetch(apiBase + '/admin/api/' + path, { headers: { 'Accept': 'application/json' } })
+        .then(function(r) { if (r.ok) return r.json(); throw new Error('api_fail'); })
+        .catch(function() { if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); }); throw new Error('no_data'); });
+    }
+    if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
+    throw new Error('no_data');
+  }
+
+  window.BG = { esc: esc, loadJSON: loadJSON, loadAdminJSON: loadAdminJSON, dogById: dogById, validPhone: validPhone, track: track };
 })();
