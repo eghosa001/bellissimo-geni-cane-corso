@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "generationSupport": 7,
+  "notes": "Development records only. Replace with verified Bellissimo Geni kennel data before launch.",
+  "dogs": [
+    {
+      "id": "henry",
+      "name": "Henry",
+      "sex": "male",
+      "colour": "Black",
+      "photo": "",
+      "sireId": "harry",
+      "damId": "bella",
+      "status": "development"
+    },
+    {
+      "id": "harry",
+      "name": "Harry",
+      "sex": "male",
+      "colour": "Black",
+      "photo": "",
+      "sireId": "bruno",
+      "damId": "luna",
+      "status": "development"
+    },
+    {
+      "id": "bella",
+      "name": "Bella",
+      "sex": "female",
+      "colour": "Fawn",
+      "photo": "",
+      "sireId": "marco",
+      "damId": "rosa",
+      "status": "development"
+    },
+    {
+      "id": "bruno",
+      "name": "Bruno",
+      "sex": "male",
+      "colour": "Black",
+      "photo": "",
+      "sireId": null,
+      "damId": null,
+      "status": "development"
+    },
+    {
+      "id": "luna",
+      "name": "Luna",
+      "sex": "female",
+      "colour": "Grey",
+      "photo": "",
+      "sireId": null,
+      "damId": null,
+      "status": "development"
+    },
+    {
+      "id": "marco",
+      "name": "Marco",
+      "sex": "male",
+      "colour": "Black",
+      "photo": "",
+      "sireId": null,
+      "damId": null,
+      "status": "development"
+    },
+    {
+      "id": "rosa",
+      "name": "Rosa",
+      "sex": "female",
+      "colour": "Fawn",
+      "photo": "",
+      "sireId": null,
+      "damId": null,
+      "status": "development"
+    }
+  ]
+}
