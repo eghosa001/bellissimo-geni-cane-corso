@@ -36,10 +36,13 @@ jobs:
           set -e
           rm -rf build
           mkdir -p build
-          cp -rp ./* ./build/
-          cp -rp ./.nojekyll ./build/ 2>/dev/null || true
-          rm -rf build/.git build/.github build/webhook build/build
-          echo "Publishing $(ls build | wc -l) entries (excludes .git/.github/webhook)"
+          tar -C . \
+            --exclude='./build' \
+            --exclude='./.git' \
+            --exclude='./.github' \
+            --exclude='./webhook' \
+            -cf - . | tar -C build -xf -
+          echo "Publishing $(ls build | wc -l) top-level entries (excludes .git/.github/webhook)"
 
       - name: Determine publish directory
         id: find_dir
