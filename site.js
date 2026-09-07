@@ -21,7 +21,25 @@
     }
     var year = document.querySelector('[data-year]');
     if (year) year.textContent = new Date().getFullYear();
+    initReveal();
   });
+
+  function initReveal() {
+    var selectors = '.section-heading,.feature-strip,.grid-3,.grid-2,.feature-grid,.gallery-grid,.steps,.pedigree-feature,.profile,.testi,.quote';
+    var els = document.querySelectorAll(selectors);
+    if (!els.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          en.target.classList.add('js-reveal', 'is-in');
+          io.unobserve(en.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  }
 
   function esc(s) {
     return String(s == null ? '' : s)
