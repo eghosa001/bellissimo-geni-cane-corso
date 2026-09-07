@@ -419,21 +419,26 @@ Priorities:
 - Reservation state transitions
 - Notifications
 
-### Phase 8 — Owner Admin / CMS ✅ SHIPPED
-- `admin.html` — password-protected Kennel Management Console (968 lines)
+### Phase 8 — Owner Admin / CMS ✅ SHIPPED + GAPS CLOSED
+- `admin.html` — password-protected Kennel Management Console (1,181 lines after gap closures)
 - Bearer-token auth via `ADMIN_PASSWORD` Workers secret on every `/admin/api/*` request
-- Dashboard with live stats (dogs, puppies, litters, reservations, testimonials, gallery counts)
-- Dog CRUD: add/edit/archive, sire/dam relationship editor (dropdown by ID, never name-matching), health notes, achievements
-- Puppy/litter CRUD: full lifecycle from COMING SOON → AVAILABLE → PAYMENT PENDING → RESERVED → SOLD, linked to litters and parent dogs
-- Reservation dashboard: view all reservations, update status one-click (REQUESTED → SOLD or CANCEL), append internal notes
-- Payment monitoring: reservation records show provider, payment_url, paid_amount, paid_at from webhook flow
+- Dashboard with live stats (dogs, puppies, litters, reservations, testimonials, gallery counts, draft counts, audit log preview)
+- Dog CRUD: add/edit/archive, sire/dam relationship editor (dropdown by ID), circular-reference warning, health notes, achievements, **browser photo upload** (Cloudflare R2), publish/draft toggle
+- Puppy/litter CRUD: full lifecycle COMING SOON → AVAILABLE → PAYMENT PENDING → RESERVED → SOLD, linked to litters and parent dogs, **browser photo upload**, status filter, price in NGN, publish/draft toggle
+- Reservation dashboard: view all sorted newest-first, one-click status transition (REQUESTED → SOLD or CANCEL), append internal notes
+- Payment monitoring: reservation records show provider, payment_url, paid_amount, paid_at; deep payment info panel
 - Testimonial management: add/edit/delete, approve/unapprove, feature on homepage toggle
-- Gallery management: add/edit/delete photos with caption, alt text, category, sort order
+- Gallery management: add/edit/delete photos with caption, alt text, category, sort order, **browser photo upload**
 - Settings: WhatsApp number, email, address, Instagram, Facebook, about blurb, payment provider/currency/amount
+- **Editable website pages** (`/admin/edit-content`): About, Breeding, Standards, Socialization, Social, Contact — HTML editor saves to KV, goes live immediately
+- **Audit trail** (`/admin/audit`): every create/update/delete/upload/publish action logged with timestamp, entity type, ID, and details (last 500 entries)
+- **Draft/publish system**: all entities support `publishStatus: 'published' | 'draft'`. Drafts hidden from public site. Toggle in forms. Stats show draft counts.
+- **Visual pedigree editor** (`/admin/pedigree-editor`): select any dog → interactive family tree displayed up to 3 generations → inline sire/dam dropdowns → save links
 - Mobile-responsive sidebar with hamburger menu for phone management
 - No GitHub access required; owner edits data through the panel only
-- `webhook/handler.js` extended with 8 admin API endpoints + ADMIN KV namespace
+- `webhook/handler.js` extended with 14 admin API endpoints including upload, content, audit, publish toggle
 - `data/admin-schema.md` — complete API reference and deployment checklist
+- `ADMIN_STATUS.md` — requirements audit table documenting all 20 items and 6 gap closures
 
 ### Phase 9 — Content
 - About

@@ -140,6 +140,66 @@
 .mobile-toggle{display:none !important;border:1px solid var(--line);background:#fff;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer}
 .overlay-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:80}
 .overlay-bg.open{display:block}
+
+/* ── Upload zone ─────────────────────────────────────────────────────────── */
+.upload-zone{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#faf8f4}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--gold);background:#fff8ec}
+.upload-zone .icon{font-size:28px;margin-bottom:6px;color:var(--muted)}
+.upload-zone p{font-size:12px;color:var(--muted)}
+.upload-zone .done{color:#2d5a27;font-weight:700;font-size:13px}
+.upload-preview{max-width:200px;margin-top:12px;border-radius:4px;border:1px solid var(--line)}
+
+/* ── Audit log ───────────────────────────────────────────────────────────── */
+.audit-row{display:flex;gap:14px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:flex-start;font-size:13px}
+.audit-row:last-child{border-bottom:0}
+.audit-row .tag{font-size:9px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:4px;white-space:nowrap;text-transform:uppercase}
+.tag-create{background:#e6f0e3;color:#2d5a27}.tag-update{background:#f7ecd2;color:#7a5f0e}.tag-delete{background:#fde8e8;color:#a22}.tag-upload{background:#e8e4da;color:#5b4a27}.tag-publish{background:#e6f0e3;color:#2d5a27}.tag-publish-toggle{background:#f7ecd2;color:#7a5f0e}
+.audit-row .meta{font-size:11px;color:var(--muted);min-width:140px}
+.audit-row .detail{color:var(--ink);flex:1}
+
+/* ── Pedigree tree ───────────────────────────────────────────────────────── */
+.pedigree-tree{display:flex;flex-direction:column;align-items:center;padding:20px 0}
+.tree-gen{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;position:relative}
+.tree-node{background:#fff;border:1.5px solid var(--line);border-radius:6px;padding:12px 16px;min-width:120px;text-align:center;cursor:pointer;transition:all .2s;position:relative;z-index:2}
+.tree-node:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.tree-node.selected{border-color:var(--gold);background:#fff8ec}
+.tree-node .tname{font:600 16px var(--serif);letter-spacing:-.01em}
+.tree-node .trole{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.tree-node .tcolour{font-size:11px;color:var(--muted)}
+.tree-connector{width:2px;height:20px;background:var(--line);margin:0 auto}
+.tree-label{text-align:center;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:8px 0}
+.pedigree-selector{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.pedigree-selector select{border:1px solid var(--line);padding:10px 14px;background:#fff;min-width:200px;outline:none;font-size:14px}
+.pedigree-selector select:focus{border-color:var(--gold)}
+.no-pedigree-data{text-align:center;padding:60px;color:var(--muted)}
+
+/* ── Content editor ──────────────────────────────────────────────────────── */
+.content-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:20px}
+.content-tab{padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);letter-spacing:.04em}
+.content-tab:hover{color:var(--ink)}
+.content-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.content-editor textarea{width:100%;min-height:300px;border:1px solid var(--line);padding:14px 16px;background:#faf8f4;font-family:monospace;font-size:13px;resize:vertical;outline:none;line-height:1.6}
+.content-editor textarea:focus{border-color:var(--gold);background:#fff}
+.content-saved{color:#2d5a27;font-size:12px;font-weight:700;margin-left:12px}
+
+/* ── Draft badge ─────────────────────────────────────────────────────────── */
+.pill.draft{background:#f0ebe0;color:#777;border-color:#d4cfc5}
+.pill.published{background:#e6f0e3;border-color:#9dbf9a;color:#2d5a27}
+
+/* ── Payment deep dashboard ─────────────────────────────────────────────── */
+.pay-deets{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0}
+.pay-deet{background:#faf8f4;border:1px solid var(--line);padding:12px 14px}
+.pay-deet .pd-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.pay-deet .pd-val{font:600 15px var(--serif);margin-top:2px;word-break:break-all}
+.pay-deet .pd-val a{color:var(--gold)}
+
+/* ── Responsive tweaks ───────────────────────────────────────────────────── */
+@media(max-width:700px){
+  .pay-deets{grid-template-columns:1fr 1fr}
+  .tree-gen{gap:16px}
+  .tree-node{min-width:90px;padding:8px 10px}
+  .tree-node .tname{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -183,6 +243,10 @@
       <div class="nav-section">Content</div>
       <div class="nav-item" data-page="testimonials">Testimonials</div>
       <div class="nav-item" data-page="gallery">Gallery</div>
+      <div class="nav-item" data-page="edit-content">Edit Pages</div>
+      <div class="nav-section">System</div>
+      <div class="nav-item" data-page="pedigree-editor">Pedigree Editor</div>
+      <div class="nav-item" data-page="audit">Audit Trail<span class="count" id="auditCount"></span></div>
       <div class="nav-item" data-page="settings">Settings</div>
     </nav>
     <div class="sidebar-footer">
@@ -310,6 +374,9 @@ async function renderPage(page) {
     case 'reservations':area.innerHTML = await renderReservationsList(); break;
     case 'testimonials':area.innerHTML = await renderTestimonialsList(); break;
     case 'gallery':     area.innerHTML = await renderGalleryList(); break;
+    case 'edit-content':area.innerHTML = await renderEditContent(); break;
+    case 'pedigree-editor':area.innerHTML = await renderPedigreeEditor(); break;
+    case 'audit':       area.innerHTML = await renderAuditTrail(); break;
     case 'settings':    area.innerHTML = await renderSettings(); break;
     default:            area.innerHTML = '<p class="muted" style="padding:40px">Unknown page.</p>';
   }
@@ -433,33 +500,94 @@ function renderDogForm(dog) {
         <form id="dogForm" onsubmit="saveDog(event,'${isEdit?dog.id:''}')">
           <div class="form-grid">
             <div class="field"><label>Name *</label><input name="name" required value="${esc(dog?.name||'')}"></div>
-            <div class="field"><label>Sex *</label><select name="sex" required><option value="" ${!dog?.sex?'selected':''}>Select…</option><option value="male" ${dog?.sex==='male'?'selected':''}>Male</option><option value="female" ${dog?.sex==='female'?'selected':''}>Female</option></select></div>
+            <div class="field"><label>Sex *</label><select name="sex" required><option value="" ${!dog?.sex?'selected':''}>Select...</option><option value="male" ${dog?.sex==='male'?'selected':''}>Male</option><option value="female" ${dog?.sex==='female'?'selected':''}>Female</option></select></div>
             <div class="field"><label>Colour</label><input name="colour" value="${esc(dog?.colour||'')}"></div>
             <div class="field"><label>Date of Birth</label><input type="date" name="dateOfBirth" value="${dog?.dateOfBirth||''}"></div>
-            <div class="field"><label>Sire</label><select name="sireId"><option value="">None</option>${sireOpts}</select></div>
-            <div class="field"><label>Dam</label><select name="damId"><option value="">None</option>${damOpts}</select></div>
+            <div class="field"><label>Sire</label><select name="sireId" onchange="checkCircular(this,'damId','${dog?.id||''}')"><option value="">None</option>${sireOpts}</select></div>
+            <div class="field"><label>Dam</label><select name="damId" onchange="checkCircular(this,'sireId','${dog?.id||''}')"><option value="">None</option>${damOpts}</select></div>
             <div class="field"><label>Registration</label><input name="registration" value="${esc(dog?.registration||'')}"><span class="hint">AKC / KC / other</span></div>
+            <div class="field"><label>Publish Status</label><select name="publishStatus"><option value="published" ${dog?.publishStatus!=='draft'?'selected':''}>Published</option><option value="draft" ${dog?.publishStatus==='draft'?'selected':''}>Draft</option></select><span class="hint">Draft hides from public site</span></div>
             <div class="field"><label>Status</label><select name="status"><option value="active" ${dog?.status==='active'||!dog?.status?'selected':''}>Active</option><option value="retired" ${dog?.status==='retired'?'selected':''}>Retired</option><option value="development" ${dog?.status==='development'?'selected':''}>Development</option></select></div>
-            <div class="field full"><label>Photo URL</label><input name="photo" value="${esc(dog?.photo||'')}" placeholder="https://…"><span class="hint">Direct URL to uploaded image</span></div>
+            <div class="field full"><label>Photo</label>
+              <div class="upload-zone" id="dogUploadZone" onclick="document.getElementById('dogFileInput').click()">
+                <div class="icon">📷</div><p>Click to upload photo<br><small>JPG, PNG, WebP — max 10MB</small></p>
+                <img id="dogUploadPreview" class="upload-preview" style="display:none">
+              </div>
+              <input type="file" id="dogFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'dogPhotoUrl')">
+              <input name="photo" id="dogPhotoUrl" value="${esc(dog?.photo||'')}" placeholder="Or paste image URL here" style="margin-top:6px">
+            </div>
             <div class="field full"><label>Bio</label><textarea name="bio" rows="3">${esc(dog?.bio||'')}</textarea></div>
             <div class="field full"><label>Health Notes</label><textarea name="health" rows="2">${esc(dog?.health||'')}</textarea></div>
             <div class="field full"><label>Achievements</label><input name="achievements" value="${esc(dog?.achievements||'')}"></div>
           </div>
+          <p id="circularWarn" style="color:#b33;font-size:12px;margin-top:8px;display:none">⚠ Circular reference detected — a parent cannot be its own ancestor.</p>
           <div style="margin-top:20px"><button type="submit" class="btn btn-gold">${isEdit?'Save Changes':'Create Dog'}</button></div>
         </form>
       </div>
     </div>`;
 }
+async function checkCircular(selectEl, otherName, selfId) {
+  const form = document.getElementById('dogForm');
+  const otherSel = form.querySelector('[name="'+otherName+'"]');
+  if (!selectEl.value || !otherSel?.value) { document.getElementById('circularWarn').style.display='none'; return; }
+  // Check if sireId === damId
+  if (selectEl.value === otherSel.value) {
+    document.getElementById('circularWarn').textContent = '⚠ Sire and Dam cannot be the same dog.';
+    document.getElementById('circularWarn').style.display = 'block';
+    selectEl.value = '';
+    return;
+  }
+  // Check if selected sire is the dog itself (editing existing)
+  if (selfId && selectEl.value === selfId && otherSel.value === selfId) {
+    document.getElementById('circularWarn').textContent = '⚠ Circular reference: a dog cannot be its own parent.';
+    document.getElementById('circularWarn').style.display = 'block';
+    selectEl.value = '';
+    return;
+  }
+  document.getElementById('circularWarn').style.display = 'none';
+}
+async function handleUploadFile(input, urlInputId) {
+  const file = input.files[0];
+  if (!file) return;
+  const zone = input.closest('.field')?.querySelector('.upload-zone') || input.previousElementSibling;
+  const preview = zone?.querySelector('img.upload-preview');
+  if (preview) { preview.style.display='block'; preview.src = URL.createObjectURL(file); }
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (zone) zone.innerHTML = `<div class="icon" style="color:#2d5a27">✓</div><p class="done">${esc(file.name)}</p><img class="upload-preview" src="${reader.result}" style="display:block">`;
+  };
+  reader.readAsDataURL(file);
+  // Actually upload to R2
+  const formData = new FormData();
+  formData.append('file', file);
+  const zoneEl = input.closest('.field')?.querySelector('.upload-zone');
+  if (zoneEl) { zoneEl.querySelector('p')?.remove(); const loading = document.createElement('p'); loading.className='muted'; loading.textContent='Uploading...'; zoneEl.appendChild(loading); }
+  try {
+    const r = await fetch(API_BASE + '/admin/api/upload', {
+      method: 'POST', body: formData,
+      headers: { 'Authorization': 'Bearer ' + adminPW }
+    });
+    const j = await r.json();
+    if (j.ok) {
+      document.getElementById(urlInputId).value = j.publicUrl || j.url;
+      if (zoneEl) { zoneEl.querySelector('p')?.remove(); zoneEl.innerHTML='<div class="icon" style="color:#2d5a27">✓</div><p class="done">Photo uploaded</p>'; }
+      toast('Photo uploaded');
+    } else throw new Error(j.error);
+  } catch(e) {
+    if (zoneEl) { zoneEl.querySelector('p')?.remove(); zoneEl.innerHTML='<div class="icon" style="color:#b33">✕</div><p>'+e.message+'</p>'; }
+    toast('Upload failed: '+e.message, 'err');
+  }
+}
 async function saveDog(e, id) {
   e.preventDefault();
   const f = e.target;
   const body = {};
-  ['name','sex','colour','dateOfBirth','sireId','damId','registration','status','photo','bio','health','achievements'].forEach(k => {
+  ['name','sex','colour','dateOfBirth','sireId','damId','registration','status','photo','bio','health','achievements','publishStatus'].forEach(k => {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
+  if(!body.publishStatus) body.publishStatus = 'published';
   const url = id ? '/admin/api/dogs?id='+encodeURIComponent(id) : '/admin/api/dogs';
-  const method = id ? 'POST' : 'POST';
-  const j = await apiFetch(url, { method, body: JSON.stringify(body) });
+  const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
   if(j.ok) { toast(id?'Dog updated':'Dog created'); closeModal(); loadAllData(); }
   else toast(j.error||'Failed','err');
 }
@@ -568,8 +696,16 @@ function renderPuppyForm(pup) {
             <div class="field"><label>Litter ID</label><input name="litterId" value="${esc(pup?.litterId||'')}" placeholder="litter-2026-a"></div>
             <div class="field"><label>Status</label><select name="status">${statusOpts}</select></div>
             <div class="field"><label>Price (NGN)</label><input name="priceNGN" type="number" value="${pup?.priceNGN||''}" placeholder="Leave empty for price-on-enquiry"></div>
-            <div class="field"><label>Price Note</label><input name="priceNote" value="${esc(pup?.priceNote||'')}" placeholder="e.g. ₦5,000,000"></div>
-            <div class="field full"><label>Photo URL</label><input name="photo" value="${esc(pup?.photo||'')}" placeholder="https://…"></div>
+            <div class="field"><label>Price Note</label><input name="priceNote" value="${esc(pup?.priceNote||'')}" placeholder="e.g. N5,000,000"></div>
+            <div class="field"><label>Publish Status</label><select name="publishStatus"><option value="published" ${pup?.publishStatus!=='draft'?'selected':''}>Published</option><option value="draft" ${pup?.publishStatus==='draft'?'selected':''}>Draft</option></select><span class="hint">Draft hides from public site</span></div>
+            <div class="field full"><label>Photo</label>
+              <div class="upload-zone" onclick="document.getElementById('pupFileInput').click()">
+                <div class="icon">&#128247;</div><p>Click to upload photo<br><small>JPG, PNG, WebP - max 10MB</small></p>
+                <img id="pupUploadPreview" class="upload-preview" style="display:none">
+              </div>
+              <input type="file" id="pupFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'pupPhotoUrl')">
+              <input name="photo" id="pupPhotoUrl" value="${esc(pup?.photo||'')}" placeholder="Or paste image URL" style="margin-top:6px">
+            </div>
             <div class="field full"><label>Notes</label><textarea name="notes" rows="2">${esc(pup?.notes||'')}</textarea></div>
           </div>
           <div style="margin-top:20px"><button type="submit" class="btn btn-gold">${isEdit?'Save Changes':'Create Puppy'}</button></div>
@@ -581,9 +717,10 @@ async function savePuppy(e, id) {
   e.preventDefault();
   const f = e.target;
   const body = {};
-  ['name','sex','colour','dateOfBirth','sireId','damId','litterId','status','priceNGN','priceNote','photo','notes'].forEach(k => {
+  ['name','sex','colour','dateOfBirth','sireId','damId','litterId','status','priceNGN','priceNote','photo','notes','publishStatus'].forEach(k => {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
+  if(!body.publishStatus) body.publishStatus = 'published';
   if(body.priceNGN) body.priceNGN = Number(body.priceNGN) || null;
   const url = id ? '/admin/api/puppies?id='+encodeURIComponent(id) : '/admin/api/puppies';
   const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
@@ -847,7 +984,14 @@ window.editGalleryItem = async function(id) {
       <div class="panel-body">
         <form onsubmit="saveGalleryItem(event,'${id}')">
           <div class="form-grid">
-            <div class="field full"><label>Image URL</label><input name="url" value="${esc(g.url||'')}"></div>
+            <div class="field full"><label>Photo</label>
+              <div class="upload-zone" onclick="document.getElementById('galFileInput').click()">
+                <div class="icon">📷</div><p>Click to upload photo<br><small>JPG, PNG, WebP — max 10MB</small></p>
+                <img id="galUploadPreview" class="upload-preview" style="display:none">
+              </div>
+              <input type="file" id="galFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'galUrlInput')">
+              <input name="url" id="galUrlInput" value="${esc(g?.url||'')}" placeholder="Or paste image URL" style="margin-top:6px">
+            </div>
             <div class="field"><label>Caption</label><input name="caption" value="${esc(g.caption||'')}"></div>
             <div class="field"><label>Alt Text</label><input name="alt" value="${esc(g.alt||'')}"></div>
             <div class="field"><label>Category</label><select name="category"><option value="general" ${g.category==='general'?'selected':''}>General</option><option value="dogs" ${g.category==='dogs'?'selected':''}>Dogs</option><option value="puppies" ${g.category==='puppies'?'selected':''}>Puppies</option><option value="kennel" ${g.category==='kennel'?'selected':''}>Kennel</option></select></div>
@@ -956,6 +1100,74 @@ function navigate(page) {
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
+// -- Edit Content Pages --
+async function renderEditContent() {
+  const PAGES = ['about','breeding','standards','socialization','social','contact'];
+  const results = await Promise.all(PAGES.map(p => apiFetch('/admin/api/content?page='+encodeURIComponent(p)).then(r=>({page:p,data:r.data||{html:''}}))));
+  const tabs = PAGES.map((p,i) => '<div class="content-tab'+(i===0?' active':'')+'" onclick="switchContentTab('+JSON.stringify(p)+',this)">'+p.charAt(0).toUpperCase()+p.slice(1)+'</div>').join('');
+  const editors = PAGES.map(p => '<div class="content-editor" id="editor-'+p+'" style="display:'+(p===PAGES[0]?'block':'none')+'"><textarea name="html" rows="20" placeholder="Paste approved HTML content here..."></textarea><div style="margin-top:12px" class="btn-group"><button class="btn btn-gold" onclick="saveContent('+JSON.stringify(p)+')">Save Content</button><span class="muted" style="font-size:11px;margin-left:8px">Saves to KV - goes live immediately</span></div></div>').join('');
+  return '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">These pages are currently static HTML. Edit the HTML below to update live content without touching code.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
+}
+window.switchContentTab = function(page, el) {
+  document.querySelectorAll('.content-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.content-editor').forEach(e=>e.style.display='none');
+  el.classList.add('active');
+  document.getElementById('editor-'+page).style.display='block';
+};
+async function saveContent(page) {
+  const ta = document.querySelector('#editor-'+page+' textarea');
+  if(!ta) return;
+  const j = await apiFetch('/admin/api/content?page='+encodeURIComponent(page),{method:'POST',body:JSON.stringify({html:ta.value})});
+  if(j.ok) toast('Page saved'); else toast(j.error||'Failed','err');
+}
+
+// -- Audit Trail --
+async function renderAuditTrail() {
+  const j = await apiFetch('/admin/api/audit?limit=200');
+  const logs = j.data || [];
+  const tagCls = {create:'tag-create',update:'tag-update',delete:'tag-delete',upload:'tag-upload',publish_toggle:'tag-publish-toggle',publish:'tag-publish'};
+  const rows = logs.map(l => {
+    const cls = tagCls[l.action]||'tag-update';
+    const detail = l.details && Object.keys(l.details).length ? Object.entries(l.details).map(([k,v])=>k+': '+esc(String(v))).join(', ') : '';
+    return '<div class="audit-row"><span class="tag '+cls+'">'+l.action+'</span><span class="meta">'+new Date(l.at).toLocaleString()+' | '+esc(l.entity)+'</span><span class="detail">'+esc(l.entityId||'')+' '+detail+'</span></div>';
+  }).join('') || '<p class="muted" style="padding:30px;text-align:center">No audit entries yet.</p>';
+  return '<div class="panel"><div class="panel-header"><h3>Audit Trail <span class="muted" style="font-weight:400;font-size:12px">('+logs.length+' entries)</span></h3></div><div class="panel-body" style="padding:0">'+rows+'</div></div>';
+}
+
+// -- Pedigree Visual Editor --
+async function renderPedigreeEditor() {
+  const j = await apiFetch('/admin/api/dogs');
+  const dogs = j.data || [];
+  const opts = dogs.map(d => '<option value="'+d.id+'">'+esc(d.name)+' ('+d.sex+')</option>').join('');
+  return '<div class="panel"><div class="panel-header"><h3>Pedigree Tree Builder</h3><span class="muted" style="font-size:11px">Select a dog to view and edit its ancestry</span></div><div class="panel-body"><div class="pedigree-selector"><select id="pedDogSelect" onchange="renderPedigreeTree(this.value)"><option value="">-- Select a dog --</option>'+opts+'</select></div><div id="pedigreeTreeArea" class="pedigree-tree"><div class="no-pedigree-data"><p style="font-size:32px;margin-bottom:12px">G</p><p>Select a dog above to build and preview its family tree</p></div></div></div></div>';
+}
+window.renderPedigreeTree = async function(dogId) {
+  if(!dogId) { document.getElementById('pedigreeTreeArea').innerHTML='<div class="no-pedigree-data"><p style="font-size:32px;margin-bottom:12px">G</p><p>Select a dog above</p></div>'; return; }
+  const dj = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId));
+  if(!dj.ok) return;
+  const dog = dj.data;
+  const j = await apiFetch('/admin/api/dogs');
+  const dogs = j.data || [];
+  const dogOpts = dogs.map(d => '<option value="'+d.id+'" '+(dog.sireId===d.id?'selected':'')+'> '+esc(d.name)+'</option>').join('');
+  const damOpts = dogs.map(d => '<option value="'+d.id+'" '+(dog.damId===d.id?'selected':'')+'> '+esc(d.name)+'</option>').join('');
+  function buildNode(id, gen) {
+    if(!id||gen>3) return '<div class="tree-node"><div class="trole">?</div><div class="tname">Not recorded</div></div>';
+    const d = dogs.find(x=>x.id===id);
+    if(!d) return '<div class="tree-node"><div class="trole">?</div><div class="tname">Unknown</div></div>';
+    return '<div class="tree-gen"><div class="tree-node'+(id===dogId?' selected':'')+'"><div class="trole">GEN '+gen+'</div><div class="tname">'+esc(d.name)+'</div><div class="tcolour">'+esc(d.colour||'')+'</div></div></div>';
+  }
+  const sirGen = buildNode(dog.sireId,1);
+  const damGen = buildNode(dog.damId,1);
+  const html = '<div style="margin-bottom:20px;padding:16px;background:#faf8f4;border-radius:6px"><strong style="font:600 20px var(--serif)">'+esc(dog.name)+'</strong><span class="muted" style="margin-left:12px">'+esc(dog.sex||'')+' | '+esc(dog.colour||'')+'</span><div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted" style="font-size:12px">Sire:</span><select id="pedSire" style="border:1px solid var(--line);padding:8px 12px;background:#fff"><option value="">None</option>'+dogOpts+'</select><span class="muted" style="font-size:12px">Dam:</span><select id="pedDam" style="border:1px solid var(--line);padding:8px 12px;background:#fff"><option value="">None</option>'+damOpts+'</select><button class="btn btn-sm btn-gold" onclick="savePedigree('+JSON.stringify(dog.id)+')">Save Parent Links</button></div></div>'+sirGen+damGen;
+  document.getElementById('pedigreeTreeArea').innerHTML = html;
+};
+async function savePedigree(dogId) {
+  const sireId = document.getElementById('pedSire').value||null;
+  const damId = document.getElementById('pedDam').value||null;
+  const j = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId),{method:'POST',body:JSON.stringify({sireId,damId})});
+  if(j.ok){toast('Pedigree updated');renderPedigreeTree(dogId);loadAllData();}else{toast(j.error||'Failed','err');}
+}
+
 (function(){
   const storedPw = localStorage.getItem('bg_admin_pw');
   if(storedPw) {

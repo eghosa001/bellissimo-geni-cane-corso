@@ -22,6 +22,9 @@ const ADMIN_KEYS = {
   settings:    'admin:settings',
   gallery:     'admin:gallery',
 };
+const AUDIT_LOG_KEY = 'admin:audit:log';
+const CONTENT_PREFIX = 'admin:content:';
+const MAX_AUDIT_LOGS = 500;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 export function strip(zero) {
@@ -200,6 +203,29 @@ function adminAuth(request, env) {
   const auth = request.headers.get('Authorization') || '';
   if (auth === 'Bearer ' + pw) return { ok: true };
   return { ok: false, reason: 'unauthorized' };
+}
+
+// ─── Audit logging ───────────────────────────────────────────────────────────
+async function auditLog(env, action, entity, entityId, details) {
+  try {
+    const raw = await env.ADMIN.get(AUDIT_LOG_KEY);
+    const logs = raw ? JSON.parse(raw) : [];
+    logs.unshift({ id: 'log-' + Date.now(), action, entity, entityId, details: details || {}, at: new Date().toISOString() });
+    if (logs.length > MAX_AUDIT_LOGS) logs.length = MAX_AUDIT_LOGS;
+    await env.ADMIN.put(AUDIT_LOG_KEY, JSON.stringify(logs));
+  } catch (_) {}
+}
+
+// ─── Draft / publish filtering ────────────────────────────────────────────────
+function filterPublished(items, params) {
+  const showAll = params && params.get('status') === 'all';
+  if (showAll) return items;
+  return items.filter(i => i.publishStatus !== 'draft');
+}
+
+function ensurePublishStatus(record) {
+  if (record.publishStatus === undefined) record.publishStatus = 'published';
+  return record;
 }
 
 // ─── Puppy Lock DO ───────────────────────────────────────────────────────────
@@ -425,15 +451,17 @@ async function handleAdminDogs(req, env) {
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
+  const showAll = url.searchParams.get('status') === 'all';
 
   if (req.method === 'GET') {
     if (id) {
       const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
       const dog = dogs.find(d => d.id === id);
-      return json(200, dog ? { ok: true, data: dog } : { ok: false, error: 'not_found' });
+      return json(200, dog ? { ok: true, data: ensurePublishStatus(dog) } : { ok: false, error: 'not_found' });
     }
     const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-    return json(200, { ok: true, data: dogs.sort((a, b) => a.name.localeCompare(b.name)) });
+    const published = filterPublished(dogs, { get: () => showAll ? 'all' : null });
+    return json(200, { ok: true, data: published.sort((a, b) => a.name.localeCompare(b.name)) });
   }
 
   if (req.method === 'POST') {
@@ -444,17 +472,24 @@ async function handleAdminDogs(req, env) {
       const idx = dogs.findIndex(d => d.id === id);
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
       const updated = { ...dogs[idx], ...body, id };
+      ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.dogs + ':' + id, updated);
+      await auditLog(env, 'update', 'dog', id, { name: updated.name, publishStatus: updated.publishStatus });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'dog-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
     const dog = { id: newId, sireId: body.sireId || null, damId: body.damId || null, ...body };
+    ensurePublishStatus(dog);
     await kvPut(env, ADMIN_KEYS.dogs + ':' + newId, dog);
+    await auditLog(env, 'create', 'dog', newId, { name: dog.name, publishStatus: dog.publishStatus });
     return json(201, { ok: true, data: dog });
   }
 
   if (req.method === 'DELETE' && id) {
+    const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+    const dog = dogs.find(d => d.id === id);
     await env.ADMIN.delete(ADMIN_KEYS.dogs + ':' + id);
+    if (dog) await auditLog(env, 'delete', 'dog', id, { name: dog.name });
     return json(200, { ok: true });
   }
 
@@ -466,17 +501,18 @@ async function handleAdminPuppies(req, env) {
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
+  const showAll = url.searchParams.get('status') === 'all';
 
   if (req.method === 'GET') {
     if (id) {
       const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
       const pup = pups.find(p => p.id === id);
-      return json(200, pup ? { ok: true, data: pup } : { ok: false, error: 'not_found' });
+      return json(200, pup ? { ok: true, data: ensurePublishStatus(pup) } : { ok: false, error: 'not_found' });
     }
     const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
     const litters = await kvList(env, ADMIN_KEYS.litters + ':');
     const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-    return json(200, { ok: true, data: pups, litters, dogs });
+    return json(200, { ok: true, data: filterPublished(pups, { get: () => showAll ? 'all' : null }), litters, dogs });
   }
 
   if (req.method === 'POST') {
@@ -487,17 +523,24 @@ async function handleAdminPuppies(req, env) {
       const idx = pups.findIndex(p => p.id === id);
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
       const updated = { ...pups[idx], ...body, id };
+      ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.puppies + ':' + id, updated);
+      await auditLog(env, 'update', 'puppy', id, { name: updated.name, status: updated.status, publishStatus: updated.publishStatus });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'puppy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
     const puppy = { id: newId, sireId: body.sireId || null, damId: body.damId || null, litterId: body.litterId || '', ...body };
+    ensurePublishStatus(puppy);
     await kvPut(env, ADMIN_KEYS.puppies + ':' + newId, puppy);
+    await auditLog(env, 'create', 'puppy', newId, { name: puppy.name, status: puppy.status });
     return json(201, { ok: true, data: puppy });
   }
 
   if (req.method === 'DELETE' && id) {
+    const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
+    const pup = pups.find(p => p.id === id);
     await env.ADMIN.delete(ADMIN_KEYS.puppies + ':' + id);
+    if (pup) await auditLog(env, 'delete', 'puppy', id, { name: pup.name });
     return json(200, { ok: true });
   }
 
@@ -509,10 +552,11 @@ async function handleAdminLitters(req, env) {
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
+  const showAll = url.searchParams.get('status') === 'all';
 
   if (req.method === 'GET') {
-    const litters = await kvList(env, ADMIN_KEYS.litters + ':');
-    return json(200, { ok: true, data: litters });
+    const list = await kvList(env, ADMIN_KEYS.litters + ':');
+    return json(200, { ok: true, data: filterPublished(list, { get: () => showAll ? 'all' : null }) });
   }
 
   if (req.method === 'POST') {
@@ -523,17 +567,24 @@ async function handleAdminLitters(req, env) {
       const idx = list.findIndex(l => l.id === id);
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
       const updated = { ...list[idx], ...body, id };
+      ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.litters + ':' + id, updated);
+      await auditLog(env, 'update', 'litter', id, { name: updated.name });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'litter-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
     const litter = { id: newId, sireId: body.sireId || null, damId: body.damId || null, ...body };
+    ensurePublishStatus(litter);
     await kvPut(env, ADMIN_KEYS.litters + ':' + newId, litter);
+    await auditLog(env, 'create', 'litter', newId, { name: litter.name });
     return json(201, { ok: true, data: litter });
   }
 
   if (req.method === 'DELETE' && id) {
+    const list = await kvList(env, ADMIN_KEYS.litters + ':');
+    const litter = list.find(l => l.id === id);
     await env.ADMIN.delete(ADMIN_KEYS.litters + ':' + id);
+    if (litter) await auditLog(env, 'delete', 'litter', id, { name: litter.name });
     return json(200, { ok: true });
   }
 
@@ -598,10 +649,12 @@ async function handleAdminTestimonials(req, env) {
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
+  const showAll = url.searchParams.get('status') === 'all';
 
   if (req.method === 'GET') {
     const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
-    return json(200, { ok: true, data: items.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
+    const published = filterPublished(items, { get: () => showAll ? 'all' : null });
+    return json(200, { ok: true, data: published.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
   }
 
   if (req.method === 'POST') {
@@ -612,17 +665,23 @@ async function handleAdminTestimonials(req, env) {
       const idx = items.findIndex(t => t.id === id);
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
       const updated = { ...items[idx], ...body, id };
+      ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.testimonials + ':' + id, updated);
+      await auditLog(env, 'update', 'testimonial', id, { name: updated.name, publishStatus: updated.publishStatus });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'testi-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-    const item = { id: newId, featured: false, approved: true, ...body };
+    const item = { id: newId, featured: false, approved: true, publishStatus: 'published', ...body };
     await kvPut(env, ADMIN_KEYS.testimonials + ':' + newId, item);
+    await auditLog(env, 'create', 'testimonial', newId, { name: item.name });
     return json(201, { ok: true, data: item });
   }
 
   if (req.method === 'DELETE' && id) {
+    const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
+    const item = items.find(t => t.id === id);
     await env.ADMIN.delete(ADMIN_KEYS.testimonials + ':' + id);
+    if (item) await auditLog(env, 'delete', 'testimonial', id, { name: item.name });
     return json(200, { ok: true });
   }
 
@@ -649,11 +708,13 @@ async function handleAdminGallery(req, env) {
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
       const updated = { ...items[idx], ...body, id };
       await kvPut(env, ADMIN_KEYS.gallery + ':' + id, updated);
+      await auditLog(env, 'update', 'gallery', id, { caption: updated.caption });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'gal-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
     const item = { id: newId, caption: '', alt: '', category: 'general', order: 0, ...body };
     await kvPut(env, ADMIN_KEYS.gallery + ':' + newId, item);
+    await auditLog(env, 'create', 'gallery', newId, { caption: item.caption });
     return json(201, { ok: true, data: item });
   }
 
@@ -690,15 +751,20 @@ async function handleAdminStats(req, env) {
   const auth = adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
 
-  const dogs      = await kvList(env, ADMIN_KEYS.dogs + ':');
-  const puppies   = await kvList(env, ADMIN_KEYS.puppies + ':');
-  const litters   = await kvList(env, ADMIN_KEYS.litters + ':');
+  const dogs         = await kvList(env, ADMIN_KEYS.dogs + ':');
+  const puppies      = await kvList(env, ADMIN_KEYS.puppies + ':');
+  const litters      = await kvList(env, ADMIN_KEYS.litters + ':');
   const reservations = await kvList(env, 'reservation:');
   const testimonials = await kvList(env, ADMIN_KEYS.testimonials + ':');
-  const gallery   = await kvList(env, ADMIN_KEYS.gallery + ':');
+  const gallery      = await kvList(env, ADMIN_KEYS.gallery + ':');
+  const auditRaw     = await env.ADMIN.get(AUDIT_LOG_KEY);
+  const auditLogs    = auditRaw ? JSON.parse(auditRaw) : [];
 
   const statusCounts = {};
   puppies.forEach(p => { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1; });
+  const draftDogs     = dogs.filter(d => d.publishStatus === 'draft').length;
+  const draftPuppies  = puppies.filter(p => p.publishStatus === 'draft').length;
+  const draftTestis   = testimonials.filter(t => t.publishStatus === 'draft').length;
 
   const recentReservations = reservations
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -707,16 +773,101 @@ async function handleAdminStats(req, env) {
   return json(200, {
     ok: true,
     stats: {
-      totalDogs: dogs.length,
-      totalPuppies: puppies.length,
+      totalDogs: dogs.length, draftDogs,
+      totalPuppies: puppies.length, draftPuppies,
       totalLitters: litters.length,
       totalReservations: reservations.length,
-      totalTestimonials: testimonials.length,
+      totalTestimonials: testimonials.length, draftTestis,
       totalGallery: gallery.length,
       puppyStatuses: statusCounts,
-      recentReservations
+      recentReservations,
+      recentAuditLogs: auditLogs.slice(0, 20)
     }
   });
+}
+
+// ─── New endpoints: upload, content, audit log ───────────────────────────────
+async function handleAdminUpload(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  if (!env.UPLOADS) return json(500, { ok: false, error: 'r2_not_configured' });
+  try {
+    const formData = await req.formData();
+    const file = formData.get('file');
+    if (!file || !(file instanceof File)) return json(400, { ok: false, error: 'no_file' });
+    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+    const allowed = ['jpg','jpeg','png','webp','avif','gif'];
+    if (!allowed.includes(ext)) return json(400, { ok: false, error: 'invalid_type' });
+    if (file.size > 10 * 1024 * 1024) return json(400, { ok: false, error: 'too_large' });
+    const key = 'media/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    await env.UPLOADS.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
+    const bucketName = env.UPLOADS_BUCKET_NAME || '';
+    const url = bucketName ? `https://${bucketName}.r2.cloudflarestorage.com/${key}` : `/uploads/${key}`;
+    await auditLog(env, 'upload', 'image', key, { size: file.size, type: file.type });
+    return json(200, { ok: true, url: key, publicUrl: url });
+  } catch (e) {
+    return json(500, { ok: false, error: 'upload_failed', message: e.message });
+  }
+}
+
+async function handleAdminContent(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  const url = new URL(req.url);
+  const page = url.searchParams.get('page') || '';
+  const ALLOWED_PAGES = ['about', 'breeding', 'standards', 'socialization', 'social', 'contact'];
+
+  if (!ALLOWED_PAGES.includes(page)) return json(400, { ok: false, error: 'unknown_page' });
+  const key = CONTENT_PREFIX + page;
+
+  if (req.method === 'GET') {
+    const raw = await kvGet(env, key);
+    return json(200, { ok: true, data: raw || { html: '', lastEdited: null } });
+  }
+
+  if (req.method === 'POST') {
+    const body = await readJson(req);
+    if (!body) return json(400, { ok: false, error: 'bad_json' });
+    const record = { html: String(body.html || '').slice(0, 50000), lastEdited: new Date().toISOString(), editedBy: 'admin' };
+    await kvPut(env, key, record);
+    await auditLog(env, 'update', 'content', page, {});
+    return json(200, { ok: true, data: record });
+  }
+
+  return json(405, { ok: false, error: 'method_not_allowed' });
+}
+
+async function handleAdminAudit(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  if (req.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
+  const url = new URL(req.url);
+  const limit = Math.min(parseInt(url.searchParams.get('limit')) || 100, 500);
+  const entity = url.searchParams.get('entity');
+  const raw = await env.ADMIN.get(AUDIT_LOG_KEY);
+  const allLogs = raw ? JSON.parse(raw) : [];
+  const filtered = entity ? allLogs.filter(l => l.entity === entity) : allLogs;
+  return json(200, { ok: true, data: filtered.slice(0, limit) });
+}
+
+async function handleAdminPublishToggle(req, env) {
+  const auth = adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  const body = await readJson(req);
+  if (!body || !body.entity || !body.id) return json(400, { ok: false, error: 'missing_fields' });
+  const { entity, id, publishStatus } = body;
+  const prefixMap = { dog: ADMIN_KEYS.dogs, puppy: ADMIN_KEYS.puppies, litter: ADMIN_KEYS.litters, testimonial: ADMIN_KEYS.testimonials };
+  const prefix = prefixMap[entity];
+  if (!prefix) return json(400, { ok: false, error: 'invalid_entity' });
+  const key = prefix + ':' + id;
+  const current = await kvGet(env, key);
+  if (!current) return json(404, { ok: false, error: 'not_found' });
+  const updated = Object.assign({}, current, { publishStatus: publishStatus || 'published' });
+  await kvPut(env, key, updated);
+  await auditLog(env, 'publish_toggle', entity, id, { publishStatus: updated.publishStatus });
+  return json(200, { ok: true, data: updated });
 }
 
 // ─── Main fetch ──────────────────────────────────────────────────────────────
@@ -742,17 +893,26 @@ export default {
 
     // ── Admin API routes ──
     if (url.pathname.startsWith('/admin/api/')) {
-      const segment = url.pathname.replace('/admin/api/', '').split('/')[0];
+      const rest = url.pathname.replace('/admin/api/', '');
+      const parts = rest.split('/');
+      const segment = parts[0];
+      const subPath = parts.slice(1).join('/');
       switch (segment) {
-        case 'dogs':       return handleAdminDogs(request, env);
-        case 'puppies':    return handleAdminPuppies(request, env);
-        case 'litters':    return handleAdminLitters(request, env);
+        case 'dogs':         return handleAdminDogs(request, env);
+        case 'puppies':      return handleAdminPuppies(request, env);
+        case 'litters':      return handleAdminLitters(request, env);
         case 'reservations': return handleAdminReservations(request, env);
         case 'testimonials': return handleAdminTestimonials(request, env);
-        case 'gallery':    return handleAdminGallery(request, env);
-        case 'settings':   return handleAdminSettings(request, env);
-        case 'stats':      return handleAdminStats(request, env);
-        default:           return json(404, { ok: false, error: 'not_found' });
+        case 'gallery':      return handleAdminGallery(request, env);
+        case 'settings':     return handleAdminSettings(request, env);
+        case 'stats':        return handleAdminStats(request, env);
+        case 'upload':       return handleAdminUpload(request, env);
+        case 'content':
+          if (subPath) return handleAdminContent(request, env);
+          return json(400, { ok: false, error: 'missing_page' });
+        case 'audit':        return handleAdminAudit(request, env);
+        case 'publish':      return handleAdminPublishToggle(request, env);
+        default:             return json(404, { ok: false, error: 'not_found' });
       }
     }
 

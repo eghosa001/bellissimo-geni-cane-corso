@@ -20,6 +20,11 @@ binding = "ADMIN"
 id = ""
 preview_id = ""
 
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = ""
+preview_bucket_name = ""
+
 [vars]
 PAYMENT_PROVIDER = "none"
 RESERVATION_AMOUNT = "0"
