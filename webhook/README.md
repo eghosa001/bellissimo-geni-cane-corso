@@ -1,33 +1,86 @@
-# Bellissimo Geni — Serverless / webhook provider
-#
-# STATUS: STUB — NOT LIVE. This documents the reservation + payment webhook
-# contract that the site's front end already posts to at POST /webhook.
-# Once the client confirms the payment provider and reservation rules
-# (Phase 7), implement this handler with:
-#   - Server-side reCAPTCHA verification (v3 site secret)
-#   - Idempotent reservation creation keyed by client reservation ref
-#   - Payment provider initiation + secure signature verification
-#   - Webhook signature verification (never trust client-supplied state)
-#   - Status transitions: REQUESTED -> PAYMENT_PENDING -> RESERVED -> SOLD
-#   - Notifications to the kennel (WhatsApp/email)
-#
-# The front end already sends:
-#   POST /webhook
-#   { "action":"reserve", "version":2,
-#     "token":"<recaptcha-v3-token>",            // only if site key set
-#     "data": { "puppy","puppyName","name","phone","email","message",
-#               "ref","status":"REQUESTED" },
-#     "timestamp":"<ISO>" }
-#
-# IMPORTANT: Do not store card/PAN details here. The provider processes cards.
-# Keep the reCAPTCHA secret and any provider secret in server environment
-# variables, never in the front end.
+# Bellissimo Geni — Reservation + Payment webhook
 
-# Function entry point (target-language agnostic pseudo-contract)
-def handle(request):
-    # 1. Verify reCAPTCHA token (skip pre-captcha dev build)
-    # 2. Validate + normalize payload (strip zero-widths, sanitize, length caps)
-    # 3. upsert reservation by client ref (idempotent)
-    # 4. Initiate payment with provider; return payment_url + provider id
-    # 5. Register webhook route to verify provider signature on callback
-    pass
+Real serverless handler (Cloudflare Workers, ESM, zero dependencies). Replaces the former stub.
+
+## Routes
+
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `/webhook` or `/webhook/reserve` | POST | Create reservation (idempotent), verify reCAPTCHA, initiate payment |
+| `/webhook/payment` | POST | Provider callback; verifies signature, transitions status |
+| `/webhook/health` | GET | `{ok:true}` |
+
+## Front end contract
+
+`reserve.html` posts to `window.BG_WEBHOOK_URL` when set (empty until deployed):
+
+```json
+{
+  "action": "reserve",
+  "version": 2,
+  "token": "<recaptcha-v3-token or null>",
+  "data": { "puppy", "puppyName", "name", "phone", "email", "message", "ref", "status": "REQUESTED" },
+  "timestamp": "ISO"
+}
+```
+
+Server returns `{ok, ref, status, payment_url}` (`payment_url` only when a provider is configured).
+
+## Status machine
+
+`REQUESTED -> PAYMENT_PENDING -> RESERVED -> SOLD`, plus `CANCELLED`. Transitions happen only server-side. Client-supplied status is ignored.
+
+## Security properties
+
+- Server-side validation: name length, phone normalized to 7–15 digits (incl. `+234`), email format, puppy id, message cap 500 chars; zero-width chars stripped; `<`/`>` stripped.
+- Timestamp skew check (±10 min) to block replays.
+- reCAPTCHA v3 verified server-side when `RECAPTCHA_SECRET` is set; demands score ≥ 0.5 and matching action (`reserve`).
+- Idempotent: same client ref returns existing record; cancelled refs return `409`.
+- Provider signature verification — never trust client state:
+  - **Paystack**: HMAC-SHA512 over raw body vs `x-paystack-signature`, event must be `charge.success`.
+  - **Flutterwave**: re-verifies the transaction server-side via `GET /v3/transactions/{id}/verify` (status `successful`).
+- Amount + currency checked against `RESERVATION_AMOUNT` / `PAYMENT_CURRENCY`.
+- No card/PAN data is stored anywhere; providers process cards.
+- Secrets live only in worker secrets/env, never in the front end.
+
+## KV record
+
+Keyed by ref (`BG-YYYY-XXXX`). Stores name, phone, email, message, puppy, status, payment url/ref, provider, paid amount/currency, ISO timestamps. 180-day TTL.
+
+## Environment
+
+| Variable | Meaning |
+| --- | --- |
+| `RESERVATIONS` | KV namespace binding |
+| `PAYMENT_PROVIDER` | `none` \| `paystack` \| `flutterwave` |
+| `PAYSTACK_SECRET` | Paystack secret key (when provider) |
+| `FLUTTERWAVE_SECRET` | Flutterwave secret key (when provider) |
+| `RESERVATION_AMOUNT` | Deposit/full amount in major units |
+| `PAYMENT_CURRENCY` | e.g. `NGN` |
+| `PAYMENT_RETURN_URL` | Callback the payer is sent back to |
+| `RECAPTCHA_SECRET` | reCAPTCHA v3 site secret (empty = skip) |
+| `NOTIFY_URL` | Optional URL that receives `{event,ref,status,puppy}` on transitions |
+
+## Deploy
+
+```sh
+cd webhook
+npx wrangler login
+npx wrangler kv namespace create RESERVATIONS   # paste id into wrangler.toml
+npx wrangler secret put PAYSTACK_SECRET
+npx wrangler deploy
+```
+
+Set the deployed URL in `reserve.html` → `window.BG_WEBHOOK_URL` and, for the reCAPTCHA badge to work, register the worker origin in the reCAPTCHA console.
+
+## Tests
+
+```sh
+cd webhook
+npm run check   # node --check handler.js
+npm test        # node --test (7 tests: sanitize, phone, email, ref, validation, skew, transitions)
+```
+
+## Blocker
+
+Live initiation still requires the client's Phase 7 decisions (provider choice, deposit vs full amount, refund/cancellation rules) — see `CLIENT_INTAKE.md`.

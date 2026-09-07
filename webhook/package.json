@@ -1,0 +1,10 @@
+{
+  "name": "bellissimo-geni-webhook",
+  "version": "2.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test test.js",
+    "check": "node --check handler.js"
+  }
+}

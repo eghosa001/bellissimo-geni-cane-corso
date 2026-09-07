@@ -1,0 +1,13 @@
+name = "bellissimo-geni-webhook"
+main = "handler.js"
+compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "RESERVATIONS"
+id = ""
+preview_id = ""
+
+[vars]
+PAYMENT_PROVIDER = "none"
+RESERVATION_AMOUNT = "0"
+PAYMENT_CURRENCY = "NGN"

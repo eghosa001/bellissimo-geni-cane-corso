@@ -34,9 +34,9 @@ See **[CLIENT_INTAKE.md](CLIENT_INTAKE.md)** — a fill-in form covering payment
 - Phone/WhatsApp validation (7–15 digits) via `BG.validPhone`.
 - reCAPTCHA v3 scaffold: set `window.RECAPTCHA_SITE_KEY` in `reserve.html` head to enable; tokens are forwarded to the webhook for server-side verification.
 
-## Payment & webhook (Phase 7 — STUB, not live)
+## Payment & webhook (Phase 7)
 
-Front end already POSTs `{action:'reserve', version, token, data{...}, timestamp}` to `/webhook`. The site never stores card details. See `webhook/README.md` for the implementation contract. Payment (provider, deposit, refunds, cancellation, balance timing, currencies) requires client confirmation before going live.
+`reserve.html` POSTs `{action:'reserve', version, token, data{...}, timestamp}` to `window.BG_WEBHOOK_URL` (empty until the worker is deployed). A real serverless handler ships in `webhook/` (Cloudflare Workers, zero deps): server-side validation, reCAPTCHA v3 verification, idempotent reservation storage in KV, Paystack/Flutterwave payment initiation, signature verification, and `REQUESTED → PAYMENT_PENDING → RESERVED → SOLD` transitions — see `webhook/README.md`. The site never stores card details. Going live still requires the client to confirm provider, deposit amount, refunds, cancellation rules and currency.
 
 ## Run locally
 
