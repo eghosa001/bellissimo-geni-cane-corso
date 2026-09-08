@@ -30,6 +30,9 @@
 <footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="index.html">Home</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
 <script>
+// Connect to live Worker API. Set window.BG_WEBHOOK_URL before launch.
+window.BG_WEBHOOK_URL = '';
+<script>
 (function(){
 var list=document.getElementById('list'),q=document.getElementById('q'),sex=document.getElementById('sex'),prof=document.getElementById('profile'),DOGS=[];
 function card(d){return '<article class="card dog-card"><span class="meta">'+BG.esc((d.sex||'').toUpperCase())+' • '+BG.esc((d.colour||'').toUpperCase())+'</span><h3>'+BG.esc(d.name)+'</h3><p>'+BG.esc(d.bio||'')+'</p><div class="row"><a class="card-link" href="dogs.html?dog='+encodeURIComponent(d.id)+'">Explore profile →</a><a class="card-link" href="pedigree.html?dog='+encodeURIComponent(d.name)+'">Pedigree →</a></div></article>';}

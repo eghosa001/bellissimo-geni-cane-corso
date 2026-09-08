@@ -10,23 +10,28 @@ new_sqlite_classes = ["PuppyLock"]
 name = "PUPPY_LOCK"
 class_name = "PuppyLock"
 
+# Create KV namespaces and paste their IDs below:
+#   wrangler kv:namespace create ADMIN
+#   wrangler kv:namespace create RESERVATIONS
 [[kv_namespaces]]
 binding = "RESERVATIONS"
-id = ""
+id = ""        # ← paste RESERVATIONS namespace ID here
 preview_id = ""
 
 [[kv_namespaces]]
 binding = "ADMIN"
-id = ""
+id = ""        # ← paste ADMIN namespace ID here
 preview_id = ""
 
+# Create an R2 bucket for photo uploads:
+#   wrangler r2 bucket create bellissimo-geni-media
 [[r2_buckets]]
 binding = "UPLOADS"
-bucket_name = ""
+bucket_name = ""             # ← paste R2 bucket name here
 preview_bucket_name = ""
 
 [vars]
-PAYMENT_PROVIDER = "none"
-RESERVATION_AMOUNT = "0"
+PAYMENT_PROVIDER = "none"    # "paystack" or "flutterwave" or "none"
+RESERVATION_AMOUNT = "0"     # deposit amount in NGN
 PAYMENT_CURRENCY = "NGN"
 RESERVATION_HOLD_HOURS = "72"

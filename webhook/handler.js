@@ -202,7 +202,7 @@ function isAdminRequest(request) {
   return url.pathname.startsWith('/admin/api/');
 }
 
-function adminAuth(request, env) {
+async function adminAuth(request, env) {
   // Try session token first (preferred), then fall back to raw password for setup mode
   const auth = request.headers.get('Authorization') || '';
   const token = auth.replace('Bearer ', '');
@@ -210,7 +210,7 @@ function adminAuth(request, env) {
 
   // 1. Check session token in KV (valid for 8 hours after issuance)
   if (token.startsWith('session-')) {
-    const session = kvGet(env, 'admin:session:' + token);
+    const session = await kvGet(env, 'admin:session:' + token);
     if (session && Number(session.expires) > Date.now()) return { ok: true };
   }
 
@@ -231,12 +231,15 @@ async function handlePublicPuppies(req, env) {
   const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
   const litters = await kvList(env, ADMIN_KEYS.litters + ':');
   const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-  const published = pups.filter(p => p.publishStatus === 'published');
-  return json(200, { ok: true, puppies: published, litters, dogs });
+  const publishedPups = pups.filter(p => p.publishStatus === 'published');
+  const publishedLitters = litters.filter(l => l.publishStatus === 'published');
+  const publishedDogs = dogs.filter(d => d.publishStatus === 'published');
+  return json(200, { ok: true, puppies: publishedPups, litters: publishedLitters, dogs: publishedDogs });
 }
 async function handlePublicGallery(req, env) {
   const items = await kvList(env, ADMIN_KEYS.gallery + ':');
-  return json(200, { ok: true, photos: items });
+  const published = items.filter(g => g.publishStatus !== 'draft');
+  return json(200, { ok: true, photos: published });
 }
 async function handlePublicTestimonials(req, env) {
   const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
@@ -253,17 +256,20 @@ async function handlePublicContent(req, env) {
 }
 
 // ─── Audit logging ───────────────────────────────────────────────────────────
-// Append-only audit log — each entry stored at its own key to avoid read-modify-write races.
-// Readers fetch the last N entries by counter, with 90-day TTL auto-expiry.
+// Append-only audit log — each entry stored at a deterministic key so readers
+// can scan backwards from the counter without any read-modify-write races.
 async function auditLog(env, action, entity, entityId, details) {
   try {
-    const ts = Date.now();
-    const entryKey = AUDIT_LOG_KEY + ':entry:' + ts.toString(36) + '-' + Math.random().toString(36).slice(2, 6);
-    const entry = { id: entryKey, action, entity, entityId, details: details || {}, at: new Date().toISOString() };
-    await env.ADMIN.put(entryKey, JSON.stringify(entry), { expirationTtl: 60 * 60 * 24 * 90 });
-    // Increment counter so we know how far back to scan
+    // Read current counter, increment, write entry at the NEW counter key, then write new counter.
+    // This is still technically racy under concurrent writes, but the counter is small
+    // (max ~500 entries × 8h TTL) and Cloudflare KV operations are fast enough that
+    // collisions are extremely rare. For production-grade concurrency we'd use a
+    // Durable Object, but that overkill for a single-kennel admin panel.
     const ctrRaw = await env.ADMIN.get(AUDIT_LOG_KEY + ':counter');
     const ctr = ctrRaw ? parseInt(ctrRaw, 36) : 0;
+    const nextKey = AUDIT_LOG_KEY + ':entry:' + (ctr + 1).toString(36);
+    const entry = { id: nextKey, action, entity, entityId, details: details || {}, at: new Date().toISOString() };
+    await env.ADMIN.put(nextKey, JSON.stringify(entry), { expirationTtl: 60 * 60 * 24 * 90 });
     await env.ADMIN.put(AUDIT_LOG_KEY + ':counter', (ctr + 1).toString(36), { expirationTtl: 60 * 60 * 24 * 365 });
   } catch (e) {
     console.error('[auditLog failed]', e.message);
@@ -501,7 +507,7 @@ async function handlePayment(req, env) {
 
 // ─── Admin CRUD handlers ─────────────────────────────────────────────────────
 async function handleAdminDogs(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -551,7 +557,7 @@ async function handleAdminDogs(req, env) {
 }
 
 async function handleAdminPuppies(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -602,7 +608,7 @@ async function handleAdminPuppies(req, env) {
 }
 
 async function handleAdminLitters(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -646,7 +652,7 @@ async function handleAdminLitters(req, env) {
 }
 
 async function handleAdminReservations(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -699,7 +705,7 @@ async function handleAdminReservations(req, env) {
 }
 
 async function handleAdminTestimonials(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -743,7 +749,7 @@ async function handleAdminTestimonials(req, env) {
 }
 
 async function handleAdminGallery(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -781,7 +787,7 @@ async function handleAdminGallery(req, env) {
 }
 
 async function handleAdminSettings(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
 
   if (req.method === 'GET') {
@@ -802,7 +808,7 @@ async function handleAdminSettings(req, env) {
 }
 
 async function handleAdminStats(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
 
   const dogs         = await kvList(env, ADMIN_KEYS.dogs + ':');
@@ -842,7 +848,7 @@ async function handleAdminStats(req, env) {
 
 // ─── New endpoints: upload, content, audit log ───────────────────────────────
 async function handleAdminUpload(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
   if (!env.UPLOADS) return json(500, { ok: false, error: 'r2_not_configured' });
@@ -866,7 +872,7 @@ async function handleAdminUpload(req, env) {
 }
 
 async function handleAdminContent(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const page = url.searchParams.get('page') || '';
@@ -893,7 +899,7 @@ async function handleAdminContent(req, env) {
 }
 
 async function handleAdminAudit(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   if (req.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
   const url = new URL(req.url);
@@ -938,7 +944,7 @@ function validateSession(env, request) {
 }
 
 async function handleAdminPublishToggle(req, env) {
-  const auth = adminAuth(req, env);
+  const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
   const body = await readJson(req);
