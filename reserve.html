@@ -47,7 +47,8 @@
 <script src="site.js"></script>
 <script>
 (function(){
-var WHATSAPP_NUMBER='2348000000000',form=document.getElementById('resForm'),sum=document.getElementById('summary'),note=document.getElementById('note');
+// WhatsApp number loaded from admin settings at runtime, falls back to placeholder
+  var WHATSAPP_NUMBER='2348000000000',form=document.getElementById('resForm'),sum=document.getElementById('summary'),note=document.getElementById('note');
 var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'',WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
 var PUPPS=[];
@@ -72,7 +73,7 @@ function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{meth
 if(RECAPTCHA_SITE_KEY&&typeof grecaptcha!=='undefined'){grecaptcha.ready(function(){grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'reserve'}).then(function(token){BG.track('captcha_success',p.id);postWebhook(token);});});}
 else{setTimeout(function(){postWebhook(null);},500);}
 });
-BG.loadJSON('data/puppies.json').then(function(j){PUPPS=j.puppies||[];fill();});
+BG.loadAdminJSON('puppies').then(function(j){PUPPS=j.puppies||j.data||[];fill();}).catch(function(){BG.loadJSON('data/puppies.json').then(function(j){PUPPS=j.puppies||[];fill();});});
 })();
 </script>
 </body>

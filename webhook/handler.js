@@ -25,6 +25,10 @@ const ADMIN_KEYS = {
 const AUDIT_LOG_KEY = 'admin:audit:log';
 const CONTENT_PREFIX = 'admin:content:';
 const MAX_AUDIT_LOGS = 500;
+// Login rate limit: max 5 attempts per IP per 10 minutes
+const LOGIN_RATE_MAX = 5;
+const LOGIN_RATE_WINDOW = 10 * 60 * 1000;
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 export function strip(zero) {
@@ -238,7 +242,7 @@ async function handlePublicPuppies(req, env) {
 }
 async function handlePublicGallery(req, env) {
   const items = await kvList(env, ADMIN_KEYS.gallery + ':');
-  const published = items.filter(g => g.publishStatus !== 'draft');
+  const published = items.filter(g => g.publishStatus === 'published');
   return json(200, { ok: true, photos: published });
 }
 async function handlePublicTestimonials(req, env) {
@@ -252,7 +256,9 @@ async function handlePublicContent(req, env) {
   const ALLOWED = ['about', 'breeding', 'standards', 'socialization', 'social', 'contact'];
   if (!ALLOWED.includes(page)) return json(400, { ok: false, error: 'unknown_page' });
   const raw = await kvGet(env, CONTENT_PREFIX + page);
-  return json(200, { ok: true, data: raw || { html: '' } });
+  // Only serve content that has been explicitly published by the owner
+  if (raw && raw.publishStatus !== 'published') return json(404, { ok: false, error: 'not_published' });
+  return json(200, { ok: true, data: raw || { html: '', publishStatus: 'published' } });
 }
 
 // ─── Audit logging ───────────────────────────────────────────────────────────
@@ -772,7 +778,7 @@ async function handleAdminGallery(req, env) {
       return json(200, { ok: true, data: updated });
     }
     const newId = 'gal-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-    const item = { id: newId, caption: '', alt: '', category: 'general', order: 0, ...body };
+    const item = { id: newId, caption: '', alt: '', category: 'general', order: 0, publishStatus: 'published', ...body };
     await kvPut(env, ADMIN_KEYS.gallery + ':' + newId, item);
     await auditLog(env, 'create', 'gallery', newId, { caption: item.caption });
     return json(201, { ok: true, data: item });
@@ -924,11 +930,22 @@ async function handleAdminLogin(req, env) {
   const body = await readJson(req);
   if (!body || !body.password) return json(400, { ok: false, error: 'missing_password' });
   const expected = env.ADMIN_PASSWORD;
-  if (!expected || String(body.password) !== expected) return json(401, { ok: false, error: 'unauthorized' });
+  if (!expected || String(body.password) !== expected) {
+    // Increment rate limit counter on failure
+    try {
+      const rateRaw = await env.ADMIN.get(rateKey);
+      const rateData = rateRaw ? JSON.parse(rateRaw) : { count: 0, until: 0 };
+      const newUntil = Number(rateData.until) > Date.now() ? Number(rateData.until) : Date.now() + LOGIN_RATE_WINDOW;
+      await env.ADMIN.put(rateKey, JSON.stringify({ count: (rateData.count || 0) + 1, until: newUntil }), { expirationTtl: LOGIN_RATE_WINDOW / 1000 + 60 });
+    } catch (_) {}
+    return json(401, { ok: false, error: 'unauthorized' });
+  }
   // Issue a short-lived token (valid 8 hours) stored in KV
   const tokenId = 'session-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
   const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
   await kvPut(env, 'admin:session:' + tokenId, { created: new Date().toISOString(), expires: expiresAt });
+  // Reset rate limit on success
+  await env.ADMIN.put(rateKey, JSON.stringify({ count: 0, until: 0 }), { expirationTtl: 60 });
   return json(200, { ok: true, token: tokenId, expiresAt: expiresAt });
 }
 
