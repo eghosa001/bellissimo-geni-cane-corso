@@ -1,0 +1,113 @@
+name: Repair admin and worker
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply targeted repairs
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          # ---- admin.html ----
+          p = Path('admin.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Remove obsolete password variable references. Authentication now uses the session token.
+          s = s.replace("adminPW", "adminToken")
+
+          # Keep the session token in memory only; do not persist credentials in sessionStorage.
+          s = s.replace("sessionStorage.removeItem('bg_session_token');\n  adminToken = null;", "adminToken = null;")
+          s = s.replace("      sessionStorage.setItem('bg_session_token', j.token);\n", "")
+
+          # Puppies page must load its data after its container has been inserted into the DOM.
+          s = s.replace(
+              "case 'puppies':     area.innerHTML = await renderPuppiesList(); break;",
+              "case 'puppies':     area.innerHTML = await renderPuppiesList(); await refreshPuppies(); break;"
+          )
+
+          # Edit Pages: actually place the fetched KV content into the textareas.
+          start = s.index('async function renderEditContent() {')
+          end = s.index('window.switchContentTab =', start)
+          replacement = r'''async function renderEditContent() {
+  const PAGES = ['about','breeding','standards','socialization','social','contact'];
+  const results = await Promise.all(PAGES.map(p => apiFetch('/admin/api/content?page='+encodeURIComponent(p)).then(r => ({page:p,data:r.data||{html:''}}))));
+  const contentByPage = Object.fromEntries(results.map(r => [r.page, r.data.html || '']));
+  const tabs = PAGES.map((p,i) => '<div class="content-tab'+(i===0?' active':'')+'" onclick="switchContentTab('+JSON.stringify(p)+',this)">'+p.charAt(0).toUpperCase()+p.slice(1)+'</div>').join('');
+  const editors = PAGES.map(p => '<div class="content-editor" id="editor-'+p+'" style="display:'+(p===PAGES[0]?'block':'none')+'"><textarea name="html" rows="20" placeholder="Paste approved HTML content here..."></textarea><div style="margin-top:12px" class="btn-group"><button class="btn btn-gold" onclick="saveContent('+JSON.stringify(p)+');return false">Save Content</button><span class="muted" style="font-size:11px;margin-left:8px">Saves to KV - goes live immediately</span></div></div>').join('');
+  const wrapper = '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">These pages are currently static HTML. Edit the HTML below to update live content without touching code.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
+  queueMicrotask(() => {
+    PAGES.forEach(p => {
+      const ta = document.querySelector('#editor-'+p+' textarea');
+      if (ta) ta.value = contentByPage[p];
+    });
+  });
+  return wrapper;
+}
+'''
+          s = s[:start] + replacement + s[end:]
+
+          # Do not restore a token from sessionStorage. A page reload requires login again.
+          s = re.sub(r"\n\(function\(\)\{\n  // Try to restore a session token[\s\S]*?\n\}\)\(\);\n</script>", "\n</script>", s)
+
+          p.write_text(s, encoding='utf-8')
+
+          # ---- webhook/handler.js ----
+          p = Path('webhook/handler.js')
+          s = p.read_text(encoding='utf-8')
+
+          old = """function adminAuth(request, env) {\n  const pw = env.ADMIN_PASSWORD;\n  if (!pw) return { ok: false, reason: 'unconfigured' };\n  const auth = request.headers.get('Authorization') || '';\n  if (auth === 'Bearer ' + pw) return { ok: true };\n  return { ok: false, reason: 'unauthorized' };\n}"""
+          new = """async function adminAuth(request, env) {\n  if (!env.ADMIN_PASSWORD) return { ok: false, reason: 'unconfigured' };\n  return await validateSession(env, request);\n}"""
+          if old not in s:
+              raise SystemExit('Expected adminAuth implementation not found')
+          s = s.replace(old, new, 1)
+          s = s.replace("  const session = kvGet(env, 'admin:session:' + token);", "  const session = await kvGet(env, 'admin:session:' + token);")
+          s = s.replace("const auth = adminAuth(req, env);", "const auth = await adminAuth(req, env);")
+
+          p.write_text(s, encoding='utf-8')
+      
+      - name: Validate JavaScript
+        run: |
+          node --check webhook/handler.js
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          html = Path('admin.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, flags=re.S|re.I)
+          if not scripts:
+              raise SystemExit('No inline admin script found')
+          Path('/tmp/admin-inline.js').write_text('\n'.join(scripts), encoding='utf-8')
+          subprocess.run(['node','--check','/tmp/admin-inline.js'], check=True)
+          print('admin.html inline JavaScript syntax: OK')
+          PY
+
+      - name: Commit repairs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html webhook/handler.js
+          if git diff --cached --quiet; then
+            echo "No repairs to commit"
+          else
+            git commit -m "fix: repair admin authentication and CMS runtime bugs"
+            git push
+          fi
+
+      - name: Remove repair workflow
+        if: success()
+        run: |
+          git rm -f .github/workflows/repair-admin-and-worker.yml
+          git commit -m "chore: remove one-time repair workflow"
+          git push
