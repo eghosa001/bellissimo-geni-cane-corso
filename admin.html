@@ -288,7 +288,9 @@ let currentDogs = [];
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('loginPw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('bg_session_token');
   adminToken = null;
+  window._bgAdminToken = null;
   document.getElementById('loginScreen').style.display='';
   document.getElementById('adminWrap').classList.remove('active');
 });
@@ -304,6 +306,8 @@ async function doLogin() {
     const j = await r.json();
     if (j.ok && j.token) {
       adminToken = j.token;
+      window._bgAdminToken = adminToken;
+      sessionStorage.setItem('bg_session_token', j.token);
       showAdmin();
     } else {
       document.getElementById('loginErr').textContent = j.error === 'unauthorized' ? 'Incorrect password.' : 'Connection error.';
@@ -312,15 +316,11 @@ async function doLogin() {
     document.getElementById('loginErr').textContent = 'Could not reach server.';
   }
 }
-  } catch(e) {
-    document.getElementById('loginErr').textContent = 'Could not reach server.';
-  }
-}
 function showAdmin() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminWrap').classList.add('active');
   document.getElementById('topDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'short',day:'numeric'});
-  if(adminPW) loadAllData();
+  if(adminToken) loadAllData();
 }
 
 // ── Navigation ──────────────────────────────────────────────────────────────
@@ -1187,10 +1187,13 @@ async function savePedigree(dogId) {
 }
 
 (function(){
-  const storedPw = localStorage.getItem('bg_admin_pw');
-  if(storedPw) {
-    adminPW = storedPw;
-    showAdmin();
+  // Try to restore a session token from sessionStorage (survives page reload, cleared on tab close)
+  // NOT localStorage — avoids XSS exposure of persistent credentials
+  const savedToken = sessionStorage.getItem('bg_session_token');
+  if (savedToken) {
+    adminToken = savedToken;
+    window._bgAdminToken = savedToken;
+    loadAllData();
   }
 })();
 </script>
