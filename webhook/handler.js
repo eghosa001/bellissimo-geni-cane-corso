@@ -135,17 +135,22 @@ async function readJson(request) {
 }
 
 async function kvGet(env, key) {
-  try {
-    const raw = await env.ADMIN.get(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
+  const raw = await env.ADMIN.get(key);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) {
+    console.error('[kvGet parse error]', key, e.message);
+    return null;
+  }
 }
 
 async function kvPut(env, key, value) {
   try {
     await env.ADMIN.put(key, JSON.stringify(value));
     return true;
-  } catch (e) { return false; }
+  } catch (e) {
+    console.error('[kvPut failed]', key, e.message);
+    throw e;
+  }
 }
 
 async function kvList(env, prefix) {
@@ -205,22 +210,60 @@ function adminAuth(request, env) {
   return { ok: false, reason: 'unauthorized' };
 }
 
+// ─── Public unauthenticated API — only published records, no auth required ──
+async function handlePublicDogs(req, env) {
+  const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+  const published = dogs.filter(d => d.publishStatus === 'published');
+  return json(200, { ok: true, dogs: published.sort((a, b) => a.name.localeCompare(b.name)) });
+}
+async function handlePublicPuppies(req, env) {
+  const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
+  const litters = await kvList(env, ADMIN_KEYS.litters + ':');
+  const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+  const published = pups.filter(p => p.publishStatus === 'published');
+  return json(200, { ok: true, puppies: published, litters, dogs });
+}
+async function handlePublicGallery(req, env) {
+  const items = await kvList(env, ADMIN_KEYS.gallery + ':');
+  return json(200, { ok: true, photos: items });
+}
+async function handlePublicTestimonials(req, env) {
+  const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
+  const approved = items.filter(t => t.approved && t.publishStatus === 'published');
+  return json(200, { ok: true, testimonials: approved.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
+}
+async function handlePublicContent(req, env) {
+  const url = new URL(req.url);
+  const page = url.searchParams.get('page') || '';
+  const ALLOWED = ['about', 'breeding', 'standards', 'socialization', 'social', 'contact'];
+  if (!ALLOWED.includes(page)) return json(400, { ok: false, error: 'unknown_page' });
+  const raw = await kvGet(env, CONTENT_PREFIX + page);
+  return json(200, { ok: true, data: raw || { html: '' } });
+}
+
 // ─── Audit logging ───────────────────────────────────────────────────────────
+// Append-only audit log — each entry stored at its own key to avoid read-modify-write races.
+// Readers fetch the last N entries by counter, with 90-day TTL auto-expiry.
 async function auditLog(env, action, entity, entityId, details) {
   try {
-    const raw = await env.ADMIN.get(AUDIT_LOG_KEY);
-    const logs = raw ? JSON.parse(raw) : [];
-    logs.unshift({ id: 'log-' + Date.now(), action, entity, entityId, details: details || {}, at: new Date().toISOString() });
-    if (logs.length > MAX_AUDIT_LOGS) logs.length = MAX_AUDIT_LOGS;
-    await env.ADMIN.put(AUDIT_LOG_KEY, JSON.stringify(logs));
-  } catch (_) {}
+    const ts = Date.now();
+    const entryKey = AUDIT_LOG_KEY + ':entry:' + ts.toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+    const entry = { id: entryKey, action, entity, entityId, details: details || {}, at: new Date().toISOString() };
+    await env.ADMIN.put(entryKey, JSON.stringify(entry), { expirationTtl: 60 * 60 * 24 * 90 });
+    // Increment counter so we know how far back to scan
+    const ctrRaw = await env.ADMIN.get(AUDIT_LOG_KEY + ':counter');
+    const ctr = ctrRaw ? parseInt(ctrRaw, 36) : 0;
+    await env.ADMIN.put(AUDIT_LOG_KEY + ':counter', (ctr + 1).toString(36), { expirationTtl: 60 * 60 * 24 * 365 });
+  } catch (e) {
+    console.error('[auditLog failed]', e.message);
+  }
 }
 
 // ─── Draft / publish filtering ────────────────────────────────────────────────
 function filterPublished(items, params) {
   const showAll = params && params.get('status') === 'all';
   if (showAll) return items;
-  return items.filter(i => i.publishStatus !== 'draft');
+  return items.filter(i => i.publishStatus === 'published');
 }
 
 function ensurePublishStatus(record) {
@@ -843,12 +886,44 @@ async function handleAdminAudit(req, env) {
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   if (req.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
   const url = new URL(req.url);
-  const limit = Math.min(parseInt(url.searchParams.get('limit')) || 100, 500);
+  const limitN = Math.min(parseInt(url.searchParams.get('limit')) || 100, 500);
   const entity = url.searchParams.get('entity');
-  const raw = await env.ADMIN.get(AUDIT_LOG_KEY);
-  const allLogs = raw ? JSON.parse(raw) : [];
+  // Fetch recent entries by scanning backwards from counter (append-only design)
+  const ctrRaw = await env.ADMIN.get(AUDIT_LOG_KEY + ':counter');
+  const totalEntries = ctrRaw ? parseInt(ctrRaw, 36) : 0;
+  const allLogs = [];
+  for (let i = totalEntries; i > Math.max(0, totalEntries - limitN - 100) && allLogs.length < limitN; i--) {
+    const raw = await env.ADMIN.get(AUDIT_LOG_KEY + ':entry:' + i.toString(36));
+    if (raw) { try { allLogs.push(JSON.parse(raw)); } catch (_) {} }
+  }
+  allLogs.sort((a, b) => new Date(b.at) - new Date(a.at));
   const filtered = entity ? allLogs.filter(l => l.entity === entity) : allLogs;
-  return json(200, { ok: true, data: filtered.slice(0, limit) });
+  return json(200, { ok: true, data: filtered.slice(0, limitN), total: totalEntries });
+}
+
+// ─── Login — server issues a short-lived token ──────────────────────────────
+async function handleAdminLogin(req, env) {
+  if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  const body = await readJson(req);
+  if (!body || !body.password) return json(400, { ok: false, error: 'missing_password' });
+  const expected = env.ADMIN_PASSWORD;
+  if (!expected || String(body.password) !== expected) return json(401, { ok: false, error: 'unauthorized' });
+  // Issue a short-lived token (valid 8 hours) stored in KV
+  const tokenId = 'session-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
+  await kvPut(env, 'admin:session:' + tokenId, { created: new Date().toISOString(), expires: expiresAt });
+  return json(200, { ok: true, token: tokenId, expiresAt: expiresAt });
+}
+
+// Helper to validate a session token
+function validateSession(env, request) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.replace('Bearer ', '');
+  if (!token) return { ok: false };
+  const session = kvGet(env, 'admin:session:' + token);
+  if (!session) return { ok: false };
+  if (Number(session.expires) < Date.now()) return { ok: false }; // expired
+  return { ok: true, token };
 }
 
 async function handleAdminPublishToggle(req, env) {
@@ -891,7 +966,20 @@ export default {
       return json(200, { ok: true, ts: Date.now() });
     }
 
-    // ── Admin API routes ──
+    // ── Public read-only API (no auth, published records only) ──
+    if (url.pathname.startsWith('/api/')) {
+      const rest = url.pathname.replace('/api/', '');
+      switch (rest) {
+        case 'dogs':          return handlePublicDogs(request, env);
+        case 'puppies':       return handlePublicPuppies(request, env);
+        case 'gallery':       return handlePublicGallery(request, env);
+        case 'testimonials':  return handlePublicTestimonials(request, env);
+        case 'content':       return handlePublicContent(request, env);
+        default:              return json(404, { ok: false, error: 'not_found' });
+      }
+    }
+
+    // ── Admin API routes (authenticated) ──
     if (url.pathname.startsWith('/admin/api/')) {
       const rest = url.pathname.replace('/admin/api/', '');
       const parts = rest.split('/');
@@ -912,6 +1000,7 @@ export default {
           return json(400, { ok: false, error: 'missing_page' });
         case 'audit':        return handleAdminAudit(request, env);
         case 'publish':      return handleAdminPublishToggle(request, env);
+        case 'login':        return handleAdminLogin(request, env);
         default:             return json(404, { ok: false, error: 'not_found' });
       }
     }

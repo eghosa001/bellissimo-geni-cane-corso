@@ -73,13 +73,25 @@
     } catch (_) {}
   }
 
-  // Admin API data loader — falls back to local JSON if API unavailable
+  // Data loader — tries public API first (no auth), then admin API with stored token, then local JSON
   function loadAdminJSON(path, fallbackPath) {
     var apiBase = window.BG_WEBHOOK_URL || '';
     if (apiBase) {
-      return fetch(apiBase + '/admin/api/' + path, { headers: { 'Accept': 'application/json' } })
-        .then(function(r) { if (r.ok) return r.json(); throw new Error('api_fail'); })
-        .catch(function() { if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); }); throw new Error('no_data'); });
+      // Step 1: Try unauthenticated public endpoint (/api/dogs, /api/puppies, etc.)
+      return fetch(apiBase + '/api/' + path, { headers: { 'Accept': 'application/json' } })
+        .then(function(r) { if (r.ok) return r.json(); throw new Error('public_fail'); })
+        .catch(function() {
+          // Step 2: Try authenticated admin endpoint if token exists
+          var token = window._bgAdminToken || '';
+          if (token) {
+            return fetch(apiBase + '/admin/api/' + path, {
+              headers: Object.assign({ 'Accept': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {})
+            }).then(function(r) { if (r.ok) return r.json(); throw new Error('admin_fail'); });
+          }
+          // Step 3: Fall back to local JSON file
+          if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
+          throw new Error('no_data');
+        });
     }
     if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
     throw new Error('no_data');

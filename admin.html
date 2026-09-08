@@ -279,9 +279,8 @@
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
 const API_BASE = window.BG_WEBHOOK_URL || '';
-// Store a hash of the password, not the raw value (mitigates XSS credential theft)
-function hashStr(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'h'+Math.abs(h).toString(36);}
-let adminPWHash = localStorage.getItem('bg_admin_pw_hash')||'';
+// Token stored in memory only — never in localStorage (survives XSS but not page reload)
+let adminToken = null;
 let currentPuppyCatalog = [];
 let currentDogs = [];
 
@@ -289,7 +288,7 @@ let currentDogs = [];
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('loginPw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.removeItem('bg_admin_pw_hash');
+  adminToken = null;
   document.getElementById('loginScreen').style.display='';
   document.getElementById('adminWrap').classList.remove('active');
 });
@@ -297,17 +296,22 @@ async function doLogin() {
   const pw = document.getElementById('loginPw').value;
   if (!pw) return;
   try {
-    const r = await fetch(API_BASE + '/admin/api/stats', {
-      headers: { 'Authorization': 'Bearer ' + pw }
+    const r = await fetch(API_BASE + '/admin/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
     });
     const j = await r.json();
-    if (j.ok) {
-      adminPW = pw;
-      localStorage.setItem('bg_admin_pw', pw);
+    if (j.ok && j.token) {
+      adminToken = j.token;
       showAdmin();
     } else {
       document.getElementById('loginErr').textContent = j.error === 'unauthorized' ? 'Incorrect password.' : 'Connection error.';
     }
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'Could not reach server.';
+  }
+}
   } catch(e) {
     document.getElementById('loginErr').textContent = 'Could not reach server.';
   }
@@ -342,7 +346,7 @@ function closeMobile() { sidebar.classList.remove('open'); overlayBg.classList.r
 // ── HTTP helpers ────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
-  if (adminPW) headers['Authorization'] = 'Bearer ' + adminPW;
+  if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
   const r = await fetch(API_BASE + path, { ...opts, headers });
   return r.json();
 }

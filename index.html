@@ -70,7 +70,7 @@
 <script src="app.js"></script>
 <script src="site.js"></script>
 <script>
-Promise.all([BG.loadAdminJSON('dogs?status=all','data/dogs.json').catch(function(){return {dogs:[]};}),BG.loadAdminJSON('puppies?status=all','data/puppies.json').catch(function(){return {puppies:[]};})]).then(function(r){
+Promise.all([BG.loadAdminJSON('dogs').catch(function(){return {dogs:[]};}),BG.loadAdminJSON('puppies').catch(function(){return {puppies:[]};})]).then(function(r){
 var dogs=r[0].dogs||[],pups=r[1].puppies||[];
 document.getElementById('featuredDogs').innerHTML=dogs.slice(0,3).map(function(d){return '<article class="card dog-card"><span class="meta">'+BG.esc((d.sex||'').toUpperCase())+' • '+BG.esc((d.colour||'').toUpperCase())+'</span><h3>'+BG.esc(d.name)+'</h3><p>'+BG.esc(d.bio||'')+'</p><div class="row"><a class="card-link" href="dogs.html?dog='+encodeURIComponent(d.id)+'">Explore profile →</a><a class="card-link" href="pedigree.html?dog='+encodeURIComponent(d.name)+'">Pedigree →</a></div></article>';}).join('');
 document.getElementById('featuredPups').innerHTML=pups.slice(0,3).map(function(p){return '<article class="card dog-card"><span class="pill '+String(p.status).toLowerCase().replace(/ /g,'-')+'">'+BG.esc(p.status)+'</span><h3>'+BG.esc(p.name)+'</h3><p><strong>'+BG.esc(p.priceNote||'')+'</strong></p><div class="row"><a class="card-link" href="reserve.html?puppy='+encodeURIComponent(p.id)+'">Reserve →</a></div></article>';}).join('');
