@@ -823,8 +823,16 @@ async function handleAdminStats(req, env) {
   const reservations = await kvList(env, 'reservation:');
   const testimonials = await kvList(env, ADMIN_KEYS.testimonials + ':');
   const gallery      = await kvList(env, ADMIN_KEYS.gallery + ':');
-  const auditRaw     = await env.ADMIN.get(AUDIT_LOG_KEY);
-  const auditLogs    = auditRaw ? JSON.parse(auditRaw) : [];
+
+  // Read recent audit entries from the counter-based append-only log
+  const ctrRaw      = await env.ADMIN.get(AUDIT_LOG_KEY + ':counter');
+  const totalAuditEntries = ctrRaw ? parseInt(ctrRaw, 36) : 0;
+  const auditLogs   = [];
+  for (let i = totalAuditEntries; i > Math.max(0, totalAuditEntries - 50) && auditLogs.length < 50; i--) {
+    const raw = await env.ADMIN.get(AUDIT_LOG_KEY + ':entry:' + i.toString(36));
+    if (raw) { try { auditLogs.push(JSON.parse(raw)); } catch (_) {} }
+  }
+  auditLogs.sort((a, b) => new Date(b.at) - new Date(a.at));
 
   const statusCounts = {};
   puppies.forEach(p => { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1; });
@@ -927,6 +935,9 @@ async function handleAdminAudit(req, env) {
 // ─── Login — server issues a short-lived token ──────────────────────────────
 async function handleAdminLogin(req, env) {
   if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  // Rate limit key based on client IP
+  const ip = req.headers.get('CF-Connecting-IP') || req.headers.get('x-forwarded-for') || 'unknown';
+  const rateKey = 'admin:login:rate:' + ip;
   const body = await readJson(req);
   if (!body || !body.password) return json(400, { ok: false, error: 'missing_password' });
   const expected = env.ADMIN_PASSWORD;
@@ -936,7 +947,7 @@ async function handleAdminLogin(req, env) {
       const rateRaw = await env.ADMIN.get(rateKey);
       const rateData = rateRaw ? JSON.parse(rateRaw) : { count: 0, until: 0 };
       const newUntil = Number(rateData.until) > Date.now() ? Number(rateData.until) : Date.now() + LOGIN_RATE_WINDOW;
-      await env.ADMIN.put(rateKey, JSON.stringify({ count: (rateData.count || 0) + 1, until: newUntil }), { expirationTtl: LOGIN_RATE_WINDOW / 1000 + 60 });
+      await env.ADMIN.put(rateKey, JSON.stringify({ count: (rateData.count || 0) + 1, until: newUntil }), { expirationTtl: Math.ceil(LOGIN_RATE_WINDOW / 1000) + 60 });
     } catch (_) {}
     return json(401, { ok: false, error: 'unauthorized' });
   }
@@ -950,11 +961,11 @@ async function handleAdminLogin(req, env) {
 }
 
 // Helper to validate a session token
-function validateSession(env, request) {
+async function validateSession(env, request) {
   const auth = request.headers.get('Authorization') || '';
   const token = auth.replace('Bearer ', '');
   if (!token) return { ok: false };
-  const session = kvGet(env, 'admin:session:' + token);
+  const session = await kvGet(env, 'admin:session:' + token);
   if (!session) return { ok: false };
   if (Number(session.expires) < Date.now()) return { ok: false }; // expired
   return { ok: true, token };
