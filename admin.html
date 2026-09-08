@@ -571,7 +571,7 @@ async function handleUploadFile(input, urlInputId) {
   try {
     const r = await fetch(API_BASE + '/admin/api/upload', {
       method: 'POST', body: formData,
-      headers: { 'Authorization': 'Bearer ' + adminPW }
+      headers: { 'Authorization': 'Bearer ' + adminToken }
     });
     const j = await r.json();
     if (j.ok) {
@@ -616,6 +616,8 @@ function renderPuppiesList() {
       <button class="btn" onclick="navigate('litters')">Manage Litters</button>
     </div>
     <div id="puppiesContent"><p class="muted" style="padding:20px">Loading…</p></div>`;
+  // Load puppy data immediately so page does not stay stuck on "Loading..."
+  refreshPuppies();
 }
 window.filterPups = function(term) {
   const status = document.getElementById('pupStatusFilter')?.value || '';
@@ -1123,7 +1125,10 @@ async function renderEditContent() {
   const PAGES = ['about','breeding','standards','socialization','social','contact'];
   const results = await Promise.all(PAGES.map(p => apiFetch('/admin/api/content?page='+encodeURIComponent(p)).then(r=>({page:p,data:r.data||{html:''}}))));
   const tabs = PAGES.map((p,i) => '<div class="content-tab'+(i===0?' active':'')+'" onclick="switchContentTab('+JSON.stringify(p)+',this)">'+p.charAt(0).toUpperCase()+p.slice(1)+'</div>').join('');
-  const editors = PAGES.map(p => '<div class="content-editor" id="editor-'+p+'" style="display:'+(p===PAGES[0]?'block':'none')+'"><textarea name="html" rows="20" placeholder="Paste approved HTML content here..."></textarea><div style="margin-top:12px" class="btn-group"><button class="btn btn-gold" onclick="saveContent('+JSON.stringify(p)+')">Save Content</button><span class="muted" style="font-size:11px;margin-left:8px">Saves to KV - goes live immediately</span></div></div>').join('');
+  // Build editors populated with fetched content
+  const pageMap = {};
+  results.forEach(r => { pageMap[r.page] = r.data && r.data.html ? r.data.html : ''; });
+  const editors = PAGES.map(p => `<div class="content-editor" id="editor-${p}" style="display:${p===PAGES[0]?'block':'none'}"><textarea name="html" rows="20">${esc(pageMap[p]||'')}</textarea><div style="margin-top:12px" class="btn-group"><button class="btn btn-gold" onclick="saveContent(${JSON.stringify(p)})">Save Content</button><span class="muted" style="font-size:11px;margin-left:8px">Saves to KV - goes live immediately</span></div></div>`).join('');
   return '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">These pages are currently static HTML. Edit the HTML below to update live content without touching code.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
 }
 window.switchContentTab = function(page, el) {

@@ -203,10 +203,21 @@ function isAdminRequest(request) {
 }
 
 function adminAuth(request, env) {
-  const pw = env.ADMIN_PASSWORD;
-  if (!pw) return { ok: false, reason: 'unconfigured' };
+  // Try session token first (preferred), then fall back to raw password for setup mode
   const auth = request.headers.get('Authorization') || '';
-  if (auth === 'Bearer ' + pw) return { ok: true };
+  const token = auth.replace('Bearer ', '');
+  if (!token) return { ok: false, reason: 'missing_auth' };
+
+  // 1. Check session token in KV (valid for 8 hours after issuance)
+  if (token.startsWith('session-')) {
+    const session = kvGet(env, 'admin:session:' + token);
+    if (session && Number(session.expires) > Date.now()) return { ok: true };
+  }
+
+  // 2. Fallback: direct password comparison (for initial setup before tokens exist)
+  const pw = env.ADMIN_PASSWORD;
+  if (pw && auth === 'Bearer ' + pw) return { ok: true };
+
   return { ok: false, reason: 'unauthorized' };
 }
 
