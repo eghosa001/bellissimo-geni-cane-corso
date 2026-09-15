@@ -1,7 +1,15 @@
-// Bellissimo Geni shared site helpers (no dependencies).
+// ALLEVAMENTO BELLISSIMO GENI shared site helpers (no dependencies).
 (function () {
   // Mobile menu (progressive enhancement; works on all pages with .mobile-nav-toggle).
   document.addEventListener('DOMContentLoaded', function () {
+    var siteName = 'ALLEVAMENTO BELLISSIMO GENI';
+    document.querySelectorAll('.brand b,.footer-brand b').forEach(function (el) {
+      el.textContent = siteName;
+    });
+    document.title = document.title
+      .replace(/Bellissimo Geni Cane Corso/gi, siteName)
+      .replace(/^Bellissimo Geni\s*\|/i, siteName + ' |');
+
     if (!document.querySelector('.skip-link')) {
       var a = document.createElement('a');
       a.href = '#main';
@@ -44,7 +52,7 @@
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      .replace(/>/g, '&gt;').replace(/\"/g, '&quot;');
   }
 
   async function loadJSON(path) {
