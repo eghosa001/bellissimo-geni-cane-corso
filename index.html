@@ -21,6 +21,13 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"ALLEVAMENTO BELLISSIMO GENI Cane Corso","description":"Premium Cane Corso kennel in Nigeria.","areaServed":"Nigeria","url":"https://eghosa001.github.io/bellissimo-geni-cane-corso/"}</script>
 </head>
 <body>
+<div class="legacy-brand-intro" id="brandIntro" aria-hidden="true">
+  <div class="legacy-brand-intro-inner">
+    <span class="legacy-brand-intro-mark">BG</span>
+    <strong>ALLEVAMENTO BELLISSIMO GENI</strong>
+    <small>CANE CORSO • NIGERIA</small>
+  </div>
+</div>
 <header class="legacy-header" id="top">
   <a class="legacy-brand" href="index.html" aria-label="ALLEVAMENTO BELLISSIMO GENI home">
     <span class="legacy-brand-mark">BG</span>
@@ -106,6 +113,29 @@
   <small>© <span data-year>2026</span> ALLEVAMENTO BELLISSIMO GENI Cane Corso.</small>
 </footer>
 
+<script>
+(function(){
+  var intro=document.getElementById('brandIntro');
+  var hero=document.querySelector('.legacy-hero-photo>img');
+  if(!intro){return;}
+  var started=Date.now(), minimum=1050, finished=false;
+  function closeIntro(){
+    if(finished){return;}
+    finished=true;
+    var wait=Math.max(0,minimum-(Date.now()-started));
+    window.setTimeout(function(){
+      intro.classList.add('is-leaving');
+      window.setTimeout(function(){intro.remove();},500);
+    },wait);
+  }
+  if(hero && hero.complete){closeIntro();}
+  else if(hero){
+    hero.addEventListener('load',closeIntro,{once:true});
+    hero.addEventListener('error',closeIntro,{once:true});
+  } else {closeIntro();}
+  window.setTimeout(closeIntro,2500);
+})();
+</script>
 <script>window.BG_WEBHOOK_URL = window.BG_WEBHOOK_URL || '';</script>
 <script src="site.js"></script>
 <script>
