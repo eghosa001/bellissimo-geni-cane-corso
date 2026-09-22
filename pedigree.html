@@ -55,7 +55,7 @@ shell.insertAdjacentHTML('beforeend','<div class="generation-label">GENERATION '
 current=unique.map(function(p){return byId[String(p.id).toLowerCase()]||null;});}}
 form.addEventListener('submit',function(e){e.preventDefault();render(findDog(input.value));});
 index();
-BG.loadJSON('data/dogs.json').then(function(j){if(j&&j.dogs&&j.dogs.length){DOGS=j.dogs;index();var init=new URLSearchParams(location.search).get('dog');if(init){input.value=init;render(findDog(init));}}}).catch(function(){});
+BG.loadAdminJSON('dogs','data/dogs.json').then(function(j){var loaded=j.data||j.dogs||[];if(loaded.length){DOGS=loaded;index();var init=new URLSearchParams(location.search).get('dog');if(init){input.value=init;render(findDog(init));}}}).catch(function(){});
 var initial=new URLSearchParams(location.search).get('dog');if(initial){input.value=initial;render(findDog(initial));}
 })();
 </script>
