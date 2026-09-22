@@ -17,16 +17,24 @@ a{color:inherit;text-decoration:none}
 button{font:inherit}
 .skip-link{position:absolute;left:-9999px;top:0;background:#111;color:#fff;padding:10px 14px;z-index:100}
 .skip-link:focus{left:8px;top:8px}
+.brand-masthead{
+  background:#050609;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px 5vw 20px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.brand-masthead img{
+  width:min(340px,72vw);
+  height:auto;
+  max-height:280px;
+  object-fit:contain;
+}
 .legacy-header{height:82px;padding:0 3.8vw;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:30px;background:var(--ivory);border-bottom:1px solid rgba(18,18,18,.05);position:sticky;top:0;z-index:30}
 .legacy-brand{display:flex;align-items:center;min-width:245px}
-.legacy-brand-logo{width:max-content}
-.legacy-corso-logo{display:flex;align-items:center;gap:14px}
-.legacy-corso-emblem{width:48px;height:48px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;flex:0 0 auto;font:600 18px/1 var(--serif);letter-spacing:.04em;color:var(--gold-deep);box-shadow:0 0 0 4px rgba(200,156,72,.07)}
-.legacy-corso-wordmark{display:flex;flex-direction:column;align-items:flex-start}
-.legacy-corso-wordmark strong{font:600 16px/.95 var(--serif);letter-spacing:.12em;color:var(--ink)}
-.legacy-corso-wordmark b{margin-top:2px;font:500 10px/1 var(--serif);letter-spacing:.34em;color:var(--gold-deep)}
-.legacy-corso-wordmark small{margin-top:4px;font-size:6.5px;letter-spacing:.13em;color:#756f66;white-space:nowrap}
-.legacy-corso-logo-header{padding:0}
+.legacy-brand-copy b{display:block;font-size:13px;letter-spacing:.12em}
+.legacy-brand-copy small{display:block;font-size:8px;letter-spacing:.22em;color:#756f66;margin-top:3px}
 .legacy-nav{display:flex;align-items:center;justify-content:center;gap:25px;font-size:11px;font-weight:500}
 .legacy-nav a{position:relative;padding:7px 0}
 .legacy-nav a::after{content:'';position:absolute;left:0;right:100%;bottom:1px;height:1px;background:var(--gold);transition:right .25s ease}
@@ -121,10 +129,10 @@ button{font:inherit}
   .legacy-footer{grid-template-columns:1fr;align-items:start}
 }
 @media(max-width:560px){
-  .legacy-corso-emblem{width:42px;height:42px;font-size:16px}
-  .legacy-corso-wordmark strong{font-size:14px}
-  .legacy-corso-wordmark b{font-size:9px}
-  .legacy-corso-wordmark small{font-size:5.8px;letter-spacing:.1em}
+  .legacy-brand-copy b{font-size:10px}
+  .legacy-brand-copy small{font-size:7px}
+  .brand-masthead{padding:12px 5vw 14px}
+  .brand-masthead img{width:min(290px,80vw);max-height:230px}
   .legacy-hero h1{font-size:64px}
   .legacy-actions{flex-direction:column;align-items:stretch}
   .legacy-button{width:100%}
