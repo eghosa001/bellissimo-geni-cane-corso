@@ -17,6 +17,57 @@ a{color:inherit;text-decoration:none}
 button{font:inherit}
 .skip-link{position:absolute;left:-9999px;top:0;background:#111;color:#fff;padding:10px 14px;z-index:100}
 .skip-link:focus{left:8px;top:8px}
+.legacy-brand-intro{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:grid;
+  place-items:center;
+  background:#0d0d0d;
+  color:#f3eee4;
+  opacity:1;
+  visibility:visible;
+  transition:opacity .48s ease,visibility .48s ease;
+}
+.legacy-brand-intro.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+.legacy-corso-logo{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  padding:28px 32px;
+  transform:translateY(-1vh);
+}
+.legacy-corso-emblem{
+  width:82px;
+  height:82px;
+  border:1px solid var(--gold);
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  font:600 29px/1 var(--serif);
+  letter-spacing:.04em;
+  color:#e0b660;
+  box-shadow:0 0 0 5px rgba(200,156,72,.08);
+}
+.legacy-corso-wordmark{display:flex;flex-direction:column;align-items:flex-start}
+.legacy-corso-wordmark strong{
+  font:600 clamp(28px,4vw,48px)/.9 var(--serif);
+  letter-spacing:.12em;
+  color:#f3eee4;
+}
+.legacy-corso-wordmark b{
+  margin-top:6px;
+  font:500 clamp(18px,2.5vw,28px)/1 var(--serif);
+  letter-spacing:.34em;
+  color:var(--gold);
+}
+.legacy-corso-wordmark small{
+  margin-top:11px;
+  font-size:8px;
+  letter-spacing:.26em;
+  color:#a9a196;
+}
 .legacy-header{height:82px;padding:0 3.8vw;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:30px;background:var(--ivory);border-bottom:1px solid rgba(18,18,18,.05);position:sticky;top:0;z-index:30}
 .legacy-brand{display:flex;align-items:center;gap:14px;min-width:245px}
 .legacy-brand-mark{width:54px;height:54px;border:1px solid var(--gold);display:grid;place-items:center;font:600 21px var(--serif)}
@@ -133,4 +184,6 @@ button{font:inherit}
   .legacy-family-secondary{height:330px}
   .legacy-family-note{height:auto;padding:6px 0}
 }
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.legacy-brand-intro{transition:none}}
+
+@media(max-width:560px){.legacy-corso-logo{gap:14px;padding:22px}.legacy-corso-emblem{width:64px;height:64px;font-size:23px}.legacy-corso-wordmark strong{font-size:29px}.legacy-corso-wordmark b{font-size:18px;letter-spacing:.28em}.legacy-corso-wordmark small{font-size:7px;letter-spacing:.18em}}
