@@ -93,10 +93,10 @@
       <a class="legacy-button legacy-button-gold" href="dogs.html">View Our Dogs <span>→</span></a>
     </div>
     <div class="legacy-family-gallery">
-      <figure class="legacy-family-primary"><img id="familyDogOne" src="assets/dogs/bellissimo-dog-01-hd.webp" alt="Black Cane Corso at ALLEVAMENTO BELLISSIMO GENI" width="1280" height="1598" loading="lazy" decoding="async"></figure>
+      <figure class="legacy-family-primary"><img id="familyDogOne" src="assets/dogs/bellissimo-family-dog-01.webp?v=2" alt="Tan Cane Corso standing at ALLEVAMENTO BELLISSIMO GENI" width="600" height="897" loading="lazy" decoding="async"></figure>
       <div class="legacy-family-secondary-wrap">
         <div class="legacy-family-note"><span></span><p>MORE THAN DOGS.<br>A LEGACY.</p></div>
-        <figure class="legacy-family-secondary"><img id="familyDogTwo" src="assets/dogs/bellissimo-dog-01-hd.webp" alt="Black Cane Corso at ALLEVAMENTO BELLISSIMO GENI" width="1280" height="1598" loading="lazy" decoding="async"></figure>
+        <figure class="legacy-family-secondary"><img id="familyDogTwo" src="assets/dogs/bellissimo-family-dog-02.webp?v=2" alt="Tan Cane Corso resting at ALLEVAMENTO BELLISSIMO GENI" width="600" height="897" loading="lazy" decoding="async"></figure>
       </div>
     </div>
   </section>
@@ -110,17 +110,5 @@
 
 <script>window.BG_WEBHOOK_URL = window.BG_WEBHOOK_URL || '';</script>
 <script src="site.js"></script>
-<script>
-(function(){
-  BG.loadAdminJSON('dogs','data/dogs.json').then(function(j){
-    var dogs=j.data||j.dogs||[];
-    var photographed=dogs.filter(function(d){return d && d.photo;});
-    if(photographed[0]){
-      document.getElementById('familyDogOne').src=photographed[0].photo;
-      document.getElementById('familyDogOne').alt=photographed[0].name||'ALLEVAMENTO BELLISSIMO GENI Cane Corso';
-    }
-  }).catch(function(){});
-})();
-</script>
 </body>
 </html>
