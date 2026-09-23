@@ -719,21 +719,41 @@ button{font:inherit}
 
 @media(max-width:820px){
   .puppies-photo-card{
-    grid-template-rows:minmax(390px,1fr) auto;
-    min-height:610px;
+    grid-template-rows:auto auto;
+    min-height:0;
   }
-  .puppies-photo-frame{min-height:390px}
-  .puppies-photo-frame img{object-position:center 38%}
+  .puppies-photo-frame{
+    height:310px;
+    min-height:0;
+  }
+  .puppies-photo-frame img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center 34%;
+  }
   .legacy-standard-copy{padding:58px 7vw 54px}
   .legacy-family{padding:54px 7vw 58px}
 }
 @media(max-width:560px){
   .puppies-photo-card{
-    grid-template-rows:430px auto;
+    grid-template-rows:auto auto;
     min-height:0;
   }
-  .puppies-photo-frame{min-height:430px}
-  .puppies-photo-frame img{object-position:center 37%}
+  .puppies-photo-frame{
+    height:260px;
+    min-height:0;
+  }
+  .puppies-photo-frame img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center 32%;
+  }
   .puppies-card-content{padding:25px 24px 28px}
   .puppies-card-content h2{font-size:40px}
   .legacy-standard-copy{padding:50px 6vw 48px}
