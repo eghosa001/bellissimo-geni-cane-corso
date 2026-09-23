@@ -1,6 +1,13 @@
 name: Website Screenshots
 
 on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "home-restored.css"
+      - "site.js"
+      - "assets/**"
+      - ".github/workflows/screenshots.yml"
   workflow_run:
     workflows: ["GitHub Pages"]
     types: [completed]
@@ -11,7 +18,7 @@ permissions:
 
 jobs:
   capture:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -27,7 +34,16 @@ jobs:
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
 
-      - name: Capture live website screenshots
+      - name: Choose screenshot target
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/bellissimo-http.log 2>&1 &
+            echo "BASE_URL=http://127.0.0.1:4173/" >> "$GITHUB_ENV"
+          else
+            echo "BASE_URL=https://eghosa001.github.io/bellissimo-geni-cane-corso/" >> "$GITHUB_ENV"
+          fi
+
+      - name: Capture homepage screenshots
         run: |
           mkdir -p screenshots
           node <<'EOF'
@@ -64,7 +80,7 @@ jobs:
           }
 
           (async () => {
-            const baseUrl = 'https://eghosa001.github.io/bellissimo-geni-cane-corso/';
+            const baseUrl = process.env.BASE_URL;
             const browser = await chromium.launch({ headless: true });
 
             const desktop = await browser.newPage({
