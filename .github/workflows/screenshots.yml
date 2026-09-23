@@ -33,6 +33,36 @@ jobs:
           node <<'EOF'
           const { chromium, devices } = require('playwright');
 
+          async function preparePage(page, label) {
+            await page.evaluate(async () => {
+              await new Promise(resolve => {
+                let total = 0;
+                const distance = Math.max(350, Math.floor(window.innerHeight * 0.75));
+                const timer = setInterval(() => {
+                  window.scrollBy(0, distance);
+                  total += distance;
+                  if (total >= document.body.scrollHeight) {
+                    clearInterval(timer);
+                    window.scrollTo(0, 0);
+                    setTimeout(resolve, 500);
+                  }
+                }, 90);
+              });
+            });
+
+            await page.waitForLoadState('networkidle');
+            await page.waitForTimeout(800);
+
+            const brokenImages = await page.locator('img').evaluateAll(images =>
+              images
+                .filter(img => !img.complete || img.naturalWidth === 0)
+                .map(img => ({ src: img.currentSrc || img.src, alt: img.alt }))
+            );
+            if (brokenImages.length) {
+              throw new Error(label + ' has broken images: ' + JSON.stringify(brokenImages));
+            }
+          }
+
           (async () => {
             const baseUrl = 'https://eghosa001.github.io/bellissimo-geni-cane-corso/';
             const browser = await chromium.launch({ headless: true });
@@ -45,6 +75,7 @@ jobs:
               waitUntil: 'networkidle',
               timeout: 60000
             });
+            await preparePage(desktop, 'desktop homepage');
             await desktop.screenshot({
               path: 'screenshots/home-desktop.png',
               fullPage: true
@@ -58,6 +89,7 @@ jobs:
               waitUntil: 'networkidle',
               timeout: 60000
             });
+            await preparePage(mobile, 'mobile homepage');
             await mobile.screenshot({
               path: 'screenshots/home-mobile.png',
               fullPage: true
