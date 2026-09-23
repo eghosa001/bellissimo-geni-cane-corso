@@ -1573,3 +1573,21 @@ button{font:inherit}
     display:none;
   }
 }
+
+
+/* ===== Final mobile hero spacing pass ===== */
+@media(max-width:560px){
+  .legacy-actions{
+    left:5vw;
+    right:auto;
+    width:90vw;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  }
+  .legacy-button{
+    overflow:hidden;
+    text-overflow:clip;
+  }
+  .legacy-hero-photo>img{
+    filter:brightness(1.06) contrast(1.02);
+  }
+}
