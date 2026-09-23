@@ -1591,3 +1591,111 @@ button{font:inherit}
     filter:brightness(1.06) contrast(1.02);
   }
 }
+
+
+/* ===== Guarantee mobile dog face visibility ===== */
+@media(max-width:560px){
+  .legacy-hero{
+    position:relative;
+    min-height:540px;
+    height:540px;
+    overflow:hidden;
+    background:#0c0d0b;
+  }
+
+  .legacy-hero-copy{
+    position:relative;
+    z-index:3;
+    width:52%;
+    max-width:none;
+    min-height:540px;
+    height:540px;
+    padding:30px 0 22px 4.8vw;
+    justify-content:flex-start;
+  }
+
+  .legacy-eyebrow{
+    margin-bottom:13px;
+    font-size:5.9px;
+    letter-spacing:.14em;
+    white-space:nowrap;
+  }
+
+  .legacy-hero h1{
+    max-width:100%;
+    font-size:clamp(38px,10.6vw,44px);
+    line-height:.82;
+    letter-spacing:-.035em;
+  }
+
+  .legacy-lead{
+    max-width:100%;
+    margin:18px 0 14px;
+    font-size:9.3px;
+    line-height:1.48;
+  }
+
+  .legacy-hero-photo{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    background:#0c0d0b;
+  }
+
+  .legacy-hero-photo>img{
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:0;
+    left:auto;
+    height:100%;
+    width:auto;
+    max-width:none;
+    transform:none;
+    object-fit:contain;
+    object-position:right center;
+    filter:brightness(1.08) contrast(1.02);
+    -webkit-mask-image:none;
+    mask-image:none;
+  }
+
+  .legacy-hero-photo::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(9,10,8,.99) 0%,
+        rgba(9,10,8,.95) 30%,
+        rgba(9,10,8,.74) 43%,
+        rgba(9,10,8,.28) 54%,
+        rgba(9,10,8,.04) 64%,
+        rgba(9,10,8,0) 72%
+      );
+  }
+
+  .legacy-actions{
+    position:absolute;
+    left:4.8vw;
+    right:4.8vw;
+    bottom:18px;
+    width:auto;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:8px;
+  }
+
+  .legacy-button{
+    width:100%;
+    min-width:0;
+    min-height:42px;
+    padding:0 7px;
+    gap:6px;
+    font-size:7px;
+    letter-spacing:.04em;
+    white-space:nowrap;
+  }
+}
