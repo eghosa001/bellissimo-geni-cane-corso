@@ -1698,3 +1698,16 @@ button{font:inherit}
     white-space:nowrap;
   }
 }
+
+
+/* ===== Mobile CTA width correction ===== */
+@media(max-width:560px){
+  .legacy-actions{
+    left:4.8vw;
+    right:auto;
+    width:90.4vw;
+  }
+  .legacy-button{
+    font-size:6.6px;
+  }
+}
