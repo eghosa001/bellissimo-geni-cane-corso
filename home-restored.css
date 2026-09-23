@@ -1592,7 +1592,6 @@ button{font:inherit}
   }
 }
 
-
 /* ===== Guarantee mobile dog face visibility ===== */
 @media(max-width:560px){
   .legacy-hero{
@@ -1606,7 +1605,7 @@ button{font:inherit}
   .legacy-hero-copy{
     position:relative;
     z-index:3;
-    width:52%;
+    width:50%;
     max-width:none;
     min-height:540px;
     height:540px;
@@ -1616,14 +1615,14 @@ button{font:inherit}
 
   .legacy-eyebrow{
     margin-bottom:13px;
-    font-size:5.9px;
-    letter-spacing:.14em;
+    font-size:5.7px;
+    letter-spacing:.12em;
     white-space:nowrap;
   }
 
   .legacy-hero h1{
     max-width:100%;
-    font-size:clamp(38px,10.6vw,44px);
+    font-size:clamp(36px,9.8vw,41px);
     line-height:.82;
     letter-spacing:-.035em;
   }
@@ -1631,8 +1630,8 @@ button{font:inherit}
   .legacy-lead{
     max-width:100%;
     margin:18px 0 14px;
-    font-size:9.3px;
-    line-height:1.48;
+    font-size:8.9px;
+    line-height:1.46;
   }
 
   .legacy-hero-photo{
@@ -1644,17 +1643,17 @@ button{font:inherit}
 
   .legacy-hero-photo>img{
     position:absolute;
-    top:0;
     right:0;
     bottom:0;
+    top:auto;
     left:auto;
-    height:100%;
+    height:82%;
     width:auto;
     max-width:none;
     transform:none;
     object-fit:contain;
-    object-position:right center;
-    filter:brightness(1.08) contrast(1.02);
+    object-position:right bottom;
+    filter:brightness(1.11) contrast(1.02);
     -webkit-mask-image:none;
     mask-image:none;
   }
@@ -1669,11 +1668,11 @@ button{font:inherit}
       linear-gradient(
         90deg,
         rgba(9,10,8,.99) 0%,
-        rgba(9,10,8,.95) 30%,
-        rgba(9,10,8,.74) 43%,
-        rgba(9,10,8,.28) 54%,
-        rgba(9,10,8,.04) 64%,
-        rgba(9,10,8,0) 72%
+        rgba(9,10,8,.96) 28%,
+        rgba(9,10,8,.72) 40%,
+        rgba(9,10,8,.28) 49%,
+        rgba(9,10,8,.05) 55%,
+        rgba(9,10,8,0) 61%
       );
   }
 
