@@ -36,6 +36,15 @@ jobs:
           set -e
           test -f assets/dogs/bellissimo-dog-02-hd.webp
           file assets/dogs/bellissimo-dog-02-hd.webp
+
+          # Reconstruct the two uploaded family photos from text-safe chunks.
+          cat .github/assets/family-dog1.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-01.webp
+          cat .github/assets/family-dog2.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-02.webp
+          test -s assets/dogs/bellissimo-family-dog-01.webp
+          test -s assets/dogs/bellissimo-family-dog-02.webp
+          file assets/dogs/bellissimo-family-dog-01.webp
+          file assets/dogs/bellissimo-family-dog-02.webp
+
           rm -rf build
           mkdir -p build
           tar -C . \
