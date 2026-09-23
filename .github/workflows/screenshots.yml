@@ -78,8 +78,9 @@ jobs:
               timeout: 60000
             });
             await prepareHero(desktop, 'desktop homepage');
-            await desktop.locator('.legacy-hero').screenshot({
-              path: 'screenshots/hero-desktop.png'
+            await desktop.screenshot({
+              path: 'screenshots/top-desktop.png',
+              fullPage: false
             });
 
             const mobileContext = await browser.newContext({
@@ -91,8 +92,9 @@ jobs:
               timeout: 60000
             });
             await prepareHero(mobile, 'mobile homepage');
-            await mobile.locator('.legacy-hero').screenshot({
-              path: 'screenshots/hero-mobile.png'
+            await mobile.screenshot({
+              path: 'screenshots/top-mobile.png',
+              fullPage: false
             });
 
             await mobileContext.close();
