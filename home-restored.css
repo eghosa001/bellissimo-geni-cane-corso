@@ -743,7 +743,7 @@ button{font:inherit}
     min-height:0;
   }
   .puppies-photo-frame{
-    height:260px;
+    height:310px;
     min-height:0;
   }
   .puppies-photo-frame img{
@@ -752,10 +752,20 @@ button{font:inherit}
     width:100%;
     height:100%;
     object-fit:cover;
-    object-position:center 32%;
+    object-position:center 50%;
   }
-  .puppies-card-content{padding:25px 24px 28px}
-  .puppies-card-content h2{font-size:40px}
+  .puppies-card-content{padding:20px 22px 23px}
+  .puppies-card-content .knowledge-label{font-size:8px}
+  .puppies-card-content h2{
+    font-size:34px;
+    margin:6px 0 10px;
+  }
+  .puppies-card-content>p:not(.knowledge-label){
+    font-size:10px;
+    line-height:1.5;
+    margin-bottom:16px;
+  }
+  .puppies-card-content>a{font-size:8px}
   .legacy-standard-copy{padding:50px 6vw 48px}
   .legacy-family{padding:48px 6vw 52px}
 }
