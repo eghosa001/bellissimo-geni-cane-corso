@@ -1,0 +1,77 @@
+name: Website Screenshots
+
+on:
+  workflow_run:
+    workflows: ["GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Capture live website screenshots
+        run: |
+          mkdir -p screenshots
+          node <<'EOF'
+          const { chromium, devices } = require('playwright');
+
+          (async () => {
+            const baseUrl = 'https://eghosa001.github.io/bellissimo-geni-cane-corso/';
+            const browser = await chromium.launch({ headless: true });
+
+            const desktop = await browser.newPage({
+              viewport: { width: 1440, height: 1100 },
+              deviceScaleFactor: 1
+            });
+            await desktop.goto(baseUrl + '?screenshot=desktop-' + Date.now(), {
+              waitUntil: 'networkidle',
+              timeout: 60000
+            });
+            await desktop.screenshot({
+              path: 'screenshots/home-desktop.png',
+              fullPage: true
+            });
+
+            const mobileContext = await browser.newContext({
+              ...devices['Pixel 7']
+            });
+            const mobile = await mobileContext.newPage();
+            await mobile.goto(baseUrl + '?screenshot=mobile-' + Date.now(), {
+              waitUntil: 'networkidle',
+              timeout: 60000
+            });
+            await mobile.screenshot({
+              path: 'screenshots/home-mobile.png',
+              fullPage: true
+            });
+
+            await mobileContext.close();
+            await browser.close();
+          })();
+          EOF
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: bellissimo-homepage-screenshots
+          path: screenshots/
+          if-no-files-found: error
+          retention-days: 14
