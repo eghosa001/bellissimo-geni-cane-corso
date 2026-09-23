@@ -50,6 +50,11 @@ jobs:
           test -s assets/dogs/bellissimo-featured-black-corso.webp
           file assets/dogs/bellissimo-featured-black-corso.webp
 
+          # Reconstruct the uploaded puppy photo used in the Puppies card.
+          cat .github/assets/puppy-section.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-puppy-section.webp
+          test -s assets/dogs/bellissimo-puppy-section.webp
+          file assets/dogs/bellissimo-puppy-section.webp
+
           rm -rf build
           mkdir -p build
           tar -C . \
