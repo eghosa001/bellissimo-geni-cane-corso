@@ -34,6 +34,16 @@ jobs:
       - name: Prepare publish directory
         run: |
           set -e
+          # Reconstruct the exact verified second-dog WebP from text-safe chunks.
+          # This avoids binary transport corruption while preserving the user's real photo.
+          cat .github/assets/dog2.b64.part1 \
+              .github/assets/dog2.b64.part2 \
+              .github/assets/dog2.b64.part3 \
+              .github/assets/dog2.b64.part4 \
+            | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-dog-02-hd.webp
+          test "$(wc -c < assets/dogs/bellissimo-dog-02-hd.webp)" -eq 21418
+          test "$(git hash-object assets/dogs/bellissimo-dog-02-hd.webp)" = "972a8c75f289fbeb1c26d557b70c146191004666"
+          file assets/dogs/bellissimo-dog-02-hd.webp
           rm -rf build
           mkdir -p build
           tar -C . \
