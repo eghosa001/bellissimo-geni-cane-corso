@@ -45,6 +45,11 @@ jobs:
           file assets/dogs/bellissimo-family-dog-01.webp
           file assets/dogs/bellissimo-family-dog-02.webp
 
+          # Reconstruct the newly uploaded featured black Corso photo.
+          cat .github/assets/featured-black-corso.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-featured-black-corso.webp
+          test -s assets/dogs/bellissimo-featured-black-corso.webp
+          file assets/dogs/bellissimo-featured-black-corso.webp
+
           rm -rf build
           mkdir -p build
           tar -C . \
