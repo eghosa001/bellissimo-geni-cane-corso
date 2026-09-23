@@ -102,6 +102,33 @@ jobs:
           })();
           EOF
 
+      - name: Smoke-test dogs and pedigree
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+            const base = process.env.BASE_URL;
+
+            await page.goto(base + 'dogs.html?dog=branco-custodi-nos', { waitUntil: 'networkidle' });
+            await page.locator('#profile h2').filter({ hasText: 'Branco Custodi Nos' }).waitFor();
+            const dogImage = page.locator('.profile-media-main img');
+            if (!(await dogImage.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Branco profile image failed');
+            const dogText = await page.locator('#profile').innerText();
+            if (!dogText.includes('Dragoslav Custodi Nos') || !dogText.includes('Himera Custodi Nos')) throw new Error('Branco parent links missing');
+
+            await page.goto(base + 'pedigree.html?dog=gyda-bellissimo-geni', { waitUntil: 'networkidle' });
+            const pedigree = await page.locator('main').innerText();
+            for (const expected of ['Gyda Bellissimo Geni','Branco Custodi Nos','Anthe Custodi Nos','Dragoslav Custodi Nos','Himera Custodi Nos']) {
+              if (!pedigree.includes(expected)) throw new Error('Pedigree missing ' + expected);
+            }
+            if (pedigree.includes('Henry')) throw new Error('Demo pedigree data still visible');
+
+            await browser.close();
+          })();
+          EOF
+
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
