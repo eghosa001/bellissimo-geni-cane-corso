@@ -11,11 +11,7 @@
       "colour": "Black",
       "photo": "assets/dogs/branco-01.webp",
       "gallery": [
-        "assets/dogs/branco-02.webp",
-        "assets/dogs/branco-03.webp",
-        "assets/dogs/branco-04.webp",
-        "assets/dogs/branco-05.webp",
-        "assets/dogs/branco-06.webp"
+        "assets/dogs/branco-02.webp"
       ],
       "registration": "NGCCKC2025D5F61D56 · JR710606CC",
       "status": "Bellissimo Geni dog",
@@ -34,7 +30,9 @@
       "dateOfBirth": "",
       "colour": "Formentino / Fawn",
       "photo": "assets/dogs/bellissimo-family-dog-01.webp",
-      "gallery": ["assets/dogs/bellissimo-family-dog-02.webp"],
+      "gallery": [
+        "assets/dogs/bellissimo-family-dog-02.webp"
+      ],
       "registration": "",
       "status": "Bellissimo Geni dog",
       "group": "current",
@@ -88,7 +86,7 @@
       "dateOfBirth": "",
       "colour": "",
       "photo": "assets/dogs/eden-01.webp",
-      "gallery": ["assets/dogs/eden-02.webp"],
+      "gallery": [],
       "registration": "",
       "status": "Past production",
       "group": "past-production",
@@ -106,7 +104,7 @@
       "dateOfBirth": "2025-01-13",
       "colour": "Black brindle",
       "photo": "assets/dogs/gyda-01.webp",
-      "gallery": ["assets/dogs/gyda-02.webp"],
+      "gallery": [],
       "registration": "NG-CCKC20258042F230",
       "status": "Past production",
       "group": "past-production",
