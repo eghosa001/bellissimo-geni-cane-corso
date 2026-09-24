@@ -58,6 +58,10 @@ window.BG_WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 var all=[],q=document.getElementById('q'),profile=document.getElementById('profile'),current=document.getElementById('current-list'),past=document.getElementById('past-list');
 function byId(id){return BG.dogById(all,id)}
 function safe(v,fallback){return v?BG.esc(v):fallback||'Not recorded'}
+function displayDate(v){
+  var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?BG.esc(m[3]+'/'+m[2]+'/'+m[1]):safe(v,'Not recorded');
+}
 function media(d){
   return d.photo?'<div class="dog-card-media"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="lazy" decoding="async"></div>':'<div class="dog-card-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
 }
@@ -98,7 +102,7 @@ function renderProfile(id){
   var d=byId(id);
   if(!d){profile.innerHTML='<div class="notice">Dog not found.</div>';return}
   var hero=d.photo?'<div class="profile-media-main"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager"></div>':'<div class="profile-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
-  profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl><dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd><dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd><dt>Date of birth</dt><dd>'+safe(d.dateOfBirth,'Not recorded')+'</dd><dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>'+ownerOrStatusRow(d)+'<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd><dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd><dt>Bloodline</dt><dd>'+safe(d.bloodline,'Not recorded')+'</dd><dt>Health record</dt><dd>'+safe(d.health,'Not recorded')+'</dd></dl><div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
+  profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl><dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd><dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd><dt>Date of birth</dt><dd>'+displayDate(d.dateOfBirth)+'</dd><dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>'+ownerOrStatusRow(d)+'<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd><dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd><dt>Bloodline</dt><dd>'+safe(d.bloodline,'Not recorded')+'</dd><dt>Health record</dt><dd>'+safe(d.health,'Not recorded')+'</dd></dl><div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
   profile.scrollIntoView({behavior:'smooth',block:'start'});
 }
 q.addEventListener('input',renderLists);
