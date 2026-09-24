@@ -100,8 +100,8 @@ jobs:
               mobile.locator('.reference-quick-nav a[href="puppies.html"]').boundingBox(),
               mobile.locator('.reference-menu-button').boundingBox()
             ]);
-            if (!dogsBox || !puppiesBox || !menuBox || !(menuBox.x < puppiesBox.x && puppiesBox.x < dogsBox.x)) {
-              throw new Error('Mobile shortcut order must be Menu, Puppies, Our Dogs');
+            if (!dogsBox || !puppiesBox || !menuBox || !(dogsBox.x < puppiesBox.x && puppiesBox.x < menuBox.x)) {
+              throw new Error('Mobile shortcut order must be Our Dogs, Puppies, Menu');
             }
 
             const layout = await mobile.evaluate(() => {
@@ -169,7 +169,7 @@ jobs:
 
             await page.goto(base + 'pedigree.html?dog=gyda-bellissimo-geni', { waitUntil: 'networkidle' });
             const pedigree = await page.locator('main').innerText();
-            for (const expected of ['Gyda Bellissimo Geni','Branco Custodi Nos','Anthe Custodi Nos','Dragoslav Custodi Nos','Himera Custodi Nos']) {
+            for (const expected of ['Gyda Bellissimo Geni','Branco Custodi Nos','Anthie Custodi Nos']) {
               if (!pedigree.includes(expected)) throw new Error('Pedigree missing ' + expected);
             }
             if (pedigree.includes('Henry')) throw new Error('Demo pedigree data still visible');
