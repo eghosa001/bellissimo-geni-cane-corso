@@ -1597,14 +1597,14 @@ button{font:inherit}
     bottom:0;
     left:auto;
     width:auto;
-    height:88%;
+    height:85%;
     max-width:none;
-    transform:none;
+    transform:translateX(15%);
     object-fit:contain;
     object-position:right center;
     filter:none;
-    -webkit-mask-image:none;
-    mask-image:none;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 4%,#000 11%,#000 100%);
+    mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 4%,#000 11%,#000 100%);
   }
   .legacy-hero-photo::before{
     content:'';
