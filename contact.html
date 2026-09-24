@@ -30,12 +30,12 @@
 <label>I am interested in<select name="interest"><option>Male puppy</option><option>Female puppy</option><option>Either / best match</option><option>Pedigree information</option><option>Next litter priority list</option><option>Other</option></select></label>
 <label>Message<textarea name="message" rows="5" placeholder="Home setup, experience, preferred timing, dog you are asking about (e.g. Gyda)"></textarea></label>
 <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-<button class="btn gold" type="submit">Prepare WhatsApp message →</button>
-<p class="hint" id="note">Demo mode: kennel WhatsApp number, address and hours are still awaiting confirmation.</p>
+<button class="btn gold" type="submit">Prepare enquiry →</button>
+<p class="hint" id="note">Your enquiry can be prepared here, then sent through a verified Bellissimo Geni contact channel.</p>
 </form>
 </div>
 <div>
-<div class="card"><span class="meta">KENNEL DETAILS</span><h3>Visit / contact</h3><p>Location: Nigeria (exact address TBC)<br>Phone / WhatsApp: TBC<br>Hours: TBC<br><a href="https://www.instagram.com/bellissimogeni?stkn=Z2I4eHg5Y3d5NDk%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram @bellissimogeni</a><br><a href="https://www.tiktok.com/@bellissimogeni?_r=1&_t=ZS-9A0YgY0blDQ" target="_blank" rel="noopener noreferrer">TikTok @bellissimogeni</a><br><a href="https://www.facebook.com/profile.php?id=61581348097005&mibextid=wwXIfr&mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">Facebook: Kelvin Ezekiel Omigie</a></p><p class="hint">Address, phone and opening hours remain unpublished until confirmed.</p></div>
+<div class="card"><span class="meta">KENNEL DETAILS</span><h3>Bellissimo Geni, Nigeria</h3><p>For current availability, visits and direct contact details, start with one of the verified Bellissimo Geni channels below.</p><div class="row"><a class="btn ghost" href="https://www.instagram.com/bellissimogeni?stkn=Z2I4eHg5Y3d5NDk%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a><a class="btn ghost" href="https://www.tiktok.com/@bellissimogeni?_r=1&_t=ZS-9A0YgY0blDQ" target="_blank" rel="noopener noreferrer">TikTok</a><a class="btn ghost" href="https://www.facebook.com/profile.php?id=61581348097005&mibextid=wwXIfr&mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">Facebook</a></div></div>
 <div class="card" style="margin-top:16px"><span class="meta">SOCIAL HUB</span><h3>Follow Bellissimo Geni</h3><p>Instagram, TikTok and Facebook links supplied by the kennel are live.</p><div class="row"><a class="btn ghost" href="social.html">Open social hub</a><a class="btn ghost" href="pedigree.html">Search pedigree</a></div></div>
 </div>
 </div>
@@ -50,7 +50,11 @@ if(String(d.get('website')||'').trim()){return;}
 var phone=String(d.get('phone')||'').trim();if(!BG.validPhone(phone)){note.textContent='Please enter a valid phone/WhatsApp number.';return;}
 BG.track('contact_submit',d.get('interest'));
 var t=['Hello Bellissimo Geni,','', 'Name: '+d.get('name'),'Phone: '+phone,'Interested in: '+d.get('interest'),'Message: '+(d.get('message')||'—')].join('\n');
-if(N==='2348000000000'){note.textContent='Demo mode: replace the WhatsApp number in contact.html before launch. Your message was prepared but not sent.';return;}
+if(N==='2348000000000'){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(function(){});}
+  note.textContent='Enquiry prepared'+(navigator.clipboard&&navigator.clipboard.writeText?' and copied to your clipboard':'')+'. Send it through Instagram, TikTok or Facebook using the verified links on this page.';
+  return;
+}
 window.open('https://wa.me/'+N+'?text='+encodeURIComponent(t),'_blank','noopener');});
 })();
 </script>
