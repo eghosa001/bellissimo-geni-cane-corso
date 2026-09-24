@@ -1599,7 +1599,7 @@ button{font:inherit}
     width:auto;
     height:85%;
     max-width:none;
-    transform:translateX(15%);
+    transform:translateX(12%);
     object-fit:contain;
     object-position:right center;
     z-index:1;
@@ -1624,9 +1624,11 @@ button{font:inherit}
     top:0;
     left:0;
     right:0;
-    height:18.5%;
+    height:24%;
     z-index:0;
     background:url('assets/dogs/bellissimo-dog-01-hd.webp') center top/cover no-repeat;
+    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 68%,rgba(0,0,0,.45) 82%,transparent 100%);
+    mask-image:linear-gradient(to bottom,#000 0%,#000 68%,rgba(0,0,0,.45) 82%,transparent 100%);
   }
 
   .legacy-hero-copy{
@@ -1659,24 +1661,24 @@ button{font:inherit}
     max-width:190px;
     margin:20px 0 18px;
     color:#f1ece3;
-    font-size:9px;
+    font-size:8px;
     line-height:1.55;
   }
   .legacy-actions{
     position:static;
-    width:clamp(154px,39vw,188px);
+    width:clamp(145px,36vw,174px);
     display:flex;
     flex-direction:column;
     align-items:stretch;
-    gap:6px;
+    gap:5px;
   }
   .legacy-button{
     width:100%;
     min-width:0;
-    min-height:39px;
+    min-height:35px;
     padding:0 12px;
     gap:8px;
-    font-size:7px;
+    font-size:6.5px;
     line-height:1.15;
     letter-spacing:.05em;
     white-space:nowrap;
