@@ -1592,7 +1592,7 @@ button{font:inherit}
     width:100%;
     height:100%;
     max-width:none;
-    transform:none;
+    transform:translateX(12%);
     object-fit:cover;
     object-position:4% 48%;
     filter:none;
@@ -1638,11 +1638,11 @@ button{font:inherit}
     letter-spacing:-.04em;
   }
   .legacy-lead{
-    max-width:188px;
+    max-width:190px;
     margin:20px 0 18px;
     color:#f1ece3;
-    font-size:9.8px;
-    line-height:1.50;
+    font-size:9px;
+    line-height:1.55;
   }
   .legacy-actions{
     position:static;
