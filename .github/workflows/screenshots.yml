@@ -17,6 +17,9 @@ on:
       - "puppies.html"
       - "reserve.html"
       - "breeding.html"
+      - "socialization.html"
+      - "standards.html"
+      - "testimonials.html"
       - "data/puppies.json"
       - "assets/**"
   workflow_run:
@@ -250,6 +253,20 @@ jobs:
               const img = gallery.nth(i);
               if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) throw new Error('Gallery image ' + i + ' failed');
               if ((await img.evaluate(el => getComputedStyle(el).objectFit)) !== 'contain') throw new Error('Gallery image ' + i + ' may crop the dog');
+              const pixels = await img.evaluate(el => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 32; canvas.height = 32;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(el, 0, 0, 32, 32);
+                const d = ctx.getImageData(0,0,32,32).data;
+                let min=255,max=0,sum=0,n=0;
+                for(let p=0;p<d.length;p+=4){
+                  const y=(d[p]+d[p+1]+d[p+2])/3;
+                  min=Math.min(min,y); max=Math.max(max,y); sum+=y; n++;
+                }
+                return {min,max,mean:sum/n};
+              });
+              if (pixels.max - pixels.min < 18) throw new Error('Gallery image ' + i + ' rendered as a flat/blank frame');
             }
 
             await page.goto(base + 'social.html', { waitUntil: 'networkidle' });
@@ -258,7 +275,7 @@ jobs:
               if (!social.includes(expected)) throw new Error('Social page missing ' + expected);
             }
 
-            const pages = ['about.html','gallery.html','puppies.html','reserve.html','breeding.html','contact.html','dogs.html','pedigree.html','social.html'];
+            const pages = ['about.html','gallery.html','puppies.html','reserve.html','breeding.html','socialization.html','standards.html','testimonials.html','contact.html','dogs.html','pedigree.html','social.html'];
             const forbidden = ['coming from the client','development placeholder','demo male','demo female','media needed:','replace all tbc','before launch'];
             for (const path of pages) {
               await page.goto(base + path, { waitUntil: 'networkidle' });
@@ -295,6 +312,9 @@ jobs:
               ['puppies', 'puppies.html'],
               ['pedigree', 'pedigree.html?dog=gyda-bellissimo-geni'],
               ['breeding', 'breeding.html'],
+              ['socialization', 'socialization.html'],
+              ['standards', 'standards.html'],
+              ['testimonials', 'testimonials.html'],
               ['reserve', 'reserve.html'],
               ['about', 'about.html'],
               ['social', 'social.html'],
