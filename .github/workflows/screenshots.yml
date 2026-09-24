@@ -9,6 +9,8 @@ on:
       - "pedigree.html"
       - "data/dogs.json"
       - "site.js"
+      - "social.html"
+      - "contact.html"
       - "assets/**"
   workflow_run:
     workflows: ["GitHub Pages"]
