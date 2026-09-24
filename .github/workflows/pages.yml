@@ -55,6 +55,14 @@ jobs:
           test -s assets/dogs/bellissimo-puppy-section.webp
           file assets/dogs/bellissimo-puppy-section.webp
 
+          # Reconstruct the supplied Tessa and Daisy kennel photos.
+          cat .github/assets/tessa-sangue-magnifica.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/tessa-sangue-magnifica.webp
+          cat .github/assets/daisy-bellissimo-geni.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/daisy-bellissimo-geni.webp
+          test -s assets/dogs/tessa-sangue-magnifica.webp
+          test -s assets/dogs/daisy-bellissimo-geni.webp
+          file assets/dogs/tessa-sangue-magnifica.webp
+          file assets/dogs/daisy-bellissimo-geni.webp
+
           rm -rf build
           mkdir -p build
           tar -C . \
