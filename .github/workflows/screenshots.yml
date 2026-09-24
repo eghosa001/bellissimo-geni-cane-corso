@@ -126,6 +126,13 @@ jobs:
             await page.locator('#profile h2').filter({ hasText: 'Branco Custodi Nos' }).waitFor();
             const dogImage = page.locator('.profile-media-main img');
             if (!(await dogImage.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Branco profile image failed');
+            const profileFit = await dogImage.evaluate(img => getComputedStyle(img).objectFit);
+            if (profileFit !== 'contain') throw new Error('Dog profile photography must not crop the subject');
+            const firstCardImage = page.locator('.dog-card-media img').first();
+            if (await firstCardImage.count()) {
+              const cardFit = await firstCardImage.evaluate(img => getComputedStyle(img).objectFit);
+              if (cardFit !== 'contain') throw new Error('Dog card photography must not crop the subject');
+            }
             const dogText = await page.locator('#profile').innerText();
             if (!dogText.includes('Dragoslav Custodi Nos') || !dogText.includes('Himera Custodi Nos')) throw new Error('Branco parent links missing');
             if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || dogText.includes('STATUS')) throw new Error('Current-dog owner row is incorrect');
