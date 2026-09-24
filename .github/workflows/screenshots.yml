@@ -40,11 +40,19 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Reconstruct supplied dog photos
+      - name: Reconstruct encoded site photos
         run: |
           mkdir -p assets/dogs
+          cat .github/assets/family-dog1.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-01.webp
+          cat .github/assets/family-dog2.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-02.webp
+          cat .github/assets/featured-black-corso.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-featured-black-corso.webp
+          cat .github/assets/puppy-section.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-puppy-section.webp
           cat .github/assets/tessa-sangue-magnifica.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/tessa-sangue-magnifica.webp
           cat .github/assets/daisy-bellissimo-geni.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/daisy-bellissimo-geni.webp
+          test -s assets/dogs/bellissimo-family-dog-01.webp
+          test -s assets/dogs/bellissimo-family-dog-02.webp
+          test -s assets/dogs/bellissimo-featured-black-corso.webp
+          test -s assets/dogs/bellissimo-puppy-section.webp
           test -s assets/dogs/tessa-sangue-magnifica.webp
           test -s assets/dogs/daisy-bellissimo-geni.webp
 
