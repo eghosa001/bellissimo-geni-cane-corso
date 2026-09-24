@@ -1470,3 +1470,246 @@ button{font:inherit}
   object-position:center center !important;
   background:#10110f;
 }
+
+
+/* ===== Reference-locked mobile homepage composition ===== */
+@media(max-width:560px){
+  /* Match the approved phone reference: compact top message, centered logo,
+     one-line Menu / Puppies / Our Dogs shortcuts, full-bleed hero and 4-up facts. */
+  .reference-topbar{
+    min-height:28px;
+    padding:5px 3.5vw;
+    grid-template-columns:1fr;
+  }
+  .reference-location,
+  .reference-social{display:none}
+  .reference-message{
+    justify-self:center;
+    text-align:center;
+    white-space:nowrap;
+    font-size:6px;
+    line-height:1.25;
+    letter-spacing:.17em;
+  }
+
+  .reference-header{
+    min-height:108px;
+    height:108px;
+    padding:0;
+    gap:0;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-rows:62px 46px;
+    background:#070807;
+  }
+  .reference-brand{
+    display:flex !important;
+    grid-column:1 / 4;
+    grid-row:1;
+    justify-self:center;
+    align-self:center;
+    width:158px;
+    max-width:none;
+    height:60px;
+    padding:2px 0 0;
+  }
+  .reference-brand img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:center;
+  }
+  .reference-quick-nav{display:contents}
+  .reference-quick-nav a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    height:46px;
+    padding:0 5px;
+    border-top:1px solid rgba(255,255,255,.10);
+    border-right:1px solid rgba(255,255,255,.10);
+    font-size:8.5px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .reference-quick-nav a::after{display:none !important}
+  .reference-quick-nav a:nth-child(1){
+    grid-column:3;
+    grid-row:2;
+    border-right:0;
+  }
+  .reference-quick-nav a:nth-child(2){
+    grid-column:2;
+    grid-row:2;
+  }
+  .reference-menu-button{
+    grid-column:1;
+    grid-row:2;
+    width:100%;
+    min-width:0;
+    min-height:46px;
+    height:46px;
+    padding:0 5px;
+    gap:8px;
+    border:0;
+    border-top:1px solid rgba(255,255,255,.10);
+    border-right:1px solid rgba(255,255,255,.10);
+    border-radius:0;
+    align-self:stretch;
+    background:linear-gradient(100deg,#d6ad64,#c58e36);
+    color:#17120b;
+    font-size:8.5px;
+    font-weight:800;
+    letter-spacing:.08em;
+  }
+  .reference-menu-button span{
+    margin:0;
+    color:#17120b;
+    font-size:12px;
+  }
+
+  .legacy-hero{
+    position:relative;
+    min-height:clamp(530px,68dvh,640px);
+    height:clamp(530px,68dvh,640px);
+    overflow:hidden;
+    background:#0c0d0b;
+  }
+  .legacy-hero-photo{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+    background:#0c0d0b;
+  }
+  .legacy-hero-photo>img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    max-width:none;
+    transform:none;
+    object-fit:cover;
+    object-position:64% 48%;
+    filter:none;
+    -webkit-mask-image:none;
+    mask-image:none;
+  }
+  .legacy-hero-photo::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:
+      linear-gradient(90deg,rgba(8,9,7,.99) 0%,rgba(8,9,7,.96) 25%,rgba(8,9,7,.77) 39%,rgba(8,9,7,.36) 52%,rgba(8,9,7,.08) 66%,rgba(8,9,7,0) 76%),
+      linear-gradient(180deg,rgba(0,0,0,.09) 0%,rgba(0,0,0,.02) 62%,rgba(0,0,0,.14) 100%);
+  }
+  .legacy-hero-photo::after{display:none}
+
+  .legacy-hero-copy{
+    position:relative;
+    z-index:3;
+    width:52%;
+    max-width:none;
+    min-height:100%;
+    height:100%;
+    padding:clamp(30px,4.4dvh,42px) 0 24px 5.7vw;
+    justify-content:flex-start;
+  }
+  .legacy-eyebrow{
+    margin-bottom:14px;
+    color:#d7ab5b;
+    font-size:6.2px;
+    line-height:1.35;
+    letter-spacing:.16em;
+    white-space:nowrap;
+  }
+  .legacy-hero h1{
+    max-width:100%;
+    margin:0;
+    color:#f6f0e7;
+    font-size:clamp(45px,11.8vw,53px);
+    line-height:.80;
+    letter-spacing:-.04em;
+  }
+  .legacy-lead{
+    max-width:172px;
+    margin:20px 0 18px;
+    color:#f1ece3;
+    font-size:10.5px;
+    line-height:1.50;
+  }
+  .legacy-actions{
+    position:static;
+    width:clamp(154px,39vw,188px);
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
+  }
+  .legacy-button{
+    width:100%;
+    min-width:0;
+    min-height:39px;
+    padding:0 12px;
+    gap:8px;
+    font-size:7px;
+    line-height:1.15;
+    letter-spacing:.05em;
+    white-space:nowrap;
+  }
+  .legacy-button-outline{
+    background:rgba(8,8,8,.20);
+    border-color:rgba(255,255,255,.72);
+  }
+  .reference-legacy-signature{display:none}
+
+  .reference-credibility{
+    min-height:92px;
+    padding:0;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    background:#f2ede4;
+  }
+  .reference-credibility article{
+    min-height:92px;
+    padding:14px 8px;
+    margin:0;
+    border-right:1px solid rgba(18,18,18,.10);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+  }
+  .reference-credibility article:last-child{border-right:0}
+  .reference-credibility .credibility-icon{
+    flex:0 0 auto;
+    font-size:17px;
+  }
+  .reference-credibility b{
+    display:block;
+    font-size:6.8px;
+    line-height:1.32;
+    letter-spacing:.08em;
+  }
+}
+
+/* Extra-small phones: keep the same composition without horizontal clipping. */
+@media(max-width:380px){
+  .reference-message{font-size:5.35px;letter-spacing:.13em}
+  .reference-brand{width:148px}
+  .reference-quick-nav a,
+  .reference-menu-button{font-size:7.7px}
+  .legacy-hero h1{font-size:clamp(41px,12vw,46px)}
+  .legacy-lead{max-width:158px;font-size:9.7px}
+  .legacy-actions{width:clamp(145px,40vw,160px)}
+  .legacy-button{font-size:6.5px;padding:0 8px}
+  .reference-credibility article{padding-inline:5px;gap:5px}
+  .reference-credibility b{font-size:6.1px}
+  .reference-credibility .credibility-icon{font-size:15px}
+}
