@@ -194,6 +194,75 @@ jobs:
           })();
           EOF
 
+      - name: Smoke-test WhatsApp changes and secondary pages
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+            const base = process.env.BASE_URL;
+
+            await page.goto(base + 'dogs.html', { waitUntil: 'networkidle' });
+            await page.locator('#q').fill('Gyda');
+            await page.locator('#profile h2').filter({ hasText: 'Gyda Bellissimo Geni' }).waitFor();
+            const searchImage = page.locator('#profile .profile-media-main img');
+            if (!(await searchImage.evaluate(img => img.complete && img.naturalWidth > 0))) {
+              throw new Error('Gyda search did not open a loaded profile image');
+            }
+
+            await page.goto(base + 'dogs.html?dog=twice-as-tall-eden-bellissimo-geni', { waitUntil: 'networkidle' });
+            const eden = await page.locator('#profile').innerText();
+            for (const expected of ['FEMALE','Grey','13/01/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+              if (!eden.includes(expected)) throw new Error('Eden profile missing ' + expected);
+            }
+
+            for (const id of ['tessa-sangue-magnifica','daisy-bellissimo-geni']) {
+              await page.goto(base + 'dogs.html?dog=' + id, { waitUntil: 'networkidle' });
+              const img = page.locator('#profile .profile-media-main img');
+              if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) {
+                throw new Error(id + ' supplied photo did not load');
+              }
+              if ((await img.evaluate(el => getComputedStyle(el).objectFit)) !== 'contain') {
+                throw new Error(id + ' photo may crop the dog');
+              }
+            }
+
+            await page.goto(base, { waitUntil: 'networkidle' });
+            if (await page.locator('.legacy-family .legacy-button-gold').count()) throw new Error('Removed family CTA returned');
+            if (await page.locator('.contact-band .legacy-button-outline').count()) throw new Error('Removed contact CTA returned');
+            if (await page.locator('.footer-contact .legacy-button').count()) throw new Error('Removed footer CTA returned');
+            if (await page.locator('.reference-social a').count() !== 3) throw new Error('Homepage social links incomplete');
+
+            await page.goto(base + 'gallery.html', { waitUntil: 'networkidle' });
+            const gallery = page.locator('.gallery-grid img');
+            if (await gallery.count() !== 6) throw new Error('Gallery should contain six real dog photos');
+            for (let i = 0; i < await gallery.count(); i++) {
+              const img = gallery.nth(i);
+              if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) throw new Error('Gallery image ' + i + ' failed');
+              if ((await img.evaluate(el => getComputedStyle(el).objectFit)) !== 'contain') throw new Error('Gallery image ' + i + ' may crop the dog');
+            }
+
+            await page.goto(base + 'social.html', { waitUntil: 'networkidle' });
+            const social = await page.locator('main').innerText();
+            for (const expected of ['@bellissimogeni','Kelvin Ezekiel Omigie']) {
+              if (!social.includes(expected)) throw new Error('Social page missing ' + expected);
+            }
+
+            const pages = ['about.html','gallery.html','puppies.html','reserve.html','breeding.html','contact.html','dogs.html','pedigree.html','social.html'];
+            const forbidden = ['coming from the client','development placeholder','demo male','demo female','media needed:','replace all tbc','before launch'];
+            for (const path of pages) {
+              await page.goto(base + path, { waitUntil: 'networkidle' });
+              const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+              if (overflow > 1) throw new Error(path + ' has horizontal overflow');
+              const body = (await page.locator('body').innerText()).toLowerCase();
+              for (const phrase of forbidden) if (body.includes(phrase)) throw new Error(path + ' still exposes staging copy: ' + phrase);
+            }
+
+            await browser.close();
+          })();
+          EOF
+
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
