@@ -1462,3 +1462,11 @@ button{font:inherit}
   .legacy-button{width:100%;min-width:0;min-height:42px;padding:0 7px;gap:6px;font-size:6.6px;letter-spacing:.04em;white-space:nowrap}
   .reference-legacy-signature{display:none}
 }
+
+/* Framing safety: kennel photography must keep the full dog/head visible. */
+.featured-dog-card img,
+.puppies-photo-frame img{
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#10110f;
+}
