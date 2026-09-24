@@ -131,6 +131,8 @@ jobs:
             if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || dogText.includes('STATUS')) throw new Error('Current-dog owner row is incorrect');
 
             await page.goto(base + 'dogs.html?dog=dragoslav-custodi-nos', { waitUntil: 'networkidle' });
+            const dragoslavText = await page.locator('#profile').innerText();
+            if (!dragoslavText.includes('STATUS') || !dragoslavText.includes('Pedigree ancestor')) throw new Error('Ancestor status should remain visible');
             const dragoslavParents = page.locator('#profile dd a');
             if (await dragoslavParents.count() < 2) throw new Error('Dragoslav sire/dam links are not traceable');
 
