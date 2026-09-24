@@ -95,6 +95,14 @@ jobs:
               timeout: 60000
             });
             await prepareHero(mobile, 'mobile homepage');
+            const [dogsBox, puppiesBox, menuBox] = await Promise.all([
+              mobile.locator('.reference-quick-nav a[href="dogs.html"]').boundingBox(),
+              mobile.locator('.reference-quick-nav a[href="puppies.html"]').boundingBox(),
+              mobile.locator('.reference-menu-button').boundingBox()
+            ]);
+            if (!dogsBox || !puppiesBox || !menuBox || !(dogsBox.x < puppiesBox.x && puppiesBox.x < menuBox.x)) {
+              throw new Error('Mobile shortcut order must be Our Dogs, Puppies, Menu');
+            }
             await mobile.screenshot({
               path: 'screenshots/top-mobile.png',
               fullPage: false
