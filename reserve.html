@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reserve a Puppy | Bellissimo Geni Cane Corso</title>
-<meta name="description" content="Reserve a Bellissimo Geni Cane Corso puppy. Get a traceable reservation reference and confirm via WhatsApp. Online payment activates after provider confirmation.">
+<meta name="description" content="Enquire about Bellissimo Geni Cane Corso puppy availability and reservation terms.">
 <meta property="og:title" content="Reserve | Bellissimo Geni Cane Corso">
 <meta property="og:url" content="https://eghosa001.github.io/bellissimo-geni-cane-corso/reserve.html">
 <link rel="canonical" href="https://eghosa001.github.io/bellissimo-geni-cane-corso/reserve.html">
@@ -22,8 +22,8 @@
 </header>
 <nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
 <main class="wrap">
-<div class="page-hero"><p class="eyebrow">RESERVATION</p><h1>Reserve with <em>confidence.</em></h1><p>Puppy → details → reference → confirmation. No card details are collected on this site. Payment activates only after the kennel confirms provider and deposit rules.</p></div>
-<div class="notice"><strong>Payment status:</strong> enquiry-based reservation is live. Secure online payment (provider, deposit amount, refunds, balance rules) is pending client confirmation — see <a href="breeding.html">breeding programme</a>.</div>
+<div class="page-hero"><p class="eyebrow">RESERVATION</p><h1>Reserve with <em>confidence.</em></h1><p>Check verified availability, submit an enquiry and confirm the terms directly with the kennel. No card details are collected on this site.</p></div>
+<div class="notice"><strong>Reservation process:</strong> availability and terms are confirmed by the kennel before any commitment. See the <a href="breeding.html">breeding programme</a> for the placement approach.</div>
 <div class="form-card">
 <div id="step1">
 <label for="puppy">1 — Choose your puppy</label>
@@ -47,13 +47,21 @@
 <script src="site.js"></script>
 <script>
 (function(){
-// WhatsApp number loaded from admin settings at runtime, falls back to placeholder
   var WHATSAPP_NUMBER='2348000000000',form=document.getElementById('resForm'),sum=document.getElementById('summary'),note=document.getElementById('note');
 var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'',WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
 var PUPPS=[];
 function ref(){var d=new Date();return 'BG-'+d.getFullYear()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
-function fill(){var pre=new URLSearchParams(location.search).get('puppy');sel.innerHTML=PUPPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' — '+BG.esc(p.status)+' — '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');upd();}
+function fill(){
+  if(!PUPPS.length){
+    var box=document.querySelector('.form-card');
+    box.innerHTML='<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Use the kennel enquiry form or verified social channels for current availability and the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" href="contact.html">Make an enquiry</a><a class="btn ghost" href="social.html">Social updates</a></div></div>';
+    return;
+  }
+  var pre=new URLSearchParams(location.search).get('puppy');
+  sel.innerHTML=PUPPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' — '+BG.esc(p.status)+' — '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');
+  upd();
+}
 function upd(){var p=PUPPS.find(function(x){return x.id===sel.value;});hint.textContent=p?((p.notes||'')+' Sire/dam: '+(p.sireId||'—')+' / '+(p.damId||'—')):'';}
 sel.addEventListener('change',upd);
 form.addEventListener('submit',function(e){
@@ -73,7 +81,7 @@ function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{meth
 if(RECAPTCHA_SITE_KEY&&typeof grecaptcha!=='undefined'){grecaptcha.ready(function(){grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'reserve'}).then(function(token){BG.track('captcha_success',p.id);postWebhook(token);});});}
 else{setTimeout(function(){postWebhook(null);},500);}
 });
-BG.loadAdminJSON('puppies').then(function(j){PUPPS=j.puppies||j.data||[];fill();}).catch(function(){BG.loadJSON('data/puppies.json').then(function(j){PUPPS=j.puppies||[];fill();});});
+BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){PUPPS=j.puppies||j.data||[];fill();}).catch(function(){PUPPS=[];fill();});
 })();
 </script>
 </body>
