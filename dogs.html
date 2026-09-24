@@ -71,6 +71,14 @@ function renderLists(){
   var c=visible.filter(function(d){return d.group==='current'}),p=visible.filter(function(d){return d.group==='past-production'});
   current.innerHTML=c.length?c.map(card).join(''):'<p>No current dogs match this search.</p>';
   past.innerHTML=p.length?p.map(card).join(''):'<p>No past productions match this search.</p>';
+  if(term.length>=3&&visible.length===1){
+    var match=visible[0],params=new URLSearchParams(location.search);
+    if(params.get('dog')!==match.id){
+      params.set('dog',match.id);
+      history.replaceState({},'',location.pathname+'?'+params.toString());
+    }
+    renderProfile(match.id);
+  }
 }
 function gallery(d){
   var imgs=[d.photo].concat(d.gallery||[]).filter(Boolean);
