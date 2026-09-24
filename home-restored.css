@@ -1588,7 +1588,7 @@ button{font:inherit}
     height:100%;
     min-height:0;
     overflow:hidden;
-    background:#0c0d0b url('assets/dogs/bellissimo-dog-01-hd.webp') center center/cover no-repeat;
+    background:#0c0d0b;
   }
   .legacy-hero-photo>img{
     position:absolute;
@@ -1602,21 +1602,32 @@ button{font:inherit}
     transform:translateX(15%);
     object-fit:contain;
     object-position:right center;
+    z-index:1;
     filter:none;
-    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 4%,#000 11%,#000 100%);
-    mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 4%,#000 11%,#000 100%);
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.45) 1.5%,#000 4%,#000 100%);
+    mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.45) 1.5%,#000 4%,#000 100%);
   }
   .legacy-hero-photo::before{
     content:'';
     position:absolute;
     inset:0;
-    z-index:1;
+    z-index:2;
     pointer-events:none;
     background:
       linear-gradient(90deg,rgba(8,9,7,.99) 0%,rgba(8,9,7,.96) 25%,rgba(8,9,7,.72) 38%,rgba(8,9,7,.20) 50%,rgba(8,9,7,.03) 60%,rgba(8,9,7,0) 70%),
       linear-gradient(180deg,rgba(0,0,0,.09) 0%,rgba(0,0,0,.02) 62%,rgba(0,0,0,.14) 100%);
   }
-  .legacy-hero-photo::after{display:none}
+  .legacy-hero-photo::after{
+    display:block;
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:18.5%;
+    z-index:0;
+    background:url('assets/dogs/bellissimo-dog-01-hd.webp') center top/cover no-repeat;
+  }
 
   .legacy-hero-copy{
     position:relative;
