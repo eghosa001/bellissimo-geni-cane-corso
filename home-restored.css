@@ -1594,7 +1594,7 @@ button{font:inherit}
     max-width:none;
     transform:none;
     object-fit:cover;
-    object-position:64% 48%;
+    object-position:4% 48%;
     filter:none;
     -webkit-mask-image:none;
     mask-image:none;
@@ -1606,7 +1606,7 @@ button{font:inherit}
     z-index:1;
     pointer-events:none;
     background:
-      linear-gradient(90deg,rgba(8,9,7,.99) 0%,rgba(8,9,7,.96) 25%,rgba(8,9,7,.77) 39%,rgba(8,9,7,.36) 52%,rgba(8,9,7,.08) 66%,rgba(8,9,7,0) 76%),
+      linear-gradient(90deg,rgba(8,9,7,.99) 0%,rgba(8,9,7,.96) 25%,rgba(8,9,7,.72) 38%,rgba(8,9,7,.20) 50%,rgba(8,9,7,.03) 60%,rgba(8,9,7,0) 70%),
       linear-gradient(180deg,rgba(0,0,0,.09) 0%,rgba(0,0,0,.02) 62%,rgba(0,0,0,.14) 100%);
   }
   .legacy-hero-photo::after{display:none}
@@ -1618,7 +1618,7 @@ button{font:inherit}
     max-width:none;
     min-height:100%;
     height:100%;
-    padding:clamp(30px,4.4dvh,42px) 0 24px 5.7vw;
+    padding:clamp(72px,9.5dvh,88px) 0 24px 5.7vw;
     justify-content:flex-start;
   }
   .legacy-eyebrow{
@@ -1638,10 +1638,10 @@ button{font:inherit}
     letter-spacing:-.04em;
   }
   .legacy-lead{
-    max-width:172px;
+    max-width:188px;
     margin:20px 0 18px;
     color:#f1ece3;
-    font-size:10.5px;
+    font-size:9.8px;
     line-height:1.50;
   }
   .legacy-actions{
