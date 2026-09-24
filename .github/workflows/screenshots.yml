@@ -5,6 +5,9 @@ on:
     paths:
       - "index.html"
       - "home-restored.css"
+      - "dogs.html"
+      - "pedigree.html"
+      - "data/dogs.json"
       - "site.js"
       - "assets/**"
   workflow_run:
@@ -92,6 +95,14 @@ jobs:
               timeout: 60000
             });
             await prepareHero(mobile, 'mobile homepage');
+            const [dogsBox, puppiesBox, menuBox] = await Promise.all([
+              mobile.locator('.reference-quick-nav a[href="dogs.html"]').boundingBox(),
+              mobile.locator('.reference-quick-nav a[href="puppies.html"]').boundingBox(),
+              mobile.locator('.reference-menu-button').boundingBox()
+            ]);
+            if (!dogsBox || !puppiesBox || !menuBox || !(dogsBox.x < puppiesBox.x && puppiesBox.x < menuBox.x)) {
+              throw new Error('Mobile shortcut order must be Our Dogs, Puppies, Menu');
+            }
             await mobile.screenshot({
               path: 'screenshots/top-mobile.png',
               fullPage: false
@@ -117,6 +128,11 @@ jobs:
             if (!(await dogImage.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Branco profile image failed');
             const dogText = await page.locator('#profile').innerText();
             if (!dogText.includes('Dragoslav Custodi Nos') || !dogText.includes('Himera Custodi Nos')) throw new Error('Branco parent links missing');
+            if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || dogText.includes('STATUS')) throw new Error('Current-dog owner row is incorrect');
+
+            await page.goto(base + 'dogs.html?dog=dragoslav-custodi-nos', { waitUntil: 'networkidle' });
+            const dragoslavParents = page.locator('#profile dd a');
+            if (await dragoslavParents.count() < 2) throw new Error('Dragoslav sire/dam links are not traceable');
 
             await page.goto(base + 'pedigree.html?dog=gyda-bellissimo-geni', { waitUntil: 'networkidle' });
             const pedigree = await page.locator('main').innerText();

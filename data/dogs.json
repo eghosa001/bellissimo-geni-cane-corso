@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "generationSupport": 7,
-  "notes": "Verified Bellissimo Geni records supplied by the kennel. Missing facts remain blank or Not recorded. Microchip and private owner details are intentionally not published.",
+  "notes": "Verified Bellissimo Geni records supplied by the kennel. Missing facts remain blank or Not recorded. Current-dog ownership is published where supplied; microchip numbers and other private records are not published.",
   "dogs": [
     {
       "id": "branco-custodi-nos",
@@ -21,7 +21,8 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Branco Custodi Nos is part of the Bellissimo Geni Cane Corso family. His verified pedigree connects through Dragoslav Custodi Nos and Himera Custodi Nos."
+      "bio": "Branco Custodi Nos is part of the Bellissimo Geni Cane Corso family. His verified pedigree connects through Dragoslav Custodi Nos and Himera Custodi Nos.",
+      "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
       "id": "karma-custodi-nos",
@@ -41,7 +42,8 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Karma Custodi Nos is a Formentino Cane Corso in the Bellissimo Geni family. Additional verified profile details will be published as supplied by the kennel."
+      "bio": "Karma Custodi Nos is a Formentino Cane Corso in the Bellissimo Geni family. Additional verified profile details will be published as supplied by the kennel.",
+      "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
       "id": "anthie-custodi-nos",
@@ -59,7 +61,8 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Verified name supplied by Bellissimo Geni. Photograph and further pedigree details remain pending rather than being guessed."
+      "bio": "Verified name supplied by Bellissimo Geni. Photograph and further pedigree details remain pending rather than being guessed.",
+      "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
       "id": "tessa-sangue-magnifica",
@@ -77,7 +80,8 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Verified name supplied by Bellissimo Geni. Photograph and further pedigree details remain pending rather than being guessed."
+      "bio": "Verified name supplied by Bellissimo Geni. Photograph and further pedigree details remain pending rather than being guessed.",
+      "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
       "id": "twice-as-tall-eden-bellissimo-geni",
