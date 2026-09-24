@@ -100,9 +100,33 @@ jobs:
               mobile.locator('.reference-quick-nav a[href="puppies.html"]').boundingBox(),
               mobile.locator('.reference-menu-button').boundingBox()
             ]);
-            if (!dogsBox || !puppiesBox || !menuBox || !(dogsBox.x < puppiesBox.x && puppiesBox.x < menuBox.x)) {
-              throw new Error('Mobile shortcut order must be Our Dogs, Puppies, Menu');
+            if (!dogsBox || !puppiesBox || !menuBox || !(menuBox.x < puppiesBox.x && puppiesBox.x < dogsBox.x)) {
+              throw new Error('Mobile shortcut order must be Menu, Puppies, Our Dogs');
             }
+
+            const layout = await mobile.evaluate(() => {
+              const buttons = [...document.querySelectorAll('.legacy-actions .legacy-button')]
+                .map(el => el.getBoundingClientRect());
+              const facts = [...document.querySelectorAll('.reference-credibility article')]
+                .map(el => el.getBoundingClientRect());
+              return {
+                overflow: document.documentElement.scrollWidth - window.innerWidth,
+                buttonsStacked: buttons.length === 2 &&
+                  Math.abs(buttons[0].x - buttons[1].x) < 2 &&
+                  buttons[1].y > buttons[0].y,
+                factsOneRow: facts.length === 4 &&
+                  Math.max(...facts.map(r => r.y)) - Math.min(...facts.map(r => r.y)) < 2
+              };
+            });
+            if (layout.overflow > 1) throw new Error('Mobile homepage has horizontal overflow');
+            if (!layout.buttonsStacked) throw new Error('Hero CTAs must be stacked on mobile');
+            if (!layout.factsOneRow) throw new Error('Credibility strip must remain four columns on mobile');
+
+            await mobile.setViewportSize({ width: 360, height: 800 });
+            await mobile.waitForTimeout(100);
+            const narrowOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+            if (narrowOverflow > 1) throw new Error('Homepage overflows at 360px width');
+
             await mobile.screenshot({
               path: 'screenshots/top-mobile.png',
               fullPage: false
