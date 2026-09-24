@@ -11,6 +11,12 @@ on:
       - "site.js"
       - "social.html"
       - "contact.html"
+      - "about.html"
+      - "gallery.html"
+      - "puppies.html"
+      - "reserve.html"
+      - "breeding.html"
+      - "data/puppies.json"
       - "assets/**"
   workflow_run:
     workflows: ["GitHub Pages"]
@@ -32,6 +38,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Reconstruct supplied dog photos
+        run: |
+          mkdir -p assets/dogs
+          cat .github/assets/tessa-sangue-magnifica.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/tessa-sangue-magnifica.webp
+          cat .github/assets/daisy-bellissimo-geni.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/daisy-bellissimo-geni.webp
+          test -s assets/dogs/tessa-sangue-magnifica.webp
+          test -s assets/dogs/daisy-bellissimo-geni.webp
 
       - name: Install Playwright
         run: |
