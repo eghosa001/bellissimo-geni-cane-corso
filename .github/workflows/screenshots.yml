@@ -213,7 +213,7 @@ jobs:
 
             await page.goto(base + 'dogs.html?dog=twice-as-tall-eden-bellissimo-geni', { waitUntil: 'networkidle' });
             const eden = await page.locator('#profile').innerText();
-            for (const expected of ['FEMALE','Grey','13/01/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+            for (const expected of ['Female','Grey','13/01/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
               if (!eden.includes(expected)) throw new Error('Eden profile missing ' + expected);
             }
 
