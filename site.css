@@ -35,7 +35,7 @@
 .ref{background:#10100f;color:#f4f1ea;padding:18px;font-size:14px;letter-spacing:.04em}
 .gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .gallery-grid figure{margin:0;background:#fff;border:1px solid var(--line);padding:10px}
-.gallery-grid img{width:100%;height:220px;object-fit:cover;display:block;background:#ddd}
+.gallery-grid img{width:100%;height:220px;object-fit:contain;object-position:center center;display:block;background:#171715}
 .gallery-grid figcaption{font-size:12px;color:var(--muted);padding:8px 4px 2px}
 .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .testi{background:#fff;border:1px solid var(--line);padding:22px;font-size:14px}
@@ -102,6 +102,6 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
 
 /* Dynamic dog photography */
 .dog-card-media{margin:-26px -22px 20px;aspect-ratio:4/3;overflow:hidden;background:#e7e2d7;border-bottom:1px solid var(--line)}
-.dog-card-media img{width:100%;height:100%;display:block;object-fit:cover}
+.dog-card-media img{width:100%;height:100%;display:block;object-fit:contain;object-position:center center;background:#171715}
 .profile .photo{overflow:hidden}
-.profile .photo img{width:100%;height:100%;min-height:300px;display:block;object-fit:cover}
+.profile .photo img{width:100%;height:100%;min-height:300px;display:block;object-fit:contain;object-position:center center;background:#171715}
