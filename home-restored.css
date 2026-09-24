@@ -1472,8 +1472,11 @@ button{font:inherit}
 }
 
 
+.mobile-fact-break{display:none}
+
 /* ===== Reference-locked mobile homepage composition ===== */
 @media(max-width:560px){
+  .mobile-fact-break{display:inline}
   /* Match the approved phone reference: compact top message, centered logo,
      one-line Menu / Puppies / Our Dogs shortcuts, full-bleed hero and 4-up facts. */
   .reference-topbar{
