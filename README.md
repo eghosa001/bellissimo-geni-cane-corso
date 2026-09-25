@@ -37,7 +37,7 @@ Public puppy/litter data is in `data/puppies.json`.
 
 Only kennel-supplied and verified facts should be added. Do not invent missing pedigree, registration, availability, price or health information.
 
-Late puppy photographs supplied on 24 September 2026 are retained outside the published listing model until their identities, litter relationship, sex and availability are confirmed. This avoids presenting a photo as an available puppy without supporting data.
+Late puppy photographs supplied on 24 September 2026 are published only in a clearly labelled kennel-photography gallery. They remain outside the puppy availability/listing model until identities, litter relationship, sex and availability are confirmed.
 
 ## Backend / admin
 
