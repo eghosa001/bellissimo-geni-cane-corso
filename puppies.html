@@ -26,20 +26,30 @@
 <div class="toolbar"><select id="f" aria-label="Filter by status"><option value="">All statuses</option><option>AVAILABLE</option><option>COMING SOON</option><option>RESERVED</option><option>SOLD</option></select></div>
 <section class="grid-3" id="list"></section>
 <section id="litters" style="margin-top:40px"></section>
+<section class="puppy-gallery-section" aria-labelledby="puppy-gallery-title">
+  <div class="puppy-gallery-heading">
+    <p class="eyebrow">KENNEL PHOTOGRAPHY</p>
+    <h2 id="puppy-gallery-title">Puppies &amp; young dogs</h2>
+    <p>These photographs were supplied by Bellissimo Geni. They are kennel photography only and do not by themselves indicate current availability.</p>
+  </div>
+  <div class="gallery-grid" id="puppy-gallery"></div>
+</section>
 </main>
 <footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="dogs.html">Our Dogs</a><a href="pedigree.html">Pedigree</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
 <script>
 window.BG_WEBHOOK_URL = window.BG_WEBHOOK_URL || '';
 (function(){
-var list=document.getElementById('list'),f=document.getElementById('f'),lit=document.getElementById('litters');
+var list=document.getElementById('list'),f=document.getElementById('f'),lit=document.getElementById('litters'),gallery=document.getElementById('puppy-gallery');
 function pill(s){return '<span class="pill '+s.toLowerCase().replace(/ /g,'-')+'">'+BG.esc(s)+'</span>';}
 function render(data){var items=(data.puppies||[]).filter(function(p){return !f.value||p.status===f.value;});
 list.innerHTML=items.length?items.map(function(p){return '<article class="card dog-card">'+pill(p.status)+'<h3>'+BG.esc(p.name)+'</h3><span class="meta">'+BG.esc([p.sex,p.colour].filter(Boolean).join(' • ').toUpperCase())+'</span><p>'+BG.esc(p.notes||'')+'</p><p><strong>'+BG.esc(p.priceNote||'Price on enquiry')+'</strong></p><div class="row"><a class="btn gold" href="reserve.html?puppy='+encodeURIComponent(p.id)+'">Reserve this puppy</a></div></article>';}).join(''):'<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Availability changes. Contact Bellissimo Geni or follow the verified social channels for the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" href="contact.html">Make an enquiry</a><a class="btn ghost" href="social.html">Social updates</a></div></div>';
 var litters=data.litters||[];
-lit.innerHTML=litters.length?'<h2 style="font:600 40px var(--serif)">Upcoming litters</h2>'+litters.map(function(l){return '<div class="card" style="margin-top:14px"><span class="meta">'+BG.esc(l.status||'')+'</span><h3>'+BG.esc(l.name)+'</h3><p>'+BG.esc(l.notes||'')+'</p><div class="row"><a class="btn ghost" href="contact.html">Join priority list</a></div></div>';}).join(''):'';}
-f.addEventListener('change',function(){BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){render({puppies:j.puppies||j.data||[],litters:j.litters||[]});});});
-BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){render({puppies:j.puppies||j.data||[],litters:j.litters||[]});}).catch(function(){list.innerHTML='<div class="notice">Could not load puppy records.</div>';});
+lit.innerHTML=litters.length?'<h2 style="font:600 40px var(--serif)">Upcoming litters</h2>'+litters.map(function(l){return '<div class="card" style="margin-top:14px"><span class="meta">'+BG.esc(l.status||'')+'</span><h3>'+BG.esc(l.name)+'</h3><p>'+BG.esc(l.notes||'')+'</p><div class="row"><a class="btn ghost" href="contact.html">Join priority list</a></div></div>';}).join(''):'';
+var photos=data.gallery||[];
+gallery.innerHTML=photos.map(function(x){return '<figure><img src="'+BG.esc(x.photo)+'" alt="'+BG.esc(x.alt||'Bellissimo Geni Cane Corso')+'" loading="lazy" decoding="async"><figcaption>'+BG.esc(x.caption||'Kennel-supplied photography.')+'</figcaption></figure>';}).join('');}
+f.addEventListener('change',function(){BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){render({puppies:j.puppies||j.data||[],litters:j.litters||[],gallery:j.gallery||[]});});});
+BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){render({puppies:j.puppies||j.data||[],litters:j.litters||[],gallery:j.gallery||[]});}).catch(function(){list.innerHTML='<div class="notice">Could not load puppy records.</div>';});
 })();
 </script>
 </body>
