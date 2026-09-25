@@ -306,9 +306,32 @@ jobs:
             await page.goto(base + 'puppies.html', { waitUntil: 'networkidle' });
             const mobileMenuDisplay = await page.locator('.mobile-menu').evaluate(el => getComputedStyle(el).display);
             if (mobileMenuDisplay !== 'none') throw new Error('Mobile menu leaks into desktop layout');
-            const emptyBox = await page.locator('#list .testi-empty').boundingBox();
-            if (!emptyBox || Math.abs((emptyBox.x + emptyBox.width / 2) - 1365 / 2) > 8) {
-              throw new Error('Puppy empty state is not centered on desktop');
+
+            const firstAvailable = page.locator('#list article').first();
+            if ((await firstAvailable.getAttribute('id')) !== 'safeera-bellissimo-geni') {
+              throw new Error('Safeera must be the first available listing');
+            }
+            const safeeraText = await firstAvailable.innerText();
+            for (const expected of ['Safeera Bellissimo Geni','AVAILABLE','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+              if (!safeeraText.includes(expected)) throw new Error('Safeera listing missing ' + expected);
+            }
+            const safeeraImage = firstAvailable.locator('img');
+            if (!(await safeeraImage.evaluate(img => img.complete && img.naturalWidth > 0))) {
+              throw new Error('Safeera listing image failed to load');
+            }
+            if ((await safeeraImage.evaluate(img => getComputedStyle(img).objectFit)) !== 'contain') {
+              throw new Error('Safeera listing image may crop the dog');
+            }
+
+            await page.goto(base, { waitUntil: 'networkidle' });
+            const availableCard = page.locator('.puppies-photo-card');
+            const availableText = await availableCard.innerText();
+            for (const expected of ['AVAILABLE','Safeera','Bellissimo Geni','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+              if (!availableText.includes(expected)) throw new Error('Homepage Safeera feature missing ' + expected);
+            }
+            const homeSafeeraImage = availableCard.locator('img');
+            if (!(await homeSafeeraImage.evaluate(img => img.complete && img.naturalWidth > 0))) {
+              throw new Error('Homepage Safeera image failed to load');
             }
             const puppyPhotos = page.locator('#puppy-gallery img');
             if (await puppyPhotos.count() !== 6) throw new Error('Expected six supplied puppy/young-dog photos');
