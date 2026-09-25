@@ -275,6 +275,23 @@ jobs:
               if (!social.includes(expected)) throw new Error('Social page missing ' + expected);
             }
 
+            await page.goto(base + 'contact.html', { waitUntil: 'networkidle' });
+            const contact = await page.locator('main').innerText();
+            for (const expected of ['+234 913 780 6866','Bellissimogenicanecorso@gmail.com']) {
+              if (!contact.includes(expected)) throw new Error('Contact page missing verified detail: ' + expected);
+            }
+            const directWhatsApp = await page.locator('a[data-bg-whatsapp]').getAttribute('href');
+            if (directWhatsApp !== 'https://wa.me/message/YSFP25LSDD7AP1') {
+              throw new Error('Direct WhatsApp link is not the kennel-supplied link');
+            }
+            await page.locator('#apply input[name="name"]').fill('Website QA');
+            await page.locator('#apply input[name="phone"]').fill('08012345678');
+            await page.locator('#apply textarea[name="message"]').fill('Contact route test');
+            const messageHref = await page.evaluate(() => BG.whatsappMessage('qa'));
+            if (!messageHref.startsWith('https://wa.me/2349137806866?text=')) {
+              throw new Error('Prefilled WhatsApp messages are not using the verified number');
+            }
+
             const pages = ['about.html','gallery.html','puppies.html','reserve.html','breeding.html','socialization.html','standards.html','testimonials.html','contact.html','dogs.html','pedigree.html','social.html'];
             const forbidden = ['coming from the client','development placeholder','demo male','demo female','media needed:','replace all tbc','before launch'];
             for (const path of pages) {

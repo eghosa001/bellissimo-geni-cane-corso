@@ -47,7 +47,7 @@
 <script src="site.js"></script>
 <script>
 (function(){
-  var WHATSAPP_NUMBER='2348000000000',form=document.getElementById('resForm'),sum=document.getElementById('summary'),note=document.getElementById('note');
+  var form=document.getElementById('resForm'),sum=document.getElementById('summary');
 var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'',WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
 var PUPPS=[];
@@ -55,7 +55,7 @@ function ref(){var d=new Date();return 'BG-'+d.getFullYear()+'-'+Math.random().t
 function fill(){
   if(!PUPPS.length){
     var box=document.querySelector('.form-card');
-    box.innerHTML='<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Use the kennel enquiry form or verified social channels for current availability and the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" href="contact.html">Make an enquiry</a><a class="btn ghost" href="social.html">Social updates</a></div></div>';
+    box.innerHTML='<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Use the verified Bellissimo Geni contact channels for current availability and the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" data-bg-whatsapp href="'+BG.contact.whatsappDirect+'" target="_blank" rel="noopener">Ask on WhatsApp</a><a class="btn ghost" href="contact.html">All contact options</a></div></div>';
     return;
   }
   var pre=new URLSearchParams(location.search).get('puppy');
@@ -74,7 +74,7 @@ if(!BG.validPhone(phone)){sum.innerHTML='<div class="notice">Please enter a vali
 var rec={ref:ref(),puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,at:new Date().toISOString(),status:'REQUESTED',ip:null};
 try{var all=JSON.parse(localStorage.getItem('bg_reservations')||'[]');all.push(rec);localStorage.setItem('bg_reservations',JSON.stringify(all));}catch(err){}
 var text=['Hello Bellissimo Geni, I would like to reserve a puppy.','','Reference: '+rec.ref,'Puppy: '+p.name+' ('+p.id+')','Name: '+name,'Phone: '+phone,'Message: '+(msg||'—')].join('\n');
-sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(rec.ref)+'</strong> — '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" target="_blank" rel="noopener" href="https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(text)+'">Confirm via WhatsApp →</a><a class="btn ghost" href="contact.html">Contact instead</a></div>';
+sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(rec.ref)+'</strong> — '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" target="_blank" rel="noopener" href="'+BG.whatsappMessage(text)+'">Confirm via WhatsApp →</a><a class="btn ghost" href="contact.html">Contact instead</a></div>';
 BG.track('reservation_request',p.id);
 var payload={action:'reserve',version:2,data:{puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,ref:rec.ref,status:'REQUESTED'},timestamp:rec.at};
 function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},payload,{token:token||null})).replace(/\u200B/g,'')}).then(function(r){return r.json().catch(function(){return null;});}).then(function(j){if(j&&j.payment_url){sum.insertAdjacentHTML('beforeend','<p class="hint">Online payment is ready: <a class="btn gold" target="_blank" rel="noopener" href="'+BG.esc(j.payment_url)+'">Pay deposit to confirm →</a></p>');}else if(j&&j.error){sum.insertAdjacentHTML('beforeend','<p class="hint">Reservation status: '+BG.esc(String(j.error).replace(/_/g,' '))+'.</p>');}}).catch(function(){});}catch(err){}}

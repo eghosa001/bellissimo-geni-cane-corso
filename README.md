@@ -1,123 +1,88 @@
 # Bellissimo Geni Cane Corso
 
-Premium responsive kennel website for Bellissimo Geni Cane Corso, Nigeria.
+Production website for **ALLEVAMENTO BELLISSIMO GENI**, Nigeria.
 
-## Architecture
+## Current status
 
-```
-Public Site (GitHub Pages)          Cloudflare Worker
-├─ index.html ──────────────────→ /api/dogs (published only)
-├─ dogs.html      ──────────────→ /api/puppies (published only)
-├─ puppies.html   ──────────────→ /api/gallery (all gallery photos)
-├─ gallery.html   ──────────────→ /api/testimonials (approved + published)
-├─ testimonials.html                /api/content?page=about,...
-└─ reserve.html                     /webhook (reservation POST)
+The public website is deployed through GitHub Pages and the current visual baseline is approved for continued use. Core public experiences are implemented:
 
-Admin Dashboard (same domain)
-└─ admin.html ──────────────────→ /admin/api/* (authenticated)
-   ├─ POST /admin/api/login         issues session token
-   ├─ GET/POST /admin/api/dogs      dog CRUD
-   ├─ GET/POST /admin/api/puppies   puppy/litter CRUD
-   ├─ POST /admin/api/upload        browser → R2 photo upload
-   ├─ POST /admin/api/content       page HTML editor
-   ├─ GET /admin/api/audit          last 500 actions
-   └─ ... (full CRUD for all entities)
-```
+- premium responsive homepage
+- Our Dogs and Past Productions
+- direct dog profiles with verified sire/dam navigation
+- pedigree search and multi-generation ancestry traversal
+- puppies and litters with verification-safe empty states
+- reservation enquiry flow
+- verified Bellissimo Geni social links
+- verified phone, WhatsApp and email contact routes
+- owner/admin CMS code and Cloudflare Worker code
+- automated responsive screenshots and smoke tests
 
-## Before launch — client needs to complete
+The website intentionally **does not publish unverified puppy identities, prices, health claims or payment terms**.
 
-See **[CLIENT_INTAKE.md](CLIENT_INTAKE.md)** — a fill-in form covering payment/rules, dog & puppy records, contact/social details, photos, content and security keys.
+## Verified business contact
 
-## Pages
+- Phone / WhatsApp number: +234 913 780 6866
+- Email: Bellissimogenicanecorso@gmail.com
+- Direct WhatsApp: https://wa.me/message/YSFP25LSDD7AP1
+- Instagram: @bellissimogeni
+- TikTok: @bellissimogeni
+- Facebook: Kelvin Ezekiel Omigie
 
-- `index.html` — Home: hero, story, featured dogs/puppies, lineage CTA, standards, bloodlines, gallery preview, owner stories (TBC), reservation CTA, enquiry form
-- `about.html` — About: Founding story, heritage, location, mission (TBC placeholders)
-- `dogs.html` — Our Dogs: live search + filter, full profiles with clickable Sire/Dam (`?dog=id`)
-- `puppies.html` — Puppies + upcoming litters, status pills, reserve links
-- `pedigree.html` — Pedigree search up to 7 generations from `data/dogs.json`
-- `breeding.html` — Breeding programme, standards, health transparency
-- `standards.html` — Standards, health testing, vaccination (TBC pending client)
-- `socialization.html` — Socialization + transition guidance (TBC pending client)
-- `gallery.html` — Client photos + clearly-marked placeholders
-- `testimonials.html` — Owner stories (placeholders until approved)
-- `reserve.html` — Reservation flow: choose puppy → terms + honeypot → WhatsApp confirm → POST `/webhook`
-- `contact.html` — Contact / Apply form via WhatsApp (honeypot + phone validation)
-- `admin.html` — **Owner CMS**: password-protected dashboard for managing all content
+The canonical contact values used by frontend JavaScript are centralized in `site.js`.
 
 ## Data
 
-The public site reads from **two sources** depending on deployment state:
+Public dog data is in `data/dogs.json`.
+Public puppy/litter data is in `data/puppies.json`.
 
-1. **Local JSON fallback** (`data/dogs.json`, `data/puppies.json`) — used when the Worker is not yet deployed or unreachable
-2. **Worker API** (`/api/dogs`, `/api/puppies`, etc.) — used when `window.BG_WEBHOOK_URL` is set
+Only kennel-supplied and verified facts should be added. Do not invent missing pedigree, registration, availability, price or health information.
 
-The admin panel writes to Cloudflare KV. The public site reads published records from the same KV via the Worker's unauthenticated `/api/*` endpoints.
+Late puppy photographs supplied on 24 September 2026 are retained outside the published listing model until their identities, litter relationship, sex and availability are confirmed. This avoids presenting a photo as an available puppy without supporting data.
 
-## Admin CMS
+## Backend / admin
 
-The owner manages all content through `admin.html`:
+The owner CMS and Worker implementation are present, but production Cloudflare infrastructure is not configured in the repository yet.
 
-- **Dogs & puppies**: add/edit/delete with sire/dam linking, photo upload (browser → R2), publish/draft toggle
-- **Litters**: group puppies, set whelp dates
-- **Reservations**: view all, update status (REQUESTED → SOLD), append notes
-- **Gallery**: upload photos, caption, category, sort order
-- **Testimonials**: approve/unapprove, feature on homepage
-- **Content pages**: edit About/Breeding/Standards/Socialization HTML directly
-- **Audit trail**: every action logged with timestamp and entity
-- **Settings**: WhatsApp number, social links, payment config
+`webhook/wrangler.toml` still requires real:
+- RESERVATIONS KV namespace ID
+- ADMIN KV namespace ID
+- R2 media bucket
+- ADMIN_PASSWORD Worker secret
 
-## Running locally
+Payment remains deliberately disabled:
+- `PAYMENT_PROVIDER = "none"`
+- `RESERVATION_AMOUNT = "0"`
 
-Open `index.html` in a browser, or serve statically:
+Do not enable payment until the kennel confirms provider, deposit amount, refund/cancellation terms and balance-payment rules.
 
-```bash
-npx serve .
-```
+## Deploying the public site
+
+Push/merge verified work to `main`. The GitHub Pages workflow deploys automatically.
 
 ## Deploying the Worker
 
-The admin CMS requires a Cloudflare Workers deployment:
+From `webhook/`:
 
 ```bash
-cd webhook
 npm install
 wrangler login
-
-# Set the admin password (store securely — never commit this)
-wrangler secret put ADMIN_PASSWORD
-
-# Create KV namespaces
-wrangler kv:namespace create ADMIN
-wrangler kv:namespace create RESERVATIONS
-# Copy the IDs into webhook/wrangler.toml
-
-# Create R2 bucket for photo uploads
+wrangler kv namespace create ADMIN
+wrangler kv namespace create RESERVATIONS
 wrangler r2 bucket create bellissimo-geni-media
-# Copy the bucket name into webhook/wrangler.toml
-
-# Deploy
+wrangler secret put ADMIN_PASSWORD
 wrangler deploy
 ```
 
-Then set `window.BG_WEBHOOK_URL` in each public HTML file to your deployed URL:
+After deployment, set `window.BG_WEBHOOK_URL` to the deployed Worker URL on pages that use backend data/reservations.
 
-```html
-<script>window.BG_WEBHOOK_URL = 'https://bellissimo-geni-webhook.your-name.workers.dev';</script>
-```
+## Release gate
 
-## Deploying the Public Site
+Before calling the full production stack complete:
 
-Push to `main` and enable GitHub Pages in repository settings. The `.github/workflows/pages.yml` handles CI/CD automatically. The `webhook/` directory is excluded from the Pages build.
+1. Confirm any late puppy identities/listing facts that should be public.
+2. Configure Cloudflare KV, R2 and the admin password secret.
+3. Decide whether payment should remain enquiry-only or be enabled with approved commercial terms.
+4. Run the Website Screenshots workflow and confirm desktop/mobile views.
+5. Verify contact, WhatsApp, dogs, pedigree, puppies and reservation flows on the deployed site.
 
-## Before launch checklist
-
-1. Deploy the Worker (see above) and set `BG_WEBHOOK_URL` in all public pages
-2. Set `ADMIN_PASSWORD` secret on the Worker
-3. Create KV namespaces and R2 bucket, fill IDs into `wrangler.toml`
-4. Replace `WHATSAPP_NUMBER` in `app.js` (line 1) with real business number
-5. Replace demo dogs/puppies/litters in `data/*.json` with verified kennel data
-6. Upload real photography via the admin panel (or replace local files)
-7. Add real location, phone, hours, social links
-8. Verify every health/pedigree claim before publishing
-9. Replace testimonial placeholders with approved owner stories
-10. Test the reservation flow end-to-end with a live payment provider if enabled
+See `IMPLEMENTATION_STATUS.md` for the authoritative handoff state.

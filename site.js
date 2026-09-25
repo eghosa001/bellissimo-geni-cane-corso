@@ -1,5 +1,12 @@
 // ALLEVAMENTO BELLISSIMO GENI shared site helpers (no dependencies).
 (function () {
+  var CONTACT = {
+    phoneDisplay: '+234 913 780 6866',
+    phoneDigits: '2349137806866',
+    email: 'Bellissimogenicanecorso@gmail.com',
+    whatsappDirect: 'https://wa.me/message/YSFP25LSDD7AP1'
+  };
+
   // Mobile menu (progressive enhancement; works on all pages with .mobile-nav-toggle).
   document.addEventListener('DOMContentLoaded', function () {
     var siteName = 'ALLEVAMENTO BELLISSIMO GENI';
@@ -29,6 +36,18 @@
     }
     var year = document.querySelector('[data-year]');
     if (year) year.textContent = new Date().getFullYear();
+
+    document.querySelectorAll('[data-bg-phone]').forEach(function (el) {
+      el.textContent = CONTACT.phoneDisplay;
+      if (el.tagName === 'A') el.href = 'tel:+' + CONTACT.phoneDigits;
+    });
+    document.querySelectorAll('[data-bg-email]').forEach(function (el) {
+      el.textContent = CONTACT.email;
+      if (el.tagName === 'A') el.href = 'mailto:' + CONTACT.email;
+    });
+    document.querySelectorAll('[data-bg-whatsapp]').forEach(function (el) {
+      if (el.tagName === 'A') el.href = CONTACT.whatsappDirect;
+    });
     initReveal();
   });
 
@@ -105,5 +124,18 @@
     throw new Error('no_data');
   }
 
-  window.BG = { esc: esc, loadJSON: loadJSON, loadAdminJSON: loadAdminJSON, dogById: dogById, validPhone: validPhone, track: track };
+  function whatsappMessage(text) {
+    return 'https://wa.me/' + CONTACT.phoneDigits + '?text=' + encodeURIComponent(String(text || ''));
+  }
+
+  window.BG = {
+    esc: esc,
+    loadJSON: loadJSON,
+    loadAdminJSON: loadAdminJSON,
+    dogById: dogById,
+    validPhone: validPhone,
+    track: track,
+    contact: CONTACT,
+    whatsappMessage: whatsappMessage
+  };
 })();

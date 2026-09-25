@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "notes": "Only verified puppy and litter listings supplied by the kennel are published.",
+  "notes": "Only verified puppy and litter listings supplied by the kennel are published. Late kennel-supplied puppy photography is retained for review but is not assigned to a listing until identity, sex, litter and availability are verified.",
   "litters": [],
   "puppies": [],
   "statuses": [

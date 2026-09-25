@@ -1,5 +1,3 @@
-const WHATSAPP_NUMBER = '2348000000000'; // Replace with the kennel's real WhatsApp number before launch.
-
 const form = document.querySelector('#enquiry-form');
 const note = document.querySelector('#form-note');
 
@@ -29,13 +27,8 @@ form?.addEventListener('submit', (event) => {
     `Message: ${message || 'Please send me current availability and pricing.'}`
   ].join('\n');
 
-  if (WHATSAPP_NUMBER === '2348000000000') {
-    note.textContent = 'Demo mode: replace WHATSAPP_NUMBER in app.js with the real business number before launch.';
-    note.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    return;
-  }
-
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  window.open(BG.whatsappMessage(text), '_blank', 'noopener,noreferrer');
+  note.textContent = 'WhatsApp opened with your enquiry.';
 });
 
 // Prevent accidental jumps for placeholder links and add a small accessible focus treatment.
