@@ -146,3 +146,10 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
 /* Balance a single verified availability listing */
 #list>article:only-child{grid-column:1/-1;width:min(100%,430px);justify-self:center}
 @media(max-width:760px){#list>article:only-child{width:100%}}
+
+/* Balance the availability grid when only one verified puppy is published. */
+.grid-3>.puppy-available-card:only-child{
+  grid-column:1/-1;
+  width:min(100%,380px);
+  justify-self:center
+}
