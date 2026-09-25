@@ -323,6 +323,10 @@ jobs:
               if (overflow > 1) throw new Error(path + ' has horizontal overflow');
               const body = (await page.locator('body').innerText()).toLowerCase();
               for (const phrase of forbidden) if (body.includes(phrase)) throw new Error(path + ' still exposes staging copy: ' + phrase);
+              const brokenImages = await page.locator('img').evaluateAll(imgs => imgs
+                .filter(img => !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0)
+                .map(img => img.getAttribute('src') || img.getAttribute('alt') || 'unknown image'));
+              if (brokenImages.length) throw new Error(path + ' contains broken images: ' + brokenImages.join(', '));
             }
 
             await page.setViewportSize({ width: 1365, height: 900 });
