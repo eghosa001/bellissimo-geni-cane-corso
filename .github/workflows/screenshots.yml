@@ -440,8 +440,19 @@ jobs:
                   await new Promise(r => setTimeout(r, 35));
                 }
                 window.scrollTo(0, 0);
+                await Promise.all([...document.images].map(async img => {
+                  if (!img.complete) {
+                    await new Promise(resolve => {
+                      const done=()=>resolve();
+                      img.addEventListener('load',done,{once:true});
+                      img.addEventListener('error',done,{once:true});
+                      setTimeout(done,1500);
+                    });
+                  }
+                  if (img.decode) await img.decode().catch(()=>{});
+                }));
               });
-              await desktop.waitForTimeout(150);
+              await desktop.waitForTimeout(100);
               await desktop.screenshot({ path: 'screenshots/' + name + '-desktop.png', fullPage: true });
               await desktop.close();
 
@@ -454,8 +465,19 @@ jobs:
                   await new Promise(r => setTimeout(r, 35));
                 }
                 window.scrollTo(0, 0);
+                await Promise.all([...document.images].map(async img => {
+                  if (!img.complete) {
+                    await new Promise(resolve => {
+                      const done=()=>resolve();
+                      img.addEventListener('load',done,{once:true});
+                      img.addEventListener('error',done,{once:true});
+                      setTimeout(done,1500);
+                    });
+                  }
+                  if (img.decode) await img.decode().catch(()=>{});
+                }));
               });
-              await mobile.waitForTimeout(150);
+              await mobile.waitForTimeout(100);
               await mobile.screenshot({ path: 'screenshots/' + name + '-mobile.png', fullPage: true });
               await mobile.close();
             }
