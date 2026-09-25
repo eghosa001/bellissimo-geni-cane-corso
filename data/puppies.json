@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "notes": "Only verified puppy and litter listings supplied by the kennel are published.",
+  "notes": "Only verified puppy and litter listings supplied by the kennel are published. Kennel-supplied puppy photography may be shown separately without implying availability.",
   "litters": [],
   "puppies": [],
   "statuses": [
@@ -10,5 +10,43 @@
     "SOLD",
     "COMING SOON",
     "UNAVAILABLE"
+  ],
+  "gallery": [
+    {
+      "id": "sept24-01",
+      "photo": "assets/puppies/bellissimo-puppy-01.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait",
+      "caption": "Kennel-supplied puppy photography. Availability is confirmed separately."
+    },
+    {
+      "id": "sept24-02",
+      "photo": "assets/puppies/bellissimo-puppy-02.webp",
+      "alt": "Bellissimo Geni black Cane Corso puppy portrait",
+      "caption": "Kennel-supplied puppy photography. Availability is confirmed separately."
+    },
+    {
+      "id": "sept24-03",
+      "photo": "assets/puppies/bellissimo-puppy-03.webp",
+      "alt": "Bellissimo Geni grey Cane Corso puppy portrait",
+      "caption": "Kennel-supplied puppy photography. Availability is confirmed separately."
+    },
+    {
+      "id": "sept24-04",
+      "photo": "assets/puppies/bellissimo-puppy-04.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait with white chest marking",
+      "caption": "Kennel-supplied puppy photography. Availability is confirmed separately."
+    },
+    {
+      "id": "sept24-05",
+      "photo": "assets/puppies/bellissimo-young-corso-01.webp",
+      "alt": "Young Bellissimo Geni Cane Corso with handler",
+      "caption": "Kennel-supplied Cane Corso photography. Availability is confirmed separately."
+    },
+    {
+      "id": "sept24-06",
+      "photo": "assets/puppies/bellissimo-puppy-05.webp",
+      "alt": "Bellissimo Geni grey Cane Corso puppy seated for portrait",
+      "caption": "Kennel-supplied puppy photography. Availability is confirmed separately."
+    }
   ]
 }
