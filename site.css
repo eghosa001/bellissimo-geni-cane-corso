@@ -125,3 +125,20 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
 .puppy-fact,.puppy-parents{margin:9px 0 0}
 .puppy-parents a{text-decoration:underline;text-underline-offset:2px}
 @media(max-width:760px){.puppy-card-media{aspect-ratio:3/4}}
+
+/* Full-site visual audit polish */
+.gallery-grid figure{
+  padding:12px;
+  background:#faf8f3;
+  box-shadow:0 12px 30px rgba(16,16,15,.05)
+}
+.gallery-grid img{background:#e8e1d5}
+.dog-card-media,.profile-media-main,.gallery-strip a,.puppy-card-media{background:#e8e1d5}
+.dog-card-media img,.profile-media-main img,.gallery-strip img,.puppy-card-media img{background:#e8e1d5}
+.puppy-available-card{overflow:hidden}
+.puppy-available-card .meta{color:#786f62}
+.puppy-parents a{font-weight:700}
+@media(max-width:760px){
+  .gallery-grid figure{padding:9px}
+  .gallery-grid img{max-height:560px}
+}
