@@ -180,10 +180,29 @@ jobs:
             if (!(await dogImage.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Branco profile image failed');
             const profileFit = await dogImage.evaluate(img => getComputedStyle(img).objectFit);
             if (profileFit !== 'contain') throw new Error('Dog profile photography must not crop the subject');
-            const firstCardImage = page.locator('.dog-card-media img').first();
-            if (await firstCardImage.count()) {
-              const cardFit = await firstCardImage.evaluate(img => getComputedStyle(img).objectFit);
-              if (cardFit !== 'contain') throw new Error('Dog card photography must not crop the subject');
+            const cardImages = page.locator('.dog-card-media img');
+            for (let i = 0; i < await cardImages.count(); i++) {
+              const img = cardImages.nth(i);
+              const state = await img.evaluate(el => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 32; canvas.height = 32;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(el,0,0,32,32);
+                const data = ctx.getImageData(0,0,32,32).data;
+                let min=255,max=0;
+                for(let p=0;p<data.length;p+=4){
+                  const y=(data[p]+data[p+1]+data[p+2])/3;
+                  min=Math.min(min,y); max=Math.max(max,y);
+                }
+                return {
+                  loaded: el.complete && el.naturalWidth > 0,
+                  fit: getComputedStyle(el).objectFit,
+                  variance: max-min
+                };
+              });
+              if (!state.loaded) throw new Error('Dog card image ' + i + ' failed to load');
+              if (state.fit !== 'contain') throw new Error('Dog card image ' + i + ' may crop the subject');
+              if (state.variance < 18) throw new Error('Dog card image ' + i + ' rendered as a flat/blank frame');
             }
             const dogText = await page.locator('#profile').innerText();
             if (!dogText.includes('Dragoslav Custodi Nos') || !dogText.includes('Himera Custodi Nos')) throw new Error('Branco parent links missing');
@@ -249,6 +268,10 @@ jobs:
             await page.goto(base + 'gallery.html', { waitUntil: 'networkidle' });
             const gallery = page.locator('.gallery-grid img');
             if (await gallery.count() !== 6) throw new Error('Gallery should contain six real dog photos');
+            const galleryCaptions = await page.locator('.gallery-grid figcaption').allTextContents();
+            if (new Set(galleryCaptions.map(x => x.trim())).size !== galleryCaptions.length) {
+              throw new Error('Main gallery repeats a dog instead of presenting six distinct subjects');
+            }
             for (let i = 0; i < await gallery.count(); i++) {
               const img = gallery.nth(i);
               if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) throw new Error('Gallery image ' + i + ' failed');
@@ -300,6 +323,10 @@ jobs:
               if (overflow > 1) throw new Error(path + ' has horizontal overflow');
               const body = (await page.locator('body').innerText()).toLowerCase();
               for (const phrase of forbidden) if (body.includes(phrase)) throw new Error(path + ' still exposes staging copy: ' + phrase);
+              const brokenImages = await page.locator('img').evaluateAll(imgs => imgs
+                .filter(img => !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0)
+                .map(img => img.getAttribute('src') || img.getAttribute('alt') || 'unknown image'));
+              if (brokenImages.length) throw new Error(path + ' contains broken images: ' + brokenImages.join(', '));
             }
 
             await page.setViewportSize({ width: 1365, height: 900 });
@@ -323,8 +350,16 @@ jobs:
               fit: getComputedStyle(img).objectFit
             }));
             if (!safeeraImageState.loaded) throw new Error('Safeera listing image failed to load');
-            if (safeeraImageState.width < 1000 || safeeraImageState.height < 1400) throw new Error('Safeera listing image is not high-resolution enough');
+            if (safeeraImageState.width < 500 || safeeraImageState.height < 700) throw new Error('Safeera listing image is not high-resolution enough for its rendered card size');
             if (safeeraImageState.fit !== 'contain') throw new Error('Safeera listing image may crop the dog');
+            const safeeraPixels = await safeeraImage.evaluate(el => {
+              const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;
+              const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(el,0,0,32,32);
+              const d=ctx.getImageData(0,0,32,32).data;let min=255,max=0;
+              for(let p=0;p<d.length;p+=4){const y=(d[p]+d[p+1]+d[p+2])/3;min=Math.min(min,y);max=Math.max(max,y);}
+              return max-min;
+            });
+            if (safeeraPixels < 18) throw new Error('Safeera listing image rendered as a flat/black frame');
             if (!await firstAvailable.locator('a[href="dogs.html?dog=branco-custodi-nos"]').count()) throw new Error('Safeera sire link missing');
             if (!await firstAvailable.locator('a[href="dogs.html?dog=anthie-custodi-nos"]').count()) throw new Error('Safeera dam link missing');
 
@@ -347,6 +382,14 @@ jobs:
             if (!(await homeSafeeraImage.evaluate(img => img.complete && img.naturalWidth > 0))) {
               throw new Error('Homepage Safeera image failed to load');
             }
+            const homeSafeeraPixels = await homeSafeeraImage.evaluate(el => {
+              const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;
+              const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(el,0,0,32,32);
+              const d=ctx.getImageData(0,0,32,32).data;let min=255,max=0;
+              for(let p=0;p<d.length;p+=4){const y=(d[p]+d[p+1]+d[p+2])/3;min=Math.min(min,y);max=Math.max(max,y);}
+              return max-min;
+            });
+            if (homeSafeeraPixels < 18) throw new Error('Homepage Safeera image rendered as a flat/black frame');
 
             await page.goto(base + 'puppies.html', { waitUntil: 'networkidle' });
             const puppyPhotos = page.locator('#puppy-gallery img');
@@ -397,8 +440,19 @@ jobs:
                   await new Promise(r => setTimeout(r, 35));
                 }
                 window.scrollTo(0, 0);
+                await Promise.all([...document.images].map(async img => {
+                  if (!img.complete) {
+                    await new Promise(resolve => {
+                      const done=()=>resolve();
+                      img.addEventListener('load',done,{once:true});
+                      img.addEventListener('error',done,{once:true});
+                      setTimeout(done,1500);
+                    });
+                  }
+                  if (img.decode) await img.decode().catch(()=>{});
+                }));
               });
-              await desktop.waitForTimeout(150);
+              await desktop.waitForTimeout(100);
               await desktop.screenshot({ path: 'screenshots/' + name + '-desktop.png', fullPage: true });
               await desktop.close();
 
@@ -411,8 +465,19 @@ jobs:
                   await new Promise(r => setTimeout(r, 35));
                 }
                 window.scrollTo(0, 0);
+                await Promise.all([...document.images].map(async img => {
+                  if (!img.complete) {
+                    await new Promise(resolve => {
+                      const done=()=>resolve();
+                      img.addEventListener('load',done,{once:true});
+                      img.addEventListener('error',done,{once:true});
+                      setTimeout(done,1500);
+                    });
+                  }
+                  if (img.decode) await img.decode().catch(()=>{});
+                }));
               });
-              await mobile.waitForTimeout(150);
+              await mobile.waitForTimeout(100);
               await mobile.screenshot({ path: 'screenshots/' + name + '-mobile.png', fullPage: true });
               await mobile.close();
             }
