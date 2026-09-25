@@ -21,7 +21,7 @@
 </header>
 <nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
 <main class="wrap">
-<div class="page-hero"><p class="eyebrow">CONTACT / APPLY</p><h1>Start the <em>conversation.</em></h1><p>Apply for a puppy, ask about a pedigree, or join the next-litter priority list. Verified social links are available below; direct kennel contact details remain pending confirmation.</p></div>
+<div class="page-hero"><p class="eyebrow">CONTACT / APPLY</p><h1>Start the <em>conversation.</em></h1><p>Apply for a puppy, ask about a pedigree, or join the next-litter priority list. Use the verified phone, WhatsApp, email and social channels below for puppy, pedigree, visit and export enquiries.</p></div>
 <div class="grid-2">
 <div class="form-card">
 <form id="apply">
@@ -31,11 +31,11 @@
 <label>Message<textarea name="message" rows="5" placeholder="Home setup, experience, preferred timing, dog you are asking about (e.g. Gyda)"></textarea></label>
 <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 <button class="btn gold" type="submit">Prepare enquiry →</button>
-<p class="hint" id="note">Your enquiry can be prepared here, then sent through a verified Bellissimo Geni contact channel.</p>
+<p class="hint" id="note">Submitting opens a pre-filled WhatsApp message to the verified Bellissimo Geni number.</p>
 </form>
 </div>
 <div>
-<div class="card"><span class="meta">KENNEL DETAILS</span><h3>Bellissimo Geni, Nigeria</h3><p>For current availability, visits and direct contact details, start with one of the verified Bellissimo Geni channels below.</p><div class="row"><a class="btn ghost" href="https://www.instagram.com/bellissimogeni?stkn=Z2I4eHg5Y3d5NDk%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a><a class="btn ghost" href="https://www.tiktok.com/@bellissimogeni?_r=1&_t=ZS-9A0YgY0blDQ" target="_blank" rel="noopener noreferrer">TikTok</a><a class="btn ghost" href="https://www.facebook.com/profile.php?id=61581348097005&mibextid=wwXIfr&mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">Facebook</a></div></div>
+<div class="card"><span class="meta">KENNEL DETAILS</span><h3>ALLEVAMENTO BELLISSIMO GENI, Nigeria</h3><p>Direct details supplied by the kennel:</p><div class="contact-details"><a data-bg-phone href="tel:+2349137806866">+234 913 780 6866</a><a data-bg-email href="mailto:Bellissimogenicanecorso@gmail.com">Bellissimogenicanecorso@gmail.com</a></div><div class="row"><a class="btn gold" data-bg-whatsapp href="https://wa.me/message/YSFP25LSDD7AP1" target="_blank" rel="noopener noreferrer">WhatsApp</a><a class="btn ghost" href="https://www.instagram.com/bellissimogeni?stkn=Z2I4eHg5Y3d5NDk%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a><a class="btn ghost" href="https://www.tiktok.com/@bellissimogeni?_r=1&_t=ZS-9A0YgY0blDQ" target="_blank" rel="noopener noreferrer">TikTok</a><a class="btn ghost" href="https://www.facebook.com/profile.php?id=61581348097005&mibextid=wwXIfr&mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">Facebook</a></div></div>
 <div class="card" style="margin-top:16px"><span class="meta">SOCIAL HUB</span><h3>Follow Bellissimo Geni</h3><p>Instagram, TikTok and Facebook links supplied by the kennel are live.</p><div class="row"><a class="btn ghost" href="social.html">Open social hub</a><a class="btn ghost" href="pedigree.html">Search pedigree</a></div></div>
 </div>
 </div>
@@ -44,18 +44,15 @@
 <script src="site.js"></script>
 <script>
 (function(){
-var N='2348000000000',f=document.getElementById('apply'),note=document.getElementById('note');
+var f=document.getElementById('apply'),note=document.getElementById('note');
 f.addEventListener('submit',function(e){e.preventDefault();var d=new FormData(f);
 if(String(d.get('website')||'').trim()){return;}
 var phone=String(d.get('phone')||'').trim();if(!BG.validPhone(phone)){note.textContent='Please enter a valid phone/WhatsApp number.';return;}
 BG.track('contact_submit',d.get('interest'));
 var t=['Hello Bellissimo Geni,','', 'Name: '+d.get('name'),'Phone: '+phone,'Interested in: '+d.get('interest'),'Message: '+(d.get('message')||'—')].join('\n');
-if(N==='2348000000000'){
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(function(){});}
-  note.textContent='Enquiry prepared'+(navigator.clipboard&&navigator.clipboard.writeText?' and copied to your clipboard':'')+'. Send it through Instagram, TikTok or Facebook using the verified links on this page.';
-  return;
-}
-window.open('https://wa.me/'+N+'?text='+encodeURIComponent(t),'_blank','noopener');});
+window.open(BG.whatsappMessage(t),'_blank','noopener');
+note.textContent='WhatsApp opened with your enquiry. If it did not open, use the verified WhatsApp button on this page.';
+});
 })();
 </script>
 </body>
