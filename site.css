@@ -142,3 +142,7 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
   .gallery-grid figure{padding:9px}
   .gallery-grid img{max-height:560px}
 }
+
+/* Balance a single verified availability listing */
+#list>article:only-child{grid-column:1/-1;width:min(100%,430px);justify-self:center}
+@media(max-width:760px){#list>article:only-child{width:100%}}
