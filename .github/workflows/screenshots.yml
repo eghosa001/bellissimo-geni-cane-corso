@@ -315,12 +315,26 @@ jobs:
             for (const expected of ['Safeera Bellissimo Geni','AVAILABLE','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
               if (!safeeraText.includes(expected)) throw new Error('Safeera listing missing ' + expected);
             }
-            const safeeraImage = firstAvailable.locator('img');
-            if (!(await safeeraImage.evaluate(img => img.complete && img.naturalWidth > 0))) {
-              throw new Error('Safeera listing image failed to load');
+            const safeeraImage = firstAvailable.locator('.puppy-card-media img');
+            const safeeraImageState = await safeeraImage.evaluate(img => ({
+              loaded: img.complete && img.naturalWidth > 0,
+              width: img.naturalWidth,
+              height: img.naturalHeight,
+              fit: getComputedStyle(img).objectFit
+            }));
+            if (!safeeraImageState.loaded) throw new Error('Safeera listing image failed to load');
+            if (safeeraImageState.width < 1000 || safeeraImageState.height < 1400) throw new Error('Safeera listing image is not high-resolution enough');
+            if (safeeraImageState.fit !== 'contain') throw new Error('Safeera listing image may crop the dog');
+            if (!await firstAvailable.locator('a[href="dogs.html?dog=branco-custodi-nos"]').count()) throw new Error('Safeera sire link missing');
+            if (!await firstAvailable.locator('a[href="dogs.html?dog=anthie-custodi-nos"]').count()) throw new Error('Safeera dam link missing');
+
+            await page.goto(base + 'reserve.html?puppy=safeera-bellissimo-geni', { waitUntil: 'networkidle' });
+            if ((await page.locator('#puppy').inputValue()) !== 'safeera-bellissimo-geni') {
+              throw new Error('Safeera reservation link did not preselect her');
             }
-            if ((await safeeraImage.evaluate(img => getComputedStyle(img).objectFit)) !== 'contain') {
-              throw new Error('Safeera listing image may crop the dog');
+            const reserveHint = await page.locator('#puppyHint').innerText();
+            for (const expected of ['Branco Custodi Nos','Anthie Custodi Nos']) {
+              if (!reserveHint.includes(expected)) throw new Error('Safeera reservation hint missing ' + expected);
             }
 
             await page.goto(base, { waitUntil: 'networkidle' });
@@ -333,6 +347,8 @@ jobs:
             if (!(await homeSafeeraImage.evaluate(img => img.complete && img.naturalWidth > 0))) {
               throw new Error('Homepage Safeera image failed to load');
             }
+
+            await page.goto(base + 'puppies.html', { waitUntil: 'networkidle' });
             const puppyPhotos = page.locator('#puppy-gallery img');
             if (await puppyPhotos.count() !== 6) throw new Error('Expected six supplied puppy/young-dog photos');
             for (let i = 0; i < 6; i++) {
