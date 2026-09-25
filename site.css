@@ -118,3 +118,10 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
 .puppy-gallery-heading h2{font:600 clamp(38px,5vw,64px)/.95 var(--serif);margin:6px 0 12px}
 .puppy-gallery-heading p:last-child{color:var(--muted);font-size:13px;line-height:1.65}
 @media(max-width:760px){.puppy-gallery-section{margin-top:46px;padding-top:38px}}
+
+/* Verified available puppy cards */
+.puppy-card-media{margin:-26px -22px 20px;aspect-ratio:2/3;overflow:hidden;background:#171715;border-bottom:1px solid var(--line)}
+.puppy-card-media img{width:100%;height:100%;display:block;object-fit:contain;object-position:center center;background:#171715}
+.puppy-fact,.puppy-parents{margin:9px 0 0}
+.puppy-parents a{text-decoration:underline;text-underline-offset:2px}
+@media(max-width:760px){.puppy-card-media{aspect-ratio:3/4}}
