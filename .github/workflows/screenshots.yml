@@ -310,6 +310,17 @@ jobs:
             if (!emptyBox || Math.abs((emptyBox.x + emptyBox.width / 2) - 1365 / 2) > 8) {
               throw new Error('Puppy empty state is not centered on desktop');
             }
+            const puppyPhotos = page.locator('#puppy-gallery img');
+            if (await puppyPhotos.count() !== 6) throw new Error('Expected six supplied puppy/young-dog photos');
+            for (let i = 0; i < 6; i++) {
+              if (!(await puppyPhotos.nth(i).evaluate(img => img.complete && img.naturalWidth > 0))) {
+                throw new Error('Supplied puppy photo ' + i + ' failed to load');
+              }
+            }
+            const puppyCopy = await page.locator('.puppy-gallery-section').innerText();
+            if (!puppyCopy.includes('do not by themselves indicate current availability')) {
+              throw new Error('Puppy photography must not imply availability');
+            }
 
             await browser.close();
           })();
