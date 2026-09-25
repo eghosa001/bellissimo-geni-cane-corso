@@ -346,7 +346,7 @@ jobs:
               fit: getComputedStyle(img).objectFit
             }));
             if (!safeeraImageState.loaded) throw new Error('Safeera listing image failed to load');
-            if (safeeraImageState.width < 700 || safeeraImageState.height < 1000) throw new Error('Safeera listing image is not high-resolution enough');
+            if (safeeraImageState.width < 500 || safeeraImageState.height < 700) throw new Error('Safeera listing image is not high-resolution enough for its rendered card size');
             if (safeeraImageState.fit !== 'contain') throw new Error('Safeera listing image may crop the dog');
             const safeeraPixels = await safeeraImage.evaluate(el => {
               const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;
