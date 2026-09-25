@@ -107,3 +107,11 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
 .dog-card-media img{width:100%;height:100%;display:block;object-fit:contain;object-position:center center;background:#171715}
 .profile .photo{overflow:hidden}
 .profile .photo img{width:100%;height:100%;min-height:300px;display:block;object-fit:contain;object-position:center center;background:#171715}
+
+/* Verified contact + puppy gallery */
+.contact-details{display:flex;flex-direction:column;gap:7px;margin:14px 0 18px}
+.contact-details a{font-weight:700;overflow-wrap:anywhere}
+.puppy-gallery-section{margin-top:58px}
+.puppy-gallery-heading{margin-bottom:26px}
+.puppy-gallery-heading h2{font:600 clamp(38px,5vw,64px)/.95 var(--serif);margin:0}
+@media(max-width:760px){.puppy-gallery-section{margin-top:44px}}
