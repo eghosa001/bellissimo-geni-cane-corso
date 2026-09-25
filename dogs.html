@@ -35,7 +35,8 @@
 .privacy-note{margin:30px 0 0;color:var(--muted);font-size:10px}
 @media(max-width:1100px){#current-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.dog-list{grid-template-columns:1fr 1fr}.profile{grid-template-columns:1fr}.profile-media-main{max-height:620px}.gallery-strip{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:560px){.dogs-page{padding:55px 5vw 82px}.dog-list,#current-list{grid-template-columns:1fr}.dog-section-head{display:block}.dog-section-head p{margin-top:10px}.profile{padding:16px;gap:20px}.profile dl{grid-template-columns:112px 1fr}.gallery-strip{grid-template-columns:1fr 1fr}.profile-actions .btn{width:100%;text-align:center}}
+.direct-dog-profile .dogs-intro,.direct-dog-profile .toolbar{display:none}.direct-dog-profile .dogs-page{padding-top:42px}
+@media(max-width:560px){.direct-dog-profile .dogs-page{padding-top:24px}.dogs-page{padding:55px 5vw 82px}.dog-list,#current-list{grid-template-columns:1fr}.dog-section-head{display:block}.dog-section-head p{margin-top:10px}.profile{padding:16px;gap:20px}.profile dl{grid-template-columns:112px 1fr}.gallery-strip{grid-template-columns:1fr 1fr}.profile-actions .btn{width:100%;text-align:center}}
 </style>
 </head>
 <body>
@@ -87,7 +88,7 @@ function renderLists(){
       params.set('dog',match.id);
       history.replaceState({},'',location.pathname+'?'+params.toString());
     }
-    renderProfile(match.id);
+    renderProfile(match.id,true);
   }
 }
 function gallery(d){
@@ -103,7 +104,7 @@ function ownerOrStatusRow(d){
   if(d.owner)return '<dt>Owner</dt><dd>'+BG.esc(d.owner)+'</dd>';
   return d.status?'<dt>Status</dt><dd>'+BG.esc(d.status)+'</dd>':'';
 }
-function renderProfile(id){
+function renderProfile(id,shouldScroll){
   if(!id){profile.innerHTML='';return}
   var d=byId(id);
   if(!d){profile.innerHTML='<div class="notice">Dog not found.</div>';return}
@@ -112,7 +113,7 @@ function renderProfile(id){
   profile.scrollIntoView({behavior:'auto',block:'start'});
 }
 q.addEventListener('input',renderLists);
-BG.loadAdminJSON('dogs','data/dogs.json').then(function(j){all=j.data||j.dogs||[];renderLists();var id=new URLSearchParams(location.search).get('dog');if(id)renderProfile(id);}).catch(function(){current.innerHTML='<div class="notice">Could not load dog records.</div>';});
+BG.loadAdminJSON('dogs','data/dogs.json').then(function(j){all=j.data||j.dogs||[];renderLists();var id=new URLSearchParams(location.search).get('dog');if(id){document.body.classList.add('direct-dog-profile');renderProfile(id,false);}}).catch(function(){current.innerHTML='<div class="notice">Could not load dog records.</div>';});
 })();
 </script>
 </body>
