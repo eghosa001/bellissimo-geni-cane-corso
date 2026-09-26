@@ -67,6 +67,12 @@ jobs:
           test -s assets/dogs/himera-custodi-nos-main.avif
           test -s assets/dogs/himera-custodi-nos-02.avif
 
+          mkdir -p assets/puppies
+          cat .github/assets/x-bellissimo-geni-main-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.avif
+          cat .github/assets/x-bellissimo-geni-standing-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.avif
+          test -s assets/puppies/x-bellissimo-geni-main.avif
+          test -s assets/puppies/x-bellissimo-geni-standing.avif
+
       - name: Install Playwright
         run: |
           npm install --no-save playwright@latest
@@ -125,6 +131,22 @@ jobs:
           }
           assert(site.includes('function resolveApiBase()'), 'Public site must resolve its deployed CMS backend');
           assert(site.includes("fetch('site-config.json'"), 'Public site must load site-config.json before falling back to static JSON');
+          const puppyRecords = JSON.parse(fs.readFileSync('data/puppies.json', 'utf8')).puppies || [];
+          const xPuppy = puppyRecords.find(p => p.id === 'x-bellissimo-geni');
+          const safeera = puppyRecords.find(p => p.id === 'safeera-bellissimo-geni');
+          assert(xPuppy && xPuppy.name === 'X Bellissimo Geni', 'X Bellissimo Geni must be published in available puppies');
+          assert(xPuppy.status === 'AVAILABLE' && xPuppy.sex === 'Female' && xPuppy.colour === 'Black Brindle', 'X Bellissimo Geni core details are incorrect');
+          assert(xPuppy.dateOfBirth === '2025-08-02', 'X Bellissimo Geni DOB is incorrect');
+          assert(xPuppy.sireId === 'branco-custodi-nos' && xPuppy.damId === 'anthie-custodi-nos', 'X Bellissimo Geni parents are incorrect');
+          assert(xPuppy.photo === 'assets/puppies/x-bellissimo-geni-main.avif', 'Sitting photo must remain X Bellissimo Geni main image');
+          assert(Array.isArray(xPuppy.gallery) && xPuppy.gallery.includes('assets/puppies/x-bellissimo-geni-standing.avif'), 'Standing photo must remain in X Bellissimo Geni gallery');
+          assert(safeera && safeera.photo === 'assets/puppies/safeera-bellissimo-geni.webp', 'Safeera availability photo must remain intact');
+          const homePage = fs.readFileSync('index.html', 'utf8');
+          assert(homePage.includes('assets/puppies/safeera-bellissimo-geni.webp'), 'Safeera must remain the homepage available-dog banner photo');
+          const puppiesPage = fs.readFileSync('puppies.html', 'utf8');
+          assert(puppiesPage.includes('function puppyGallery(p)'), 'Available puppy page must render record-specific galleries');
+          assert(puppiesPage.includes('puppy-main-photo-link'), 'Main puppy photo must link to the full-resolution asset');
+
           const siteConfig = JSON.parse(fs.readFileSync('site-config.json', 'utf8'));
           assert(typeof siteConfig.backendUrl === 'string', 'site-config.json must expose backendUrl');
           assert(!siteConfig.backendUrl || /^https:\/\//.test(siteConfig.backendUrl), 'Configured backend URL must be HTTPS');
@@ -866,6 +888,8 @@ jobs:
               'assets/dogs/zz-top-sangue-magnifica-02.webp',
               'assets/dogs/limoncello-sangue-magnifica-custodi-nos.webp',
               'assets/puppies/safeera-bellissimo-geni.webp',
+              'assets/puppies/x-bellissimo-geni-main.avif',
+              'assets/puppies/x-bellissimo-geni-standing.avif',
               'assets/puppies/yasmin-bellissimo-geni.webp',
               'assets/puppies/bellissimo-puppy-01.webp',
               'assets/puppies/bellissimo-puppy-02.webp',
