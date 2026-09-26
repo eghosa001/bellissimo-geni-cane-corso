@@ -67,9 +67,6 @@ jobs:
           test -s assets/dogs/himera-custodi-nos-main.avif
           test -s assets/dogs/himera-custodi-nos-02.avif
 
-          mkdir -p assets/puppies
-          cat .github/assets/x-bellissimo-geni-main-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.avif
-          cat .github/assets/x-bellissimo-geni-standing-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.avif
           test -s assets/puppies/x-bellissimo-geni-main.avif
           test -s assets/puppies/x-bellissimo-geni-standing.avif
 
