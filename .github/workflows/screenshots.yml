@@ -128,8 +128,8 @@ jobs:
               mobile.locator('.reference-quick-nav a[href="puppies.html"]').boundingBox(),
               mobile.locator('.reference-menu-button').boundingBox()
             ]);
-            if (!dogsBox || !puppiesBox || !menuBox || !(menuBox.x < puppiesBox.x && puppiesBox.x < dogsBox.x)) {
-              throw new Error('Mobile shortcut order must be Menu, Puppies, Our Dogs');
+            if (!dogsBox || !puppiesBox || !menuBox || !(dogsBox.x < puppiesBox.x && puppiesBox.x < menuBox.x)) {
+              throw new Error('Mobile shortcut order must be Our Dogs, Puppies, Menu');
             }
 
             const layout = await mobile.evaluate(() => {
@@ -343,12 +343,12 @@ jobs:
 
             await page.goto(base + 'puppies.html', { waitUntil: 'networkidle' });
             const genericHeaderBoxes = await Promise.all([
-              page.locator('.mobile-nav-toggle').boundingBox(),
+              page.locator('.mobile-quick-links a[href="dogs.html"]').boundingBox(),
               page.locator('.mobile-quick-links a[href="puppies.html"]').boundingBox(),
-              page.locator('.mobile-quick-links a[href="dogs.html"]').boundingBox()
+              page.locator('.mobile-nav-toggle').boundingBox()
             ]);
             if (!genericHeaderBoxes.every(Boolean) || !(genericHeaderBoxes[0].x < genericHeaderBoxes[1].x && genericHeaderBoxes[1].x < genericHeaderBoxes[2].x)) {
-              throw new Error('Generic mobile shortcut order must be Menu, Puppies, Our Dogs');
+              throw new Error('Generic mobile shortcut order must be Our Dogs, Puppies, Menu');
             }
             const mobileHeaderOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
             if (mobileHeaderOverflow > 1) throw new Error('Generic mobile header creates horizontal overflow');
