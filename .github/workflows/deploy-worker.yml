@@ -2,6 +2,12 @@ name: Deploy Bellissimo Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "webhook/**"
+      - ".github/workflows/deploy-worker.yml"
 
 permissions:
   contents: write
