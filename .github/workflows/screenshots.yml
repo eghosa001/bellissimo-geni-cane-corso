@@ -28,6 +28,10 @@ on:
       - "CNAME"
       - "robots.txt"
       - "sitemap.xml"
+      - "scripts/set-production-domain.mjs"
+      - ".github/workflows/activate-domain.yml"
+      - ".github/workflows/deploy-worker.yml"
+      - "site-config.json"
   workflow_run:
     workflows: ["GitHub Pages"]
     types: [completed]
@@ -90,6 +94,12 @@ jobs:
           for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
             assert(site.includes('>' + label + '<'), 'Canonical mobile menu missing ' + label);
           }
+          assert(site.includes('function resolveApiBase()'), 'Public site must resolve its deployed CMS backend');
+          assert(site.includes("fetch('site-config.json'"), 'Public site must load site-config.json before falling back to static JSON');
+          const siteConfig = JSON.parse(fs.readFileSync('site-config.json', 'utf8'));
+          assert(typeof siteConfig.backendUrl === 'string', 'site-config.json must expose backendUrl');
+          assert(!siteConfig.backendUrl || /^https:\/\//.test(siteConfig.backendUrl), 'Configured backend URL must be HTTPS');
+          assert(admin.includes("fetch('site-config.json'"), 'Admin login must auto-discover the deployed Worker URL');
           EOF
 
       - name: Run Worker unit tests
