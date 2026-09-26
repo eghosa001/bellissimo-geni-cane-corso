@@ -240,7 +240,7 @@ async function adminAuth(request, env) {
 // ─── Public unauthenticated API — only published records, no auth required ──
 async function handlePublicDogs(req, env) {
   const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-  const published = dogs.filter(d => d.publishStatus === 'published');
+  const published = dogs.filter(d => d.publishStatus !== 'draft');
   return json(200, { ok: true, dogs: published.sort((a, b) => a.name.localeCompare(b.name)) });
 }
 async function handlePublicPuppies(req, env) {
@@ -248,20 +248,20 @@ async function handlePublicPuppies(req, env) {
   const litters = await kvList(env, ADMIN_KEYS.litters + ':');
   const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
   const gallery = await kvList(env, ADMIN_KEYS.gallery + ':');
-  const publishedPups = pups.filter(p => p.publishStatus === 'published');
-  const publishedLitters = litters.filter(l => l.publishStatus === 'published');
-  const publishedDogs = dogs.filter(d => d.publishStatus === 'published');
-  const publishedGallery = gallery.filter(g => g.publishStatus === 'published');
+  const publishedPups = pups.filter(p => p.publishStatus !== 'draft');
+  const publishedLitters = litters.filter(l => l.publishStatus !== 'draft');
+  const publishedDogs = dogs.filter(d => d.publishStatus !== 'draft');
+  const publishedGallery = gallery.filter(g => g.publishStatus !== 'draft');
   return json(200, { ok: true, puppies: publishedPups, litters: publishedLitters, dogs: publishedDogs, gallery: publishedGallery });
 }
 async function handlePublicGallery(req, env) {
   const items = await kvList(env, ADMIN_KEYS.gallery + ':');
-  const published = items.filter(g => g.publishStatus === 'published');
+  const published = items.filter(g => g.publishStatus !== 'draft');
   return json(200, { ok: true, photos: published });
 }
 async function handlePublicTestimonials(req, env) {
   const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
-  const approved = items.filter(t => t.approved && t.publishStatus === 'published');
+  const approved = items.filter(t => t.approved && t.publishStatus !== 'draft');
   return json(200, { ok: true, testimonials: approved.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
 }
 async function handlePublicContent(req, env) {
@@ -300,7 +300,7 @@ async function auditLog(env, action, entity, entityId, details) {
 function filterPublished(items, params) {
   const showAll = params && params.get('status') === 'all';
   if (showAll) return items;
-  return items.filter(i => i.publishStatus === 'published');
+  return items.filter(i => i.publishStatus !== 'draft');
 }
 
 function ensurePublishStatus(record) {
