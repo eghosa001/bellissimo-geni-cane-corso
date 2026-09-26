@@ -28,7 +28,7 @@
 <nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
 <main id="main" class="pedigree-page">
 <div style="text-align:center"><p class="eyebrow">BELLISSIMO GENI PEDIGREE</p><h1 style="font:600 clamp(58px,8vw,112px)/.88 var(--serif);letter-spacing:-.04em">Trace the <em>lineage.</em></h1><p style="max-width:680px;margin:25px auto;color:var(--muted)">Search a Bellissimo Geni dog and follow each verified Sire and Dam relationship. The pedigree engine supports up to seven generations and stops wherever the supplied record stops.</p></div>
-<div class="source-note">Only kennel-supplied pedigree information is shown. Unknown parents remain “Not recorded”; no ancestry is generated or inferred. Microchip numbers and private owner details are not displayed publicly.</div>
+<div class="source-note">Only kennel-supplied pedigree information is shown. Sire and Dam relationships are resolved automatically from the shared records; unknown ancestry is never guessed. Microchip numbers and private owner details are not displayed publicly.</div>
 <form class="pedigree-search" id="pedigree-search"><input id="dog-search" name="dog" autocomplete="off" placeholder="Search a dog, e.g. Gyda or Branco" aria-label="Search a dog"><button class="search-button" type="submit">Search</button></form>
 <p class="search-status" id="search-status" aria-live="polite"></p>
 <section id="dog-result" class="dog-result"></section>
@@ -39,12 +39,16 @@
 <script>
 window.BG_WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 (function(){
-var DOGS=[],byId={},form=document.getElementById('pedigree-search'),input=document.getElementById('dog-search'),status=document.getElementById('search-status'),result=document.getElementById('dog-result'),shell=document.getElementById('pedigree-shell');
-function index(){byId={};DOGS.forEach(function(d){byId[String(d.id).toLowerCase()]=d})}
-function findDog(v){var q=String(v||'').trim().toLowerCase();if(!q)return null;return byId[q]||DOGS.find(function(d){return d.name.toLowerCase()===q})||DOGS.find(function(d){return d.name.toLowerCase().indexOf(q)>=0})||null}
-function relLabel(g,i){if(g===1)return i%2===0?'SIRE':'DAM';return 'GEN '+g}
-function card(id,role){
-  var dog=id&&byId[String(id).toLowerCase()];
+var RECORDS=[],family=null,form=document.getElementById('pedigree-search'),input=document.getElementById('dog-search'),status=document.getElementById('search-status'),result=document.getElementById('dog-result'),shell=document.getElementById('pedigree-shell');
+function findDog(v){
+  var q=String(v||'').trim().toLowerCase();
+  if(!q)return null;
+  var exact=family&&family.resolve(q);
+  if(exact)return exact.record;
+  return RECORDS.find(function(d){return String(d.name||'').toLowerCase()===q;})||
+    RECORDS.find(function(d){return String(d.name||'').toLowerCase().indexOf(q)>=0;})||null;
+}
+function card(dog,role){
   if(!dog)return '<div class="parent-card"><span class="role">'+BG.esc(role)+'</span><strong>Not recorded</strong><small>This ancestor has not been supplied.</small></div>';
   var meta=[dog.sex,dog.colour,dog.registration].filter(Boolean).join(' • ');
   var photo=dog.photo?'<span class="parent-thumb"><img src="'+BG.esc(dog.photo)+'" alt="'+BG.esc(dog.name)+'" loading="lazy" decoding="async"></span>':'';
@@ -54,8 +58,10 @@ function render(start){
   if(!start){status.textContent='No matching dog found.';result.classList.remove('active');shell.innerHTML='';return}
   status.textContent='';
   var pic=start.photo?'<img src="'+BG.esc(start.photo)+'" alt="'+BG.esc(start.name)+'">':'';
+  var startItem=family&&family.resolve(start.id);
+  var profileHref=startItem&&startItem.kind==='puppy'?'puppies.html?puppy='+encodeURIComponent(start.id):'dogs.html?dog='+encodeURIComponent(start.id);
   result.classList.add('active');
-  result.innerHTML=pic+'<div><p class="eyebrow">DOG RECORD</p><h2>'+BG.esc(start.name)+'</h2><p class="dog-meta">'+BG.esc([start.sex,start.colour,start.registration].filter(Boolean).join(' • ')||'Verified pedigree record')+'</p><p style="margin-top:12px"><a href="dogs.html?dog='+encodeURIComponent(start.id)+'">Open full profile →</a></p></div>';
+  result.innerHTML=pic+'<div><p class="eyebrow">DOG RECORD</p><h2>'+BG.esc(start.name)+'</h2><p class="dog-meta">'+BG.esc([start.sex,start.colour,start.registration].filter(Boolean).join(' • ')||'Verified pedigree record')+'</p><p style="margin-top:12px"><a href="'+profileHref+'">Open full profile →</a></p></div>';
   shell.innerHTML='';
   var startKey=String(start.id).toLowerCase();
   var current=[{dog:start,path:[startKey]}],expanded={};
@@ -66,26 +72,41 @@ function render(start){
       var nodeKey=String(node.dog.id).toLowerCase();
       if(expanded[nodeKey])return;
       expanded[nodeKey]=1;
-      [['sireId','SIRE'],['damId','DAM']].forEach(function(pair){
-        var id=node.dog[pair[0]];
-        if(!id)return;
-        var key=String(id).toLowerCase();
+      [['sire','SIRE'],['dam','DAM']].forEach(function(pair){
+        var prefix=pair[0];
+        var raw=node.dog[prefix+'Id']||node.dog[prefix+'Name']||node.dog[prefix];
+        if(!raw)return;
+        var item=family?family.parentOf(node.dog,prefix):null;
+        if(!item){
+          parents.push({dog:null,role:g===1?pair[1]:(pair[1]+' OF '+node.dog.name),path:node.path});
+          return;
+        }
+        var dog=item.record,key=String(dog.id).toLowerCase();
         var cyclic=node.path.indexOf(key)>=0;
         parents.push({
-          id:id,
+          dog:cyclic?null:dog,
           role:g===1?pair[1]:(pair[1]+' OF '+node.dog.name),
-          dog:cyclic?null:byId[key],
           path:node.path.concat(key)
         });
       });
     });
     if(!parents.length){shell.insertAdjacentHTML('beforeend','<p class="ancestry-note">'+(g===1?'No parent records are currently attached to this dog.':'The supplied verified pedigree ends here.')+'</p>');break}
-    shell.insertAdjacentHTML('beforeend','<div class="generation-block"><div class="generation-label">GENERATION '+g+' • '+(g===1?'PARENTS':g===2?'GRANDPARENTS':g===3?'GREAT GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+parents.map(function(p){return card(p.id,p.role)}).join('')+'</div></div>');
-    current=parents.filter(function(p){return !!p.dog}).map(function(p){return {dog:p.dog,path:p.path}});
+    shell.insertAdjacentHTML('beforeend','<div class="generation-block"><div class="generation-label">GENERATION '+g+' • '+(g===1?'PARENTS':g===2?'GRANDPARENTS':g===3?'GREAT GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+parents.map(function(p){return card(p.dog,p.role)}).join('')+'</div></div>');
+    current=parents.filter(function(p){return !!p.dog}).map(function(p){return {dog:p.dog,path:p.path};});
   }
 }
-form.addEventListener('submit',function(e){e.preventDefault();var d=findDog(input.value);if(d)history.replaceState(null,'','?dog='+encodeURIComponent(d.id));render(d)});
-BG.loadAdminJSON('dogs','data/dogs.json').then(function(j){DOGS=j.data||j.dogs||[];index();var init=new URLSearchParams(location.search).get('dog');if(init){var d=findDog(init);if(d){input.value=d.name;render(d)}}}).catch(function(){status.textContent='Could not load pedigree records.'});
+form.addEventListener('submit',function(e){e.preventDefault();var d=findDog(input.value);if(d)history.replaceState(null,'','?dog='+encodeURIComponent(d.id));render(d);});
+Promise.all([
+  BG.loadAdminJSON('dogs','data/dogs.json'),
+  BG.loadAdminJSON('puppies','data/puppies.json').catch(function(){return {puppies:[]};})
+]).then(function(rows){
+  var dogs=rows[0].data||rows[0].dogs||[];
+  var young=rows[1].puppies||rows[1].data||[];
+  family=BG.familyIndex([{kind:'dog',records:dogs},{kind:'puppy',records:young}]);
+  RECORDS=family.entries.map(function(item){return item.record;});
+  var init=new URLSearchParams(location.search).get('dog');
+  if(init){var d=findDog(init);if(d){input.value=d.name;render(d);}}
+}).catch(function(){status.textContent='Could not load pedigree records.';});
 })();
 </script>
 </body>
