@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import worker, {
   STATUS,
   strip,
   normalizePhone,
@@ -68,4 +68,23 @@ test('puppy lock decisions', () => {
   assert.deepEqual(lockDecision({ status: STATUS.CANCELLED, ref: 'BG-2026-X3', until: 0 }, now).granted, true);
   assert.deepEqual(lockDecision({ status: STATUS.PAYMENT_PENDING, ref: 'BG-2026-X4', until: now + 60000 }, now).granted, false);
   assert.deepEqual(lockDecision({ status: STATUS.PAYMENT_PENDING, ref: 'BG-2026-X5', until: now - 1000 }, now).granted, true);
+});
+
+test('remote admin CORS is present on preflight and JSON responses', async () => {
+  const preflight = await worker.fetch(new Request('https://worker.example/admin/api/login', {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'https://eghosa001.github.io',
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'authorization,content-type'
+    }
+  }), {});
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), '*');
+  assert.match(preflight.headers.get('Access-Control-Allow-Headers') || '', /authorization/i);
+  assert.match(preflight.headers.get('Access-Control-Allow-Headers') || '', /content-type/i);
+
+  const health = await worker.fetch(new Request('https://worker.example/webhook/health'), {});
+  assert.equal(health.status, 200);
+  assert.equal(health.headers.get('Access-Control-Allow-Origin'), '*');
 });
