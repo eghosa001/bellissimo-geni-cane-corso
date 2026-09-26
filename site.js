@@ -176,27 +176,88 @@
     });
   }
 
+  function mergeById(baseItems, liveItems) {
+    var map = {};
+    var order = [];
+    (baseItems || []).forEach(function(item) {
+      if (!item || !item.id) return;
+      var key = String(item.id);
+      if (!map[key]) order.push(key);
+      map[key] = item;
+    });
+    (liveItems || []).forEach(function(item) {
+      if (!item || !item.id) return;
+      var key = String(item.id);
+      if (!map[key]) order.push(key);
+      map[key] = Object.assign({}, map[key] || {}, item);
+    });
+    return order.map(function(key) { return map[key]; });
+  }
+
+  function mergeManagedPayload(path, fallback, live) {
+    fallback = fallback || {};
+    live = live || {};
+
+    if (path === 'dogs') {
+      return Object.assign({}, fallback, live, {
+        dogs: mergeById(fallback.dogs || fallback.data || [], live.dogs || live.data || [])
+      });
+    }
+
+    if (path === 'puppies') {
+      return Object.assign({}, fallback, live, {
+        puppies: mergeById(fallback.puppies || fallback.data || [], live.puppies || live.data || []),
+        litters: mergeById(fallback.litters || [], live.litters || []),
+        gallery: mergeById(fallback.gallery || [], live.gallery || [])
+      });
+    }
+
+    return live && Object.keys(live).length ? live : fallback;
+  }
+
   function loadAdminJSON(path, fallbackPath) {
-    return resolveApiBase().then(function(apiBase) {
-      if (apiBase) {
-        // Step 1: Try unauthenticated public endpoint (/api/dogs, /api/puppies, etc.)
-        return fetch(apiBase + '/api/' + path, { headers: { 'Accept': 'application/json' } })
-          .then(function(r) { if (r.ok) return r.json(); throw new Error('public_fail'); })
-          .catch(function() {
-            // Step 2: Try authenticated admin endpoint if token exists.
-            var token = window._bgAdminToken || '';
-            if (token) {
-              return fetch(apiBase + '/admin/api/' + path, {
-                headers: Object.assign({ 'Accept': 'application/json' }, { 'Authorization': 'Bearer ' + token })
-              }).then(function(r) { if (r.ok) return r.json(); throw new Error('admin_fail'); });
-            }
-            // Step 3: Keep the public site usable even if the Worker is unavailable.
-            if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
-            throw new Error('no_data');
-          });
-      }
-      if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
-      throw new Error('no_data');
+    var fallbackPromise = fallbackPath
+      ? fetch(fallbackPath, { cache: 'no-store' })
+          .then(function(r) { return r.ok ? r.json() : {}; })
+          .catch(function() { return {}; })
+      : Promise.resolve({});
+
+    return Promise.all([resolveApiBase(), fallbackPromise]).then(function(parts) {
+      var apiBase = parts[0];
+      var fallback = parts[1];
+
+      if (!apiBase) return fallback;
+
+      return fetch(apiBase + '/api/' + path, {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      })
+        .then(function(r) {
+          if (!r.ok) throw new Error('public_fail');
+          return r.json();
+        })
+        .then(function(live) {
+          // Preserve the verified repository baseline and layer CMS records over it.
+          // This prevents an empty/fresh KV namespace from hiding the existing catalogue.
+          return mergeManagedPayload(path, fallback, live);
+        })
+        .catch(function() {
+          var token = window._bgAdminToken || '';
+          if (!token) return fallback;
+          return fetch(apiBase + '/admin/api/' + path, {
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            cache: 'no-store'
+          })
+            .then(function(r) {
+              if (!r.ok) throw new Error('admin_fail');
+              return r.json();
+            })
+            .then(function(live) { return mergeManagedPayload(path, fallback, live); })
+            .catch(function() { return fallback; });
+        });
     });
   }
 
