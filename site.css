@@ -184,3 +184,60 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
   .site-header>.nav-cta{display:none}
   .mobile-menu{top:105px}
 }
+
+
+/* WhatsApp-requested phone header: Our Dogs · Puppies · Menu, with Menu on the right. */
+.mobile-quick-nav{display:none}
+@media(max-width:560px){
+  .site-header{
+    height:104px;
+    min-height:104px;
+    padding:0;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-rows:69px 35px;
+    gap:0;
+    background:rgba(244,241,234,.98);
+  }
+  .site-header .brand{
+    grid-column:1 / 4;
+    grid-row:1;
+    justify-self:center;
+    align-self:center;
+    min-width:0;
+    padding:0 12px;
+  }
+  .site-header .brand b{font-size:10px;letter-spacing:.13em}
+  .site-header .brand small{font-size:7px}
+  .site-header .mobile-quick-nav{display:contents}
+  .site-header .mobile-quick-nav a,
+  .site-header .mobile-nav-toggle{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-width:0;
+    height:35px;
+    padding:0 5px;
+    border:0;
+    border-top:1px solid var(--line);
+    border-right:1px solid var(--line);
+    background:transparent;
+    font-size:8.5px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .site-header .mobile-quick-nav a:nth-child(1){grid-column:1;grid-row:2}
+  .site-header .mobile-quick-nav a:nth-child(2){grid-column:2;grid-row:2}
+  .site-header .mobile-nav-toggle{
+    grid-column:3;
+    grid-row:2;
+    border-right:0;
+    background:var(--gold);
+    color:#17140e;
+  }
+  .site-header .nav-cta{display:none}
+  .mobile-menu{position:relative;z-index:20}
+}
