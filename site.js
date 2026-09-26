@@ -36,8 +36,23 @@
       header.insertBefore(quick, reserve || null);
     }
 
-    var toggle = document.querySelector('.mobile-nav-toggle');
     var menu = document.querySelector('.mobile-menu');
+    if (menu) {
+      menu.innerHTML = [
+        '<a href="index.html">Home</a>',
+        '<a href="dogs.html">Our Dogs</a>',
+        '<a href="puppies.html">Puppies</a>',
+        '<a href="pedigree.html">Pedigree</a>',
+        '<a href="breeding.html">Breeding</a>',
+        '<a href="gallery.html">Gallery</a>',
+        '<a href="about.html">About</a>',
+        '<a href="social.html">Social</a>',
+        '<a href="contact.html#export">Export</a>',
+        '<a href="reserve.html">Reserve</a>',
+        '<a href="contact.html">Contact</a>'
+      ].join('');
+    }
+    var toggle = document.querySelector('.mobile-nav-toggle');
     if (toggle && menu) {
       toggle.addEventListener('click', function () {
         var open = menu.classList.toggle('open');
