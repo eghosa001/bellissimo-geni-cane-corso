@@ -88,3 +88,50 @@ test('remote admin CORS is present on preflight and JSON responses', async () =>
   assert.equal(health.status, 200);
   assert.equal(health.headers.get('Access-Control-Allow-Origin'), '*');
 });
+
+
+test('uploaded R2 media is served through the Worker', async () => {
+  const stored = new Map();
+  const env = {
+    UPLOADS: {
+      async put(key, body, options) {
+        stored.set(key, { bytes: await new Response(body).arrayBuffer(), options });
+      },
+      async get(key) {
+        const item = stored.get(key);
+        if (!item) return null;
+        return {
+          body: item.bytes,
+          httpMetadata: item.options && item.options.httpMetadata || {},
+          writeHttpMetadata(headers) {
+            const type = this.httpMetadata && this.httpMetadata.contentType;
+            if (type) headers.set('content-type', type);
+          }
+        };
+      }
+    },
+    ADMIN: {
+      async get() { return null; },
+      async put() {},
+      async delete() {},
+      async list() { return { keys: [], list_complete: true }; }
+    },
+    ADMIN_PASSWORD: 'secret'
+  };
+
+  const form = new FormData();
+  form.append('file', new File(['image-bytes'], 'dog.webp', { type: 'image/webp' }));
+  const upload = await worker.fetch(new Request('https://worker.example/admin/api/upload', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer secret' },
+    body: form
+  }), env);
+  assert.equal(upload.status, 200);
+  const uploaded = await upload.json();
+  assert.match(uploaded.publicUrl || '', /^https:\/\/worker\.example\/uploads\/media\//);
+
+  const media = await worker.fetch(new Request(uploaded.publicUrl), env);
+  assert.equal(media.status, 200);
+  assert.equal(media.headers.get('content-type'), 'image/webp');
+  assert.equal(await media.text(), 'image-bytes');
+});
