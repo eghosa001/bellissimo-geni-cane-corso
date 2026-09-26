@@ -135,3 +135,23 @@ test('uploaded R2 media is served through the Worker', async () => {
   assert.equal(media.headers.get('content-type'), 'image/webp');
   assert.equal(await media.text(), 'image-bytes');
 });
+
+
+test('admin content query route reaches the content handler', async () => {
+  const env = {
+    ADMIN_PASSWORD: 'test-password',
+    ADMIN: {
+      get: async () => null,
+      put: async () => {},
+      delete: async () => {},
+      list: async () => ({ keys: [], cursor: null })
+    }
+  };
+  const res = await worker.fetch(new Request('https://worker.example/admin/api/content?page=about', {
+    headers: { Authorization: 'Bearer test-password' }
+  }), env);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.data.publishStatus, 'published');
+});
