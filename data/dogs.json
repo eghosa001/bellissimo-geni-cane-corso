@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "generationSupport": 7,
-  "notes": "Verified Bellissimo Geni records supplied by the kennel. Missing facts remain blank or Not recorded. Current-dog ownership is published where supplied; microchip numbers and other private records are not published.",
+  "notes": "Verified Bellissimo Geni records supplied by the kennel. Missing facts remain blank or Not recorded. Current-dog ownership is published where supplied; microchip numbers and other private records are not published. Tessa's published ancestry comes from the supplied KSS export pedigree; microchip/tattoo data is intentionally excluded.",
   "dogs": [
     {
       "id": "branco-custodi-nos",
@@ -82,7 +82,7 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Tessa Sangue Magnifica’s supplied pedigree verifies her as a black female born 27 March 2024, by ZZ Top Sangue Magnifica out of Birba Sangue Magnifica.",
+      "bio": "Tessa Sangue Magnifica is part of the Bellissimo Geni Cane Corso family. Her supplied KSS export pedigree records ZZ Top Sangue Magnifica as sire and Birba Sangue Magnifica as dam.",
       "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
@@ -894,6 +894,24 @@
       "health": "",
       "achievements": "",
       "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+    },
+    {
+      "id": "calistro-from-cda-god-of-troy-team",
+      "name": "Calistro From CDA God Of Troy Team",
+      "sex": "male",
+      "dateOfBirth": "",
+      "colour": "",
+      "photo": "",
+      "gallery": [],
+      "registration": "JR 78440 Cc",
+      "status": "Pedigree ancestor",
+      "group": "ancestor",
+      "sireId": null,
+      "damId": null,
+      "bloodline": "",
+      "health": "",
+      "achievements": "",
+      "bio": ""
     }
   ]
 }
