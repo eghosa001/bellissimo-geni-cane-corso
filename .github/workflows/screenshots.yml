@@ -487,14 +487,49 @@ jobs:
               throw new Error('Branco registration cleanup failed');
             }
 
-            await page.goto(base + 'puppies.html?puppy=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
-            const yasmin = page.locator('#yasmin-bellissimo-geni');
+            const brancoImage = page.locator('.profile-media-main img');
+            const brancoSrc = await brancoImage.getAttribute('src');
+            if (!brancoSrc || !brancoSrc.endsWith('assets/dogs/branco-02.webp')) {
+              throw new Error('Branco requested former photo is not the main profile image');
+            }
+
+            await page.goto(base + 'dogs.html?dog=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
+            const yasmin = page.locator('#profile');
             const yasminText = await yasmin.innerText();
-            for (const expected of ['Yasmin Bellissimo Geni','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+            for (const expected of ['Yasmin Bellissimo Geni','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos','Past production']) {
               if (!yasminText.includes(expected)) throw new Error('Yasmin record missing ' + expected);
             }
-            const image = yasmin.locator('img');
+            const image = yasmin.locator('.profile-media-main img');
             if (!(await image.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Yasmin photo failed to load');
+
+            for (const record of [
+              ['diesel-bellissimo-geni','Diesel Bellissimo Geni','NG-CCKC2026389197AE'],
+              ['rocco-bellissimo-geni','Rocco Bellissimo Geni','NG-CCKC20267B948A24']
+            ]) {
+              await page.goto(base + 'dogs.html?dog=' + record[0], { waitUntil: 'networkidle' });
+              const txt = await page.locator('#profile').innerText();
+              for (const expected of [record[1],'Male','Black','26/10/2025',record[2],'Past production','Branco Custodi Nos','Tessa Sangue Magnifica']) {
+                if (!txt.includes(expected)) throw new Error(record[1] + ' missing ' + expected);
+              }
+            }
+
+            for (const parent of ['branco-custodi-nos','tessa-sangue-magnifica']) {
+              await page.goto(base + 'dogs.html?dog=' + parent, { waitUntil: 'networkidle' });
+              const txt = await page.locator('#profile').innerText();
+              for (const child of ['Diesel Bellissimo Geni','Rocco Bellissimo Geni']) {
+                if (!txt.includes(child)) throw new Error(parent + ' family links missing ' + child);
+              }
+            }
+
+            await page.goto(base + 'dogs.html?dog=himera-custodi-nos', { waitUntil: 'networkidle' });
+            const himera = await page.locator('#profile').innerText();
+            for (const expected of ['Himera Custodi Nos','Igon del Dyrium','Bisera Custodi Nos','Official HD A · ED 0 · OCD free']) {
+              if (!himera.includes(expected)) throw new Error('Himera record missing ' + expected);
+            }
+
+            await page.goto(base + 'dogs.html?dog=nefertiti-custodi-nos', { waitUntil: 'networkidle' });
+            const nefertiti = await page.locator('#profile').innerText();
+            if (!nefertiti.includes('HD A · ED 0')) throw new Error('Nefertiti HDA ED0 health correction missing');
 
             await page.goto(base + 'pedigree.html?dog=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
             const pedigree = await page.locator('main').innerText();
@@ -599,6 +634,12 @@ jobs:
               ['ancestor-zz-top', 'dogs.html?dog=zz-top-sangue-magnifica'],
               ['ancestor-limoncello', 'dogs.html?dog=limoncello-sangue-magnifica-custodi-nos'],
               ['ancestor-anthie', 'dogs.html?dog=anthie-custodi-nos'],
+              ['branco-requested-photo', 'dogs.html?dog=branco-custodi-nos'],
+              ['yasmin-past-production', 'dogs.html?dog=yasmin-bellissimo-geni'],
+              ['diesel-past-production', 'dogs.html?dog=diesel-bellissimo-geni'],
+              ['rocco-past-production', 'dogs.html?dog=rocco-bellissimo-geni'],
+              ['himera-health', 'dogs.html?dog=himera-custodi-nos'],
+              ['nefertiti-health', 'dogs.html?dog=nefertiti-custodi-nos'],
               ['breeding', 'breeding.html'],
               ['socialization', 'socialization.html'],
               ['standards', 'standards.html'],
