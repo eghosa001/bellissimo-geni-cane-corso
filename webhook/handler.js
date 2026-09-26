@@ -159,9 +159,54 @@ async function kvGet(env, key) {
   }
 }
 
+const INDEX_KEY_PREFIX = 'admin:index:';
+const INDEXED_COLLECTION_PREFIXES = [
+  ADMIN_KEYS.dogs + ':',
+  ADMIN_KEYS.puppies + ':',
+  ADMIN_KEYS.litters + ':',
+  ADMIN_KEYS.testimonials + ':',
+  ADMIN_KEYS.gallery + ':',
+  'reservation:'
+];
+
+function indexedCollectionPrefix(key) {
+  return INDEXED_COLLECTION_PREFIXES.find(prefix => String(key || '').startsWith(prefix)) || null;
+}
+
+function indexStorageKey(prefix) {
+  return INDEX_KEY_PREFIX + prefix.replace(/:$/, '');
+}
+
+async function kvIndexIds(env, prefix) {
+  const raw = await env.ADMIN.get(indexStorageKey(prefix));
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+async function kvWriteIndex(env, prefix, ids) {
+  const clean = Array.from(new Set((ids || []).map(String).filter(Boolean)));
+  await env.ADMIN.put(indexStorageKey(prefix), JSON.stringify(clean));
+}
+
 async function kvPut(env, key, value) {
   try {
     await env.ADMIN.put(key, JSON.stringify(value));
+    const prefix = indexedCollectionPrefix(key);
+    if (prefix) {
+      const id = String(key).slice(prefix.length);
+      if (id) {
+        const ids = await kvIndexIds(env, prefix);
+        if (!ids.includes(id)) {
+          ids.push(id);
+          await kvWriteIndex(env, prefix, ids);
+        }
+      }
+    }
     return true;
   } catch (e) {
     console.error('[kvPut failed]', key, e.message);
@@ -169,17 +214,26 @@ async function kvPut(env, key, value) {
   }
 }
 
+async function kvDelete(env, key) {
+  await kvDelete(env, key);
+  const prefix = indexedCollectionPrefix(key);
+  if (prefix) {
+    const id = String(key).slice(prefix.length);
+    const ids = await kvIndexIds(env, prefix);
+    const next = ids.filter(item => item !== id);
+    if (next.length !== ids.length) await kvWriteIndex(env, prefix, next);
+  }
+}
+
 async function kvList(env, prefix) {
+  const ids = await kvIndexIds(env, prefix);
+  if (!ids.length) return [];
+  const raws = await Promise.all(ids.map(id => env.ADMIN.get(prefix + id)));
   const results = [];
-  let cursor;
-  do {
-    const page = await env.ADMIN.list({ prefix, limit: 100, cursor });
-    for (const item of page.keys) {
-      const raw = await env.ADMIN.get(item.name);
-      if (raw) results.push(JSON.parse(raw));
-    }
-    cursor = page.cursor;
-  } while (cursor);
+  for (const raw of raws) {
+    if (!raw) continue;
+    try { results.push(JSON.parse(raw)); } catch (_) {}
+  }
   return results;
 }
 
@@ -605,7 +659,7 @@ async function handleAdminDogs(req, env) {
   if (req.method === 'DELETE' && id) {
     const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
     const dog = dogs.find(d => d.id === id);
-    await env.ADMIN.delete(ADMIN_KEYS.dogs + ':' + id);
+    await kvDelete(env, ADMIN_KEYS.dogs + ':' + id);
     if (dog) await auditLog(env, 'delete', 'dog', id, { name: dog.name });
     return json(200, { ok: true });
   }
@@ -656,7 +710,7 @@ async function handleAdminPuppies(req, env) {
   if (req.method === 'DELETE' && id) {
     const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
     const pup = pups.find(p => p.id === id);
-    await env.ADMIN.delete(ADMIN_KEYS.puppies + ':' + id);
+    await kvDelete(env, ADMIN_KEYS.puppies + ':' + id);
     if (pup) await auditLog(env, 'delete', 'puppy', id, { name: pup.name });
     return json(200, { ok: true });
   }
@@ -700,7 +754,7 @@ async function handleAdminLitters(req, env) {
   if (req.method === 'DELETE' && id) {
     const list = await kvList(env, ADMIN_KEYS.litters + ':');
     const litter = list.find(l => l.id === id);
-    await env.ADMIN.delete(ADMIN_KEYS.litters + ':' + id);
+    await kvDelete(env, ADMIN_KEYS.litters + ':' + id);
     if (litter) await auditLog(env, 'delete', 'litter', id, { name: litter.name });
     return json(200, { ok: true });
   }
@@ -751,7 +805,7 @@ async function handleAdminReservations(req, env) {
     }
 
     if (action === 'delete') {
-      await env.ADMIN.delete('reservation:' + id);
+      await kvDelete(env, 'reservation:' + id);
       return json(200, { ok: true });
     }
 
@@ -796,7 +850,7 @@ async function handleAdminTestimonials(req, env) {
   if (req.method === 'DELETE' && id) {
     const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
     const item = items.find(t => t.id === id);
-    await env.ADMIN.delete(ADMIN_KEYS.testimonials + ':' + id);
+    await kvDelete(env, ADMIN_KEYS.testimonials + ':' + id);
     if (item) await auditLog(env, 'delete', 'testimonial', id, { name: item.name });
     return json(200, { ok: true });
   }
@@ -835,7 +889,7 @@ async function handleAdminGallery(req, env) {
   }
 
   if (req.method === 'DELETE' && id) {
-    await env.ADMIN.delete(ADMIN_KEYS.gallery + ':' + id);
+    await kvDelete(env, ADMIN_KEYS.gallery + ':' + id);
     return json(200, { ok: true });
   }
 
@@ -1056,7 +1110,7 @@ async function handleAdminLogout(req, env) {
   const auth = req.headers.get('Authorization') || '';
   const token = auth.replace('Bearer ', '');
   if (token && token.startsWith('session-')) {
-    await env.ADMIN.delete('admin:session:' + token);
+    await kvDelete(env, 'admin:session:' + token);
   }
   return json(200, { ok: true });
 }
@@ -1106,19 +1160,6 @@ export default {
     // ── Public health endpoint ──
     if (request.method === 'GET' && url.pathname === '/webhook/health') {
       return json(200, { ok: true, ts: Date.now() });
-    }
-
-    // Temporary KV connectivity diagnostic; exposes only binding health/error text.
-    if (request.method === 'GET' && url.pathname === '/webhook/kv-health') {
-      try {
-        if (!env.ADMIN || typeof env.ADMIN.list !== 'function') {
-          return json(500, { ok: false, error: 'ADMIN binding unavailable' });
-        }
-        const page = await env.ADMIN.list({ limit: 1 });
-        return json(200, { ok: true, adminBinding: true, visibleKeys: page.keys.length });
-      } catch (e) {
-        return json(500, { ok: false, error: String(e && e.message || e) });
-      }
     }
 
     // ── Public media uploaded by the owner ──
