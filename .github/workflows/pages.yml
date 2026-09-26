@@ -64,11 +64,7 @@ jobs:
           file assets/dogs/himera-custodi-nos-main.avif
           file assets/dogs/himera-custodi-nos-02.avif
 
-          # X Bellissimo Geni: preserve the supplied 856x1280 source dimensions.
-          # Sitting portrait is the main photo; standing portrait is the secondary gallery photo.
-          mkdir -p assets/puppies
-          cat .github/assets/x-bellissimo-geni-main-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.avif
-          cat .github/assets/x-bellissimo-geni-standing-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.avif
+          # X Bellissimo Geni photos are committed directly under assets/puppies.
           test -s assets/puppies/x-bellissimo-geni-main.avif
           test -s assets/puppies/x-bellissimo-geni-standing.avif
           file assets/puppies/x-bellissimo-geni-main.avif
