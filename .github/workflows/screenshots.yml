@@ -751,7 +751,7 @@ jobs:
                 throw new Error(record[1] + ' must not display Himera photography');
               }
               const placeholder = await page.locator('.profile-placeholder').innerText();
-              if (!placeholder.includes('Photography pending')) {
+              if (!/photography pending/i.test(placeholder)) {
                 throw new Error(record[1] + ' must use the photography-pending placeholder');
               }
             }
