@@ -58,6 +58,33 @@ jobs:
             echo "Wrangler automatically provisions the ADMIN and RESERVATIONS KV namespaces and UPLOADS R2 bucket."
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Bootstrap verified public data
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const base = String(process.env.WORKER_URL || '').replace(/\/+$/, '');
+          const password = String(process.env.ADMIN_PASSWORD || '');
+          const dogs = JSON.parse(fs.readFileSync('data/dogs.json','utf8'));
+          const puppies = JSON.parse(fs.readFileSync('data/puppies.json','utf8'));
+          const payload = {
+            dogs: dogs.dogs || [],
+            puppies: puppies.puppies || [],
+            litters: puppies.litters || [],
+            gallery: puppies.gallery || []
+          };
+          fetch(base + '/admin/api/bootstrap', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + password, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).then(async response => {
+            const body = await response.text();
+            if (!response.ok) throw new Error('Bootstrap failed: ' + response.status + ' ' + body);
+            console.log(body);
+          }).catch(error => { console.error(error); process.exit(1); });
+          EOF
+
       - name: Prepare public-site backend configuration
         env:
           WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
