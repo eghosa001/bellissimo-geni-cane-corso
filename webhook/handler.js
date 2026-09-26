@@ -595,7 +595,7 @@ async function handleAdminDogs(req, env) {
       return json(200, { ok: true, data: updated });
     }
     const newId = 'dog-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-    const dog = { id: newId, sireId: body.sireId || null, damId: body.damId || null, ...body };
+    const dog = { id: newId, sireId: body.sireId || null, damId: body.damId || null, group: body.group || 'current', ...body };
     ensurePublishStatus(dog);
     await kvPut(env, ADMIN_KEYS.dogs + ':' + newId, dog);
     await auditLog(env, 'create', 'dog', newId, { name: dog.name, publishStatus: dog.publishStatus });
