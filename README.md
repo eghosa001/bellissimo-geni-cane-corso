@@ -41,12 +41,9 @@ Late puppy photographs supplied on 24 September 2026 are published only in a cle
 
 ## Backend / admin
 
-The owner CMS and Worker implementation are present, but production Cloudflare infrastructure is not configured in the repository yet.
+The owner CMS and Worker implementation are present. The repository now uses Wrangler automatic provisioning for the ADMIN/RESERVATIONS KV namespaces and R2 media bucket, so account-specific resource IDs are no longer committed or manually pasted.
 
-`webhook/wrangler.toml` still requires real:
-- RESERVATIONS KV namespace ID
-- ADMIN KV namespace ID
-- R2 media bucket
+Production deployment still requires Cloudflare authentication plus:
 - ADMIN_PASSWORD Worker secret
 
 Payment remains deliberately disabled:
@@ -66,14 +63,12 @@ From `webhook/`:
 ```bash
 npm install
 wrangler login
-wrangler kv namespace create ADMIN
-wrangler kv namespace create RESERVATIONS
-wrangler r2 bucket create bellissimo-geni-media
-wrangler secret put ADMIN_PASSWORD
+npm install
 wrangler deploy
+wrangler secret put ADMIN_PASSWORD
 ```
 
-After deployment, set `window.BG_WEBHOOK_URL` to the deployed Worker URL on pages that use backend data/reservations.
+After deployment, open `admin.html` and enter the Worker URL once on the sign-in screen. It is stored locally on that device; the admin password remains a Worker secret.
 
 ## Release gate
 
