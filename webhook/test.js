@@ -155,3 +155,48 @@ test('admin content query route reaches the content handler', async () => {
   assert.equal(body.ok, true);
   assert.equal(body.data.publishStatus, 'published');
 });
+
+
+test('bootstrap preserves verified record IDs and makes them public', async () => {
+  const store = new Map();
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); },
+      async list({ prefix = '' } = {}) {
+        return {
+          keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })),
+          cursor: null,
+          list_complete: true
+        };
+      }
+    }
+  };
+  const payload = {
+    dogs: [{ id: 'verified-dog', name: 'Verified Dog', publishStatus: 'published' }],
+    puppies: [{ id: 'verified-pup', name: 'Verified Pup', status: 'AVAILABLE', publishStatus: 'published' }],
+    litters: [],
+    gallery: [{ id: 'verified-photo', url: 'https://example.test/photo.webp', publishStatus: 'published' }]
+  };
+  const boot = await worker.fetch(new Request('https://worker.example/admin/api/bootstrap', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer secret', 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }), env);
+  assert.equal(boot.status, 200);
+  const bootBody = await boot.json();
+  assert.equal(bootBody.ok, true);
+
+  const dogs = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
+  assert.equal(dogs.status, 200);
+  const dogBody = await dogs.json();
+  assert.equal(dogBody.dogs[0].id, 'verified-dog');
+
+  const pups = await worker.fetch(new Request('https://worker.example/api/puppies'), env);
+  assert.equal(pups.status, 200);
+  const pupBody = await pups.json();
+  assert.equal(pupBody.puppies[0].id, 'verified-pup');
+  assert.equal(pupBody.gallery[0].id, 'verified-photo');
+});
