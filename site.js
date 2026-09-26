@@ -26,6 +26,16 @@
     }
     var main = document.querySelector('main');
     if (main && !main.id) main.id = 'main';
+    var header = document.querySelector('.site-header');
+    if (header && !header.querySelector('.mobile-quick-links')) {
+      var quick = document.createElement('nav');
+      quick.className = 'mobile-quick-links';
+      quick.setAttribute('aria-label', 'Quick links');
+      quick.innerHTML = '<a href="puppies.html">Puppies</a><a href="dogs.html">Our Dogs</a>';
+      var reserve = header.querySelector('.nav-cta');
+      header.insertBefore(quick, reserve || null);
+    }
+
     var toggle = document.querySelector('.mobile-nav-toggle');
     var menu = document.querySelector('.mobile-menu');
     if (toggle && menu) {
