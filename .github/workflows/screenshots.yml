@@ -132,6 +132,15 @@ jobs:
               throw new Error('Mobile shortcut order must be Our Dogs, Puppies, Menu');
             }
 
+            const brandBox = await mobile.locator('.reference-brand').boundingBox();
+            if (!brandBox || brandBox.x > 24) {
+              throw new Error('Mobile homepage logo must be left-aligned');
+            }
+            const mobileLead = await mobile.locator('.legacy-lead').innerText();
+            if (mobileLead.includes('—') || !mobileLead.includes('Cane Corso.\nA premium kennel')) {
+              throw new Error('Mobile hero lead punctuation/line break regressed');
+            }
+
             const layout = await mobile.evaluate(() => {
               const buttons = [...document.querySelectorAll('.legacy-actions .legacy-button')]
                 .map(el => el.getBoundingClientRect());
