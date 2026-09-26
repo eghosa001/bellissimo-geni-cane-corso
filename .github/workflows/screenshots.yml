@@ -3,6 +3,7 @@ name: Website Screenshots
 on:
   pull_request:
     paths:
+      - ".github/workflows/screenshots.yml"
       - "index.html"
       - "home-restored.css"
       - "dogs.html"
@@ -249,6 +250,18 @@ jobs:
               throw new Error('Private pedigree identifiers must not be exposed');
             }
 
+            for (const expected of ['SIRE OF ZZ Top Sangue Magnifica','DAM OF ZZ Top Sangue Magnifica','SIRE OF Birba Sangue Magnifica','DAM OF Birba Sangue Magnifica']) {
+              if (!tessaPedigree.includes(expected)) throw new Error('Pedigree relationship label missing ' + expected);
+            }
+
+            await page.goto(base + 'dogs.html?dog=limoncello-sangue-magnifica-custodi-nos', { waitUntil: 'networkidle' });
+            await page.locator('#profile h2').filter({ hasText: 'Limoncello Sangue Magnifica Custodi Nos' }).waitFor();
+            const limoncelloText = await page.locator('#profile').innerText();
+            const limoncelloUpper = limoncelloText.toUpperCase();
+            if (!limoncelloText.includes('Limoncello Sangue Magnifica Custodi Nos') || !limoncelloUpper.includes('SIRE OF') || !limoncelloText.includes('Nefertiti Custodi Nos')) {
+              throw new Error('Limoncello family relationship is not explained correctly');
+            }
+
             await browser.close();
           })();
           EOF
@@ -276,7 +289,7 @@ jobs:
               if (!eden.includes(expected)) throw new Error('Eden profile missing ' + expected);
             }
 
-            for (const id of ['tessa-sangue-magnifica','daisy-bellissimo-geni','anthie-custodi-nos']) {
+            for (const id of ['tessa-sangue-magnifica','daisy-bellissimo-geni','anthie-custodi-nos','roman-custodi-nos','birba-sangue-magnifica','zz-top-sangue-magnifica','limoncello-sangue-magnifica-custodi-nos']) {
               await page.goto(base + 'dogs.html?dog=' + id, { waitUntil: 'networkidle' });
               const img = page.locator('#profile .profile-media-main img');
               if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) {
