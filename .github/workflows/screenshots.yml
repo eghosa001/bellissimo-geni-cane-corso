@@ -229,6 +229,13 @@ jobs:
             for (const expected of ['Tessa Sangue Magnifica','ZZ Top Sangue Magnifica','Birba Sangue Magnifica','Mockingjay Custodi Nos Sangue Magnifica','Jaro Ivoni Imperial','Sangue Magnifica Murano']) {
               if (!tessaPedigree.includes(expected)) throw new Error('Tessa pedigree missing ' + expected);
             }
+            const muranoCards = page.locator('#pedigree-shell .parent-card strong').filter({ hasText: 'Sangue Magnifica Murano' });
+            if (await muranoCards.count() !== 2) {
+              throw new Error('Repeated pedigree ancestor Sangue Magnifica Murano must remain visible in both verified branches');
+            }
+            if (await page.locator('#pedigree-shell .generation-block').count() !== 4) {
+              throw new Error('Tessa supplied pedigree should stop after its four verified ancestor generations');
+            }
             if (/microchip|tattoo/i.test(tessaPedigree.replace(/Microchip numbers and private owner details are not displayed publicly\./i,''))) {
               throw new Error('Private pedigree identifiers must not be exposed');
             }
@@ -456,6 +463,7 @@ jobs:
               ['gallery', 'gallery.html'],
               ['puppies', 'puppies.html'],
               ['pedigree', 'pedigree.html?dog=gyda-bellissimo-geni'],
+              ['pedigree-tessa', 'pedigree.html?dog=tessa-sangue-magnifica'],
               ['breeding', 'breeding.html'],
               ['socialization', 'socialization.html'],
               ['standards', 'standards.html'],

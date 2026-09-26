@@ -56,15 +56,31 @@ function render(start){
   result.classList.add('active');
   result.innerHTML=pic+'<div><p class="eyebrow">DOG RECORD</p><h2>'+BG.esc(start.name)+'</h2><p class="dog-meta">'+BG.esc([start.sex,start.colour,start.registration].filter(Boolean).join(' • ')||'Verified pedigree record')+'</p><p style="margin-top:12px"><a href="dogs.html?dog='+encodeURIComponent(start.id)+'">Open full profile →</a></p></div>';
   shell.innerHTML='';
-  var current=[start],seen={};seen[String(start.id).toLowerCase()]=1;
+  var startKey=String(start.id).toLowerCase();
+  var current=[{dog:start,path:[startKey]}],expanded={};
   for(var g=1;g<=7;g++){
     var parents=[];
-    current.forEach(function(d){if(!d)return;if(d.sireId)parents.push({id:d.sireId,role:g===1?'SIRE':'ANCESTOR'});if(d.damId)parents.push({id:d.damId,role:g===1?'DAM':'ANCESTOR'})});
+    current.forEach(function(node){
+      if(!node||!node.dog)return;
+      var nodeKey=String(node.dog.id).toLowerCase();
+      if(expanded[nodeKey])return;
+      expanded[nodeKey]=1;
+      [['sireId','SIRE'],['damId','DAM']].forEach(function(pair){
+        var id=node.dog[pair[0]];
+        if(!id)return;
+        var key=String(id).toLowerCase();
+        var cyclic=node.path.indexOf(key)>=0;
+        parents.push({
+          id:id,
+          role:g===1?pair[1]:'GEN '+g,
+          dog:cyclic?null:byId[key],
+          path:node.path.concat(key)
+        });
+      });
+    });
     if(!parents.length){shell.insertAdjacentHTML('beforeend','<p class="ancestry-note">'+(g===1?'No parent records are currently attached to this dog.':'The supplied verified pedigree ends here.')+'</p>');break}
-    var unique=[];parents.forEach(function(p){var k=String(p.id).toLowerCase();if(!seen[k]){seen[k]=1;unique.push(p)}});
-    if(!unique.length){shell.insertAdjacentHTML('beforeend','<p class="ancestry-note">The pedigree reconnects to an ancestor already shown above.</p>');break}
-    shell.insertAdjacentHTML('beforeend','<div class="generation-block"><div class="generation-label">GENERATION '+g+' • '+(g===1?'PARENTS':g===2?'GRANDPARENTS':g===3?'GREAT GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+unique.map(function(p,i){return card(p.id,relLabel(g,i))}).join('')+'</div></div>');
-    current=unique.map(function(p){return byId[String(p.id).toLowerCase()]}).filter(Boolean);
+    shell.insertAdjacentHTML('beforeend','<div class="generation-block"><div class="generation-label">GENERATION '+g+' • '+(g===1?'PARENTS':g===2?'GRANDPARENTS':g===3?'GREAT GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+parents.map(function(p){return card(p.id,p.role)}).join('')+'</div></div>');
+    current=parents.filter(function(p){return !!p.dog}).map(function(p){return {dog:p.dog,path:p.path}});
   }
 }
 form.addEventListener('submit',function(e){e.preventDefault();var d=findDog(input.value);if(d)history.replaceState(null,'','?dog='+encodeURIComponent(d.id));render(d)});
