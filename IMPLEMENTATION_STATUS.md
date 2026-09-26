@@ -13,8 +13,8 @@ Use this file instead of old chat instructions when deciding what still needs wo
 - latest supplied photography for Anthie, Roman Custodi Nos, Birba Sangue Magnifica, ZZ Top Sangue Magnifica and Limoncello Sangue Magnifica Custodi Nos
 - Yasmin is classified under Past Productions with verified Branco × Anthie parentage
 - Diesel and Rocco are recorded as Branco × Tessa Past Productions from their supplied CCKC pedigrees
-- Diesel and Rocco source photographs are published and included in the HD image regression gate
-- Himera and Nefertiti health rows include the supplied ED0 details; Himera also records OCD free
+- Diesel and Rocco remain verified pedigree-based Past Productions, but no dog photographs are attributed to them because the previously displayed images were supplied for Himera
+- Himera uses the kennel-supplied main and secondary photographs; Nefertiti and Himera health rows include the supplied ED0 details, and Himera also records OCD free
 - Branco uses the requested former photograph as his published main image
 - explicit parent/offspring relationship context on dog profiles and pedigree cards
 - owner display for current kennel dogs
