@@ -1769,3 +1769,19 @@ button{font:inherit}
   }
 }
 
+
+
+/* Make the featured-dogs eyebrow readable without changing the hero eyebrow. */
+.featured-dogs .legacy-eyebrow.compact{
+  font-size:clamp(12px,1.15vw,16px);
+  font-weight:800;
+  letter-spacing:.16em;
+  line-height:1.25;
+}
+@media(max-width:820px){
+  .featured-dogs .legacy-eyebrow.compact{
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.14em;
+  }
+}
