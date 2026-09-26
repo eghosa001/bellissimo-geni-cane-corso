@@ -130,6 +130,15 @@ test('uploaded R2 media is served through the Worker', async () => {
   const uploaded = await upload.json();
   assert.match(uploaded.publicUrl || '', /^https:\/\/worker\.example\/uploads\/media\//);
 
+  const badForm = new FormData();
+  badForm.append('file', new File(['<html>bad</html>'], 'fake.jpg', { type: 'text/html' }));
+  const rejected = await worker.fetch(new Request('https://worker.example/admin/api/upload', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer secret' },
+    body: badForm
+  }), env);
+  assert.equal(rejected.status, 400);
+
   const media = await worker.fetch(new Request(uploaded.publicUrl), env);
   assert.equal(media.status, 200);
   assert.equal(media.headers.get('content-type'), 'image/webp');
@@ -237,4 +246,79 @@ test('bootstrap runs only once even if an owner later empties a collection', asy
   const secondBody = await second.json();
   assert.equal(secondBody.alreadySeeded, true);
   assert.equal(store.has('admin:dogs:replacement-dog'), false);
+});
+
+
+test('admin login throttles failures and logout revokes the session', async () => {
+  const store = new Map();
+  const env = {
+    ADMIN_PASSWORD: 'correct-password',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); },
+      async list({ prefix = '' } = {}) {
+        return { keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), cursor: null };
+      }
+    }
+  };
+
+  for (let i = 0; i < 5; i++) {
+    const bad = await worker.fetch(new Request('https://worker.example/admin/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.5' },
+      body: JSON.stringify({ password: 'wrong' })
+    }), env);
+    assert.equal(bad.status, 401);
+  }
+
+  const blocked = await worker.fetch(new Request('https://worker.example/admin/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.5' },
+    body: JSON.stringify({ password: 'correct-password' })
+  }), env);
+  assert.equal(blocked.status, 429);
+
+  const login = await worker.fetch(new Request('https://worker.example/admin/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.6' },
+    body: JSON.stringify({ password: 'correct-password' })
+  }), env);
+  assert.equal(login.status, 200);
+  const { token } = await login.json();
+  assert.match(token, /^session-[0-9a-f]{48}$/);
+
+  const logout = await worker.fetch(new Request('https://worker.example/admin/api/logout', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token }
+  }), env);
+  assert.equal(logout.status, 200);
+  assert.equal(store.has('admin:session:' + token), false);
+});
+
+test('owner admin sees drafts while public APIs keep them hidden', async () => {
+  const store = new Map([
+    ['admin:dogs:draft-dog', JSON.stringify({ id: 'draft-dog', name: 'Draft Dog', publishStatus: 'draft' })]
+  ]);
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); },
+      async list({ prefix = '' } = {}) {
+        return { keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), cursor: null };
+      }
+    }
+  };
+
+  const admin = await worker.fetch(new Request('https://worker.example/admin/api/dogs', {
+    headers: { Authorization: 'Bearer secret' }
+  }), env);
+  assert.equal(admin.status, 200);
+  assert.equal((await admin.json()).data.length, 1);
+
+  const publicRes = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
+  assert.equal(publicRes.status, 200);
+  assert.equal((await publicRes.json()).dogs.length, 0);
 });
