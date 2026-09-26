@@ -43,12 +43,7 @@ Six kennel-supplied puppy/young-dog photographs arrived with voice notes. They m
 - whether each image is intended for public listing, general gallery use, or internal reference
 
 ### Cloudflare production configuration
-Code exists, but production bindings are not configured:
-- ADMIN KV
-- RESERVATIONS KV
-- R2 media bucket
-- ADMIN_PASSWORD secret
-- deployed Worker URL
+Wrangler now auto-provisions ADMIN KV, RESERVATIONS KV and the R2 media bucket. The only remaining production inputs are Cloudflare authentication, an ADMIN_PASSWORD Worker secret, and the deployed Worker URL for the admin sign-in screen.
 
 ### Payment
 Payment remains disabled by design until approved:
