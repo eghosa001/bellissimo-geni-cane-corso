@@ -23,9 +23,9 @@
       "sex": "Female",
       "dateOfBirth": "2025-08-02",
       "colour": "Black Brindle",
-      "photo": "assets/puppies/x-bellissimo-geni-main.jpg",
+      "photo": "assets/puppies/x-bellissimo-geni-main.avif",
       "gallery": [
-        "assets/puppies/x-bellissimo-geni-standing.jpg"
+        "assets/puppies/x-bellissimo-geni-standing.avif"
       ],
       "status": "AVAILABLE",
       "sireId": "branco-custodi-nos",
