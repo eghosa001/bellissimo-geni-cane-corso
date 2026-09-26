@@ -51,6 +51,10 @@ jobs:
           cat .github/assets/puppy-section.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-puppy-section.webp
           test -s assets/dogs/bellissimo-featured-black-corso.webp
           test -s assets/dogs/bellissimo-puppy-section.webp
+          cat .github/assets/diesel-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/diesel-bellissimo-geni.avif
+          cat .github/assets/rocco-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/rocco-bellissimo-geni.avif
+          test -s assets/dogs/diesel-bellissimo-geni.avif
+          test -s assets/dogs/rocco-bellissimo-geni.avif
 
       - name: Install Playwright
         run: |
@@ -511,6 +515,10 @@ jobs:
               for (const expected of [record[1],'Male','Black','26/10/2025',record[2],'Past production','Branco Custodi Nos','Tessa Sangue Magnifica']) {
                 if (!txt.includes(expected)) throw new Error(record[1] + ' missing ' + expected);
               }
+              const dogPhoto = page.locator('.profile-media-main img');
+              if (!(await dogPhoto.evaluate(img => img.complete && img.naturalWidth >= 600 && img.naturalHeight >= 600))) {
+                throw new Error(record[1] + ' source photo is missing or below the HD threshold');
+              }
             }
 
             for (const parent of ['branco-custodi-nos','tessa-sangue-magnifica']) {
@@ -563,6 +571,8 @@ jobs:
               'assets/dogs/anthie-custodi-nos-03.webp',
               'assets/dogs/tessa-sangue-magnifica.webp',
               'assets/dogs/daisy-bellissimo-geni.webp',
+              'assets/dogs/diesel-bellissimo-geni.avif',
+              'assets/dogs/rocco-bellissimo-geni.avif',
               'assets/dogs/eden-01.webp',
               'assets/dogs/gyda-01.webp',
               'assets/dogs/dragoslav-custodi-nos.webp',
