@@ -11,13 +11,14 @@ new_sqlite_classes = ["PuppyLock"]
 name = "PUPPY_LOCK"
 class_name = "PuppyLock"
 
-# Wrangler 4.45+ automatically provisions KV and R2 resources when bindings
-# are declared without account-specific IDs/names.
+# Bind existing KV namespaces; provision R2 after it is enabled for this account.
 [[kv_namespaces]]
 binding = "RESERVATIONS"
+id = "62443108e65242478947658b65f4adaf"
 
 [[kv_namespaces]]
 binding = "ADMIN"
+id = "d41ceb74ca574463a698233b76e0016d"
 
 [[r2_buckets]]
 binding = "UPLOADS"
