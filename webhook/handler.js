@@ -1108,6 +1108,29 @@ export default {
       return json(200, { ok: true, ts: Date.now() });
     }
 
+    // Temporary count-only storage diagnostic; exposes no record contents.
+    if (request.method === 'GET' && url.pathname === '/webhook/storage-counts') {
+      const prefixes = {
+        dogs: ADMIN_KEYS.dogs + ':',
+        puppies: ADMIN_KEYS.puppies + ':',
+        litters: ADMIN_KEYS.litters + ':',
+        gallery: ADMIN_KEYS.gallery + ':',
+        sessions: 'admin:session:'
+      };
+      const counts = {};
+      for (const [name, prefix] of Object.entries(prefixes)) {
+        let total = 0;
+        let cursor;
+        do {
+          const page = await env.ADMIN.list({ prefix, limit: 1000, cursor });
+          total += page.keys.length;
+          cursor = page.cursor;
+        } while (cursor);
+        counts[name] = total;
+      }
+      return json(200, { ok: true, counts });
+    }
+
     // ── Public media uploaded by the owner ──
     if (url.pathname.startsWith('/uploads/')) {
       return handleUploadedMedia(request, env);
