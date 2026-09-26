@@ -138,6 +138,63 @@
     return 'https://wa.me/' + CONTACT.phoneDigits + '?text=' + encodeURIComponent(String(text || ''));
   }
 
+
+  function familyIndex(groups) {
+    var entries = [];
+    (groups || []).forEach(function (group) {
+      var kind = group.kind || 'dog';
+      (group.records || []).forEach(function (record) {
+        if (!record || !record.id) return;
+        entries.push({ kind: kind, record: record });
+      });
+    });
+
+    function key(v) { return String(v || '').trim().toLowerCase(); }
+    function nameKey(v) {
+      return key(v).replace(/[^a-z0-9]+/g, ' ').replace(/^\s+|\s+$/g, '');
+    }
+
+    var byId = {};
+    var byName = {};
+    entries.forEach(function (item) {
+      byId[key(item.record.id)] = item;
+      if (item.record.name) byName[nameKey(item.record.name)] = item;
+    });
+
+    function resolve(ref) {
+      if (!ref) return null;
+      if (typeof ref === 'object' && ref.id) return byId[key(ref.id)] || null;
+      return byId[key(ref)] || byName[nameKey(ref)] || null;
+    }
+
+    function parentOf(child, role) {
+      if (!child) return null;
+      var prefix = role === 'dam' ? 'dam' : 'sire';
+      return resolve(child[prefix + 'Id']) || resolve(child[prefix + 'Name']) || resolve(child[prefix]);
+    }
+
+    function childrenOf(parent) {
+      var parentItem = resolve(parent);
+      var parentId = parentItem ? key(parentItem.record.id) : key(parent && parent.id);
+      if (!parentId) return [];
+      return entries.reduce(function (out, item) {
+        if (key(item.record.id) === parentId) return out;
+        var sire = parentOf(item.record, 'sire');
+        var dam = parentOf(item.record, 'dam');
+        if (sire && key(sire.record.id) === parentId) out.push({ kind: item.kind, record: item.record, role: 'sire' });
+        else if (dam && key(dam.record.id) === parentId) out.push({ kind: item.kind, record: item.record, role: 'dam' });
+        return out;
+      }, []);
+    }
+
+    return {
+      entries: entries,
+      resolve: resolve,
+      parentOf: parentOf,
+      childrenOf: childrenOf
+    };
+  }
+
   window.BG = {
     esc: esc,
     loadJSON: loadJSON,
@@ -146,6 +203,7 @@
     validPhone: validPhone,
     track: track,
     contact: CONTACT,
-    whatsappMessage: whatsappMessage
+    whatsappMessage: whatsappMessage,
+    familyIndex: familyIndex
   };
 })();
