@@ -472,6 +472,48 @@ jobs:
           })();
           EOF
 
+      - name: Verify automatic family links and Yasmin
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+            const base = process.env.BASE_URL;
+
+            for (const parent of ['branco-custodi-nos','anthie-custodi-nos']) {
+              await page.goto(base + 'dogs.html?dog=' + parent, { waitUntil: 'networkidle' });
+              const text = await page.locator('#profile').innerText();
+              for (const child of ['Safeera Bellissimo Geni','Yasmin Bellissimo Geni']) {
+                if (!text.includes(child)) throw new Error(parent + ' family links missing ' + child);
+              }
+            }
+
+            await page.goto(base + 'dogs.html?dog=branco-custodi-nos', { waitUntil: 'networkidle' });
+            const branco = await page.locator('#profile').innerText();
+            if (!branco.includes('JR710606CC') || branco.includes('NGCCKC2025D5F61D56')) {
+              throw new Error('Branco registration cleanup failed');
+            }
+
+            await page.goto(base + 'puppies.html?puppy=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
+            const yasmin = page.locator('#yasmin-bellissimo-geni');
+            const yasminText = await yasmin.innerText();
+            for (const expected of ['Yasmin Bellissimo Geni','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+              if (!yasminText.includes(expected)) throw new Error('Yasmin record missing ' + expected);
+            }
+            const image = yasmin.locator('img');
+            if (!(await image.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Yasmin photo failed to load');
+
+            await page.goto(base + 'pedigree.html?dog=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
+            const pedigree = await page.locator('main').innerText();
+            for (const expected of ['Yasmin Bellissimo Geni','Branco Custodi Nos','Anthie Custodi Nos']) {
+              if (!pedigree.includes(expected)) throw new Error('Yasmin pedigree missing ' + expected);
+            }
+
+            await browser.close();
+          })();
+          EOF
+
       - name: Capture secondary-page screenshots
         run: |
           node <<'EOF'

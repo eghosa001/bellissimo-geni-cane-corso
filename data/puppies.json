@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "notes": "Only verified puppy and litter listings supplied by the kennel are published. Safeera Bellissimo Geni is the first verified AVAILABLE listing. Other kennel-supplied puppy/young-dog photographs remain gallery-only unless separately verified for availability.",
+  "notes": "Verified Bellissimo Geni puppy and young-dog records supplied by the kennel. Availability is shown only when explicitly verified. Sire and dam display names are resolved automatically from the shared dog records.",
   "litters": [],
   "puppies": [
     {
@@ -12,12 +12,24 @@
       "photo": "assets/puppies/safeera-bellissimo-geni.webp",
       "status": "AVAILABLE",
       "sireId": "branco-custodi-nos",
-      "sireName": "Branco Custodi Nos",
       "damId": "anthie-custodi-nos",
-      "damName": "Anthie Custodi Nos",
       "priceNote": "Price on enquiry",
       "notes": "Verified available Bellissimo Geni female.",
       "featuredOrder": 1
+    },
+    {
+      "id": "yasmin-bellissimo-geni",
+      "name": "Yasmin Bellissimo Geni",
+      "sex": "Female",
+      "dateOfBirth": "2025-08-02",
+      "colour": "Brindle",
+      "photo": "assets/puppies/yasmin-bellissimo-geni.webp",
+      "status": "",
+      "sireId": "branco-custodi-nos",
+      "damId": "anthie-custodi-nos",
+      "priceNote": "",
+      "notes": "Kennel-supplied Bellissimo Geni young female.",
+      "featuredOrder": 2
     }
   ],
   "gallery": [

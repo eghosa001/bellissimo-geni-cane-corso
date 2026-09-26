@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "generationSupport": 7,
-  "notes": "Verified Bellissimo Geni records supplied by the kennel. Missing facts remain blank or Not recorded. Current-dog ownership is published where supplied; microchip numbers and other private records are not published.",
+  "notes": "Verified Bellissimo Geni records supplied by the kennel. Family relationships are resolved automatically from supplied sire/dam references across dog and young-dog records. Missing facts remain blank or Not recorded. Current-dog ownership is published where supplied; microchip numbers and other private records are not published.",
   "dogs": [
     {
       "id": "branco-custodi-nos",
@@ -13,7 +13,7 @@
       "gallery": [
         "assets/dogs/branco-02.webp"
       ],
-      "registration": "NGCCKC2025D5F61D56 · JR710606CC",
+      "registration": "JR710606CC",
       "status": "Bellissimo Geni dog",
       "group": "current",
       "sireId": "dragoslav-custodi-nos",

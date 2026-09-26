@@ -40,16 +40,61 @@
 <script>
 window.BG_WEBHOOK_URL = window.BG_WEBHOOK_URL || '';
 (function(){
-var list=document.getElementById('list'),f=document.getElementById('f'),lit=document.getElementById('litters'),gallery=document.getElementById('puppy-gallery');
-function pill(s){return '<span class="pill '+s.toLowerCase().replace(/ /g,'-')+'">'+BG.esc(s)+'</span>';}
-function render(data){var rank={AVAILABLE:0,'COMING SOON':1,'PAYMENT PENDING':2,RESERVED:3,SOLD:4,UNAVAILABLE:5};var items=(data.puppies||[]).filter(function(p){return !f.value||p.status===f.value;}).sort(function(a,b){var ra=rank[a.status] == null ? 99 : rank[a.status],rb=rank[b.status] == null ? 99 : rank[b.status];return ra-rb||((a.featuredOrder||999)-(b.featuredOrder||999))||String(a.name||'').localeCompare(String(b.name||''));});
-list.innerHTML=items.length?items.map(function(p){var dob=p.dateOfBirth?new Date(p.dateOfBirth+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}):'';var parents=[];if(p.sireId)parents.push('Sire: <a href="dogs.html?dog='+encodeURIComponent(p.sireId)+'">'+BG.esc(p.sireName||p.sireId)+'</a>');if(p.damId)parents.push('Dam: <a href="dogs.html?dog='+encodeURIComponent(p.damId)+'">'+BG.esc(p.damName||p.damId)+'</a>');return '<article class="card dog-card puppy-available-card" id="'+BG.esc(p.id)+'" data-puppy-id="'+BG.esc(p.id)+'">'+(p.photo?'<div class="puppy-card-media"><img src="'+BG.esc(p.photo)+'" alt="'+BG.esc(p.name)+' — '+BG.esc(p.colour||'Cane Corso')+'" loading="eager" decoding="async"></div>':'')+pill(p.status)+'<h3>'+BG.esc(p.name)+'</h3><span class="meta">'+BG.esc([p.sex,p.colour].filter(Boolean).join(' • '))+'</span>'+(dob?'<p class="puppy-fact"><strong>DOB:</strong> '+BG.esc(dob)+'</p>':'')+(parents.length?'<p class="puppy-parents">'+parents.join('<br>')+'</p>':'')+'<p>'+BG.esc(p.notes||'')+'</p><p><strong>'+BG.esc(p.priceNote||'Price on enquiry')+'</strong></p><div class="row"><a class="btn gold" href="reserve.html?puppy='+encodeURIComponent(p.id)+'">Reserve this puppy</a></div></article>';}).join(''):'<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Availability changes. Contact Bellissimo Geni or follow the verified social channels for the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" href="contact.html">Make an enquiry</a><a class="btn ghost" href="social.html">Social updates</a></div></div>';
-var litters=data.litters||[];
-lit.innerHTML=litters.length?'<h2 style="font:600 40px var(--serif)">Upcoming litters</h2>'+litters.map(function(l){return '<div class="card" style="margin-top:14px"><span class="meta">'+BG.esc(l.status||'')+'</span><h3>'+BG.esc(l.name)+'</h3><p>'+BG.esc(l.notes||'')+'</p><div class="row"><a class="btn ghost" href="contact.html">Join priority list</a></div></div>';}).join(''):'';
-var photos=data.gallery||[];
-gallery.innerHTML=photos.map(function(x){return '<figure><img src="'+BG.esc(x.photo)+'" alt="'+BG.esc(x.alt||'Bellissimo Geni Cane Corso')+'" loading="lazy" decoding="async"><figcaption>'+BG.esc(x.caption||'Kennel-supplied photography.')+'</figcaption></figure>';}).join('');}
-f.addEventListener('change',function(){BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){render({puppies:j.puppies||j.data||[],litters:j.litters||[],gallery:j.gallery||[]});});});
-BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){render({puppies:j.puppies||j.data||[],litters:j.litters||[],gallery:j.gallery||[]});}).catch(function(){list.innerHTML='<div class="notice">Could not load puppy records.</div>';});
+var list=document.getElementById('list'),f=document.getElementById('f'),lit=document.getElementById('litters'),gallery=document.getElementById('puppy-gallery'),family=null,DATA={puppies:[],litters:[],gallery:[]};
+function pill(s){return s?'<span class="pill '+s.toLowerCase().replace(/ /g,'-')+'">'+BG.esc(s)+'</span>':'';}
+function parentLine(p,role,label){
+  var item=family?family.parentOf(p,role):null;
+  if(item){
+    var d=item.record;
+    return label+': <a href="dogs.html?dog='+encodeURIComponent(d.id)+'">'+BG.esc(d.name)+'</a>';
+  }
+  var raw=p[role+'Name']||p[role+'Id']||p[role];
+  return raw?label+': '+BG.esc(raw):'';
+}
+function focusRequested(){
+  var id=new URLSearchParams(location.search).get('puppy');
+  if(!id)return;
+  var el=document.getElementById(id);
+  if(el){
+    el.setAttribute('data-requested','true');
+    setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'});},0);
+  }
+}
+function render(data){
+  var rank={AVAILABLE:0,'COMING SOON':1,'PAYMENT PENDING':2,RESERVED:3,SOLD:4,UNAVAILABLE:5};
+  var items=(data.puppies||[]).filter(function(p){return !f.value||p.status===f.value;}).sort(function(a,b){
+    var ra=rank[a.status] == null ? 98 : rank[a.status],rb=rank[b.status] == null ? 98 : rank[b.status];
+    return ra-rb||((a.featuredOrder||999)-(b.featuredOrder||999))||String(a.name||'').localeCompare(String(b.name||''));
+  });
+  list.innerHTML=items.length?items.map(function(p){
+    var dob=p.dateOfBirth?new Date(p.dateOfBirth+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+    var parents=[parentLine(p,'sire','Sire'),parentLine(p,'dam','Dam')].filter(Boolean);
+    var action=p.status==='AVAILABLE'?'<div class="row"><a class="btn gold" href="reserve.html?puppy='+encodeURIComponent(p.id)+'">Reserve this puppy</a></div>':'';
+    var price=p.priceNote?'<p><strong>'+BG.esc(p.priceNote)+'</strong></p>':'';
+    return '<article class="card dog-card puppy-available-card" id="'+BG.esc(p.id)+'" data-puppy-id="'+BG.esc(p.id)+'">'+
+      (p.photo?'<div class="puppy-card-media"><img src="'+BG.esc(p.photo)+'" alt="'+BG.esc(p.name)+' — '+BG.esc(p.colour||'Cane Corso')+'" loading="eager" decoding="async"></div>':'')+
+      pill(p.status)+'<h3>'+BG.esc(p.name)+'</h3><span class="meta">'+BG.esc([p.sex,p.colour].filter(Boolean).join(' • '))+'</span>'+
+      (dob?'<p class="puppy-fact"><strong>DOB:</strong> '+BG.esc(dob)+'</p>':'')+
+      (parents.length?'<p class="puppy-parents">'+parents.join('<br>')+'</p>':'')+
+      '<p>'+BG.esc(p.notes||'')+'</p>'+price+action+'</article>';
+  }).join(''):'<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Availability changes. Contact Bellissimo Geni or follow the verified social channels for the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" href="contact.html">Make an enquiry</a><a class="btn ghost" href="social.html">Social updates</a></div></div>';
+  var litters=data.litters||[];
+  lit.innerHTML=litters.length?'<h2 style="font:600 40px var(--serif)">Upcoming litters</h2>'+litters.map(function(l){return '<div class="card" style="margin-top:14px"><span class="meta">'+BG.esc(l.status||'')+'</span><h3>'+BG.esc(l.name)+'</h3><p>'+BG.esc(l.notes||'')+'</p><div class="row"><a class="btn ghost" href="contact.html">Join priority list</a></div></div>';}).join(''):'';
+  var photos=data.gallery||[];
+  gallery.innerHTML=photos.map(function(x){return '<figure><img src="'+BG.esc(x.photo)+'" alt="'+BG.esc(x.alt||'Bellissimo Geni Cane Corso')+'" loading="lazy" decoding="async"><figcaption>'+BG.esc(x.caption||'Kennel-supplied photography.')+'</figcaption></figure>';}).join('');
+  focusRequested();
+}
+f.addEventListener('change',function(){render(DATA);});
+Promise.all([
+  BG.loadAdminJSON('puppies','data/puppies.json'),
+  BG.loadAdminJSON('dogs','data/dogs.json')
+]).then(function(rows){
+  var pj=rows[0],dj=rows[1];
+  DATA={puppies:pj.puppies||pj.data||[],litters:pj.litters||[],gallery:pj.gallery||[]};
+  var dogs=dj.data||dj.dogs||[];
+  family=BG.familyIndex([{kind:'dog',records:dogs},{kind:'puppy',records:DATA.puppies}]);
+  render(DATA);
+}).catch(function(){list.innerHTML='<div class="notice">Could not load puppy records.</div>';});
 })();
 </script>
 </body>
