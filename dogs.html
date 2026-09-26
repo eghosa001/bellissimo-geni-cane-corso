@@ -31,7 +31,7 @@
 .profile-placeholder{height:100%;min-height:420px;display:grid;place-items:center;text-align:center;color:#e4d8c4;background:radial-gradient(circle at 50% 38%,#2d2922 0,#171715 58%,#10100f 100%);border:1px solid rgba(199,163,90,.2);padding:32px}.profile-placeholder b{font:600 38px var(--serif);display:block}.profile-placeholder span{display:block;margin-top:9px;color:#b99656;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
 .profile h2{font:600 clamp(46px,5.2vw,72px)/.9 var(--serif);margin:7px 0 18px}.profile .profile-copy>p{color:var(--muted);line-height:1.65}
 .profile dl{display:grid;grid-template-columns:145px 1fr;border-top:1px solid var(--line);margin:22px 0 0}.profile dt,.profile dd{padding:11px 0;border-bottom:1px solid var(--line);font-size:11px}.profile dt{font-weight:800;text-transform:uppercase;letter-spacing:.09em}.profile dd{margin:0}
-.profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.profile-gallery{grid-column:1/-1;margin-top:5px}.profile-gallery h3{font:600 30px var(--serif);margin:0 0 14px}.gallery-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.gallery-strip a{aspect-ratio:4/5;overflow:hidden;background:#151515}.gallery-strip img{width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:transparent}
+.profile-relations{margin-top:22px;padding:16px 0 2px;border-top:1px solid var(--line)}.profile-relations h3{font:600 24px/1 var(--serif);margin:0 0 12px}.relation-list{display:flex;flex-wrap:wrap;gap:8px}.relation-link{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--line);background:#f8f4ed;font-size:10px}.relation-link span{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--gold)}.profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.profile-gallery{grid-column:1/-1;margin-top:5px}.profile-gallery h3{font:600 30px var(--serif);margin:0 0 14px}.gallery-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.gallery-strip a{aspect-ratio:4/5;overflow:hidden;background:#151515}.gallery-strip img{width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:transparent}
 .privacy-note{margin:30px 0 0;color:var(--muted);font-size:10px}
 @media(max-width:1100px){#current-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.dog-list{grid-template-columns:1fr 1fr}.profile{grid-template-columns:1fr}.profile-media-main{max-height:620px}.gallery-strip{grid-template-columns:repeat(3,1fr)}}
@@ -104,12 +104,21 @@ function ownerOrStatusRow(d){
   if(d.owner)return '<dt>Owner</dt><dd>'+BG.esc(d.owner)+'</dd>';
   return d.status?'<dt>Status</dt><dd>'+BG.esc(d.status)+'</dd>':'';
 }
+function familyRelationships(d){
+  var id=String(d.id||'').toLowerCase();
+  var children=all.filter(function(x){return String(x.sireId||'').toLowerCase()===id||String(x.damId||'').toLowerCase()===id;});
+  if(!children.length)return '';
+  return '<div class="profile-relations"><h3>Family relationships</h3><div class="relation-list">'+children.map(function(child){
+    var role=String(child.sireId||'').toLowerCase()===id?'Sire of':'Dam of';
+    return '<a class="relation-link" href="dogs.html?dog='+encodeURIComponent(child.id)+'"><span>'+role+'</span><strong>'+BG.esc(child.name)+'</strong></a>';
+  }).join('')+'</div></div>';
+}
 function renderProfile(id,shouldScroll){
   if(!id){profile.innerHTML='';return}
   var d=byId(id);
   if(!d){profile.innerHTML='<div class="notice">Dog not found.</div>';return}
   var hero=d.photo?'<div class="profile-media-main"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager" decoding="sync" onerror="this.remove()"></div>':'<div class="profile-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
-  profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl><dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd><dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd><dt>Date of birth</dt><dd>'+displayDate(d.dateOfBirth)+'</dd><dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>'+ownerOrStatusRow(d)+'<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd><dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd><dt>Bloodline</dt><dd>'+safe(d.bloodline,'Not recorded')+'</dd><dt>Health record</dt><dd>'+safe(d.health,'Not recorded')+'</dd></dl><div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
+  profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl><dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd><dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd><dt>Date of birth</dt><dd>'+displayDate(d.dateOfBirth)+'</dd><dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>'+ownerOrStatusRow(d)+'<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd><dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd><dt>Bloodline</dt><dd>'+safe(d.bloodline,'Not recorded')+'</dd><dt>Health record</dt><dd>'+safe(d.health,'Not recorded')+'</dd></dl>'+familyRelationships(d)+'<div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
   if(shouldScroll!==false)profile.scrollIntoView({behavior:'smooth',block:'start'});
 }
 q.addEventListener('input',renderLists);

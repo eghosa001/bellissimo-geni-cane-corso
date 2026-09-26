@@ -1,6 +1,6 @@
 # Bellissimo Geni — Implementation Status
 
-**Authoritative status date:** 25 September 2026
+**Authoritative status date:** 26 September 2026
 
 Use this file instead of old chat instructions when deciding what still needs work. Later verified instructions supersede earlier conflicting ones.
 
@@ -10,6 +10,8 @@ Use this file instead of old chat instructions when deciding what still needs wo
 - mobile quick navigation: Our Dogs → Puppies → Menu
 - verified current dogs and Past Productions currently present in `data/dogs.json`
 - Anthie Custodi Nos correction
+- latest supplied photography for Anthie, Roman Custodi Nos, Birba Sangue Magnifica, ZZ Top Sangue Magnifica and Limoncello Sangue Magnifica Custodi Nos
+- explicit parent/offspring relationship context on dog profiles and pedigree cards
 - owner display for current kennel dogs
 - direct dog profiles and sire/dam navigation
 - multi-generation pedigree traversal
