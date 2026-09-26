@@ -255,6 +255,7 @@ jobs:
             }
 
             await page.goto(base + 'dogs.html?dog=limoncello-sangue-magnifica-custodi-nos', { waitUntil: 'networkidle' });
+            await page.locator('#profile h2').filter({ hasText: 'Limoncello Sangue Magnifica Custodi Nos' }).waitFor();
             const limoncelloText = await page.locator('#profile').innerText();
             if (!limoncelloText.includes('Limoncello Sangue Magnifica Custodi Nos') || !limoncelloText.includes('Sire of') || !limoncelloText.includes('Nefertiti Custodi Nos')) {
               throw new Error('Limoncello family relationship is not explained correctly');
