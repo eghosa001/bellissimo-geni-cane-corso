@@ -298,7 +298,8 @@ test('admin login throttles failures and logout revokes the session', async () =
 
 test('owner admin sees drafts while public APIs keep them hidden', async () => {
   const store = new Map([
-    ['admin:dogs:draft-dog', JSON.stringify({ id: 'draft-dog', name: 'Draft Dog', publishStatus: 'draft' })]
+    ['admin:dogs:draft-dog', JSON.stringify({ id: 'draft-dog', name: 'Draft Dog', publishStatus: 'draft' })],
+    ['admin:index:admin:dogs', JSON.stringify(['draft-dog'])]
   ]);
   const env = {
     ADMIN_PASSWORD: 'secret',
