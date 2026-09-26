@@ -45,14 +45,13 @@ Do not infer these from photographs.
 
 ## External production setup still required
 
-The admin/Worker code exists, but Cloudflare resources must be created in the kennel's Cloudflare account:
-- ADMIN KV namespace
-- RESERVATIONS KV namespace
-- R2 media bucket
-- ADMIN_PASSWORD Worker secret
-- deployed Worker URL
+The admin/Worker code now uses Wrangler automatic provisioning for ADMIN KV, RESERVATIONS KV and R2 media storage. Production still requires:
+- Cloudflare account authentication/API token
+- ADMIN_PASSWORD stored as a Worker secret
+- one production Worker deployment
+- the resulting Worker URL entered on the admin sign-in screen
 
-These values must not be invented or committed as secrets.
+Secrets must never be committed.
 
 ## Payment remains intentionally disabled
 
