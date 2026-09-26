@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   deploy:
@@ -39,15 +40,40 @@ jobs:
           npm run check
 
       - name: Deploy and auto-provision KV/R2
+        id: deploy
         working-directory: webhook
         run: |
           export WRANGLER_OUTPUT_FILE_PATH="$RUNNER_TEMP/wrangler-output.ndjson"
           npx wrangler deploy
           printf '%s' "$ADMIN_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD
           npx wrangler deploy
+          worker_url="$(grep -Eo 'https://[^"[:space:]]+\.workers\.dev' "$WRANGLER_OUTPUT_FILE_PATH" | tail -1)"
+          test -n "$worker_url" || { echo "Could not determine workers.dev deployment URL"; cat "$WRANGLER_OUTPUT_FILE_PATH"; exit 1; }
+          echo "worker_url=$worker_url" >> "$GITHUB_OUTPUT"
           {
             echo "## Bellissimo Worker deployed"
             echo
+            echo "Worker: $worker_url"
+            echo
             echo "Wrangler automatically provisions the ADMIN and RESERVATIONS KV namespaces and UPLOADS R2 bucket."
-            echo "Copy the workers.dev URL printed in the deployment log into the Backend URL field on admin.html."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare public-site backend configuration
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const url = String(process.env.WORKER_URL || '').replace(/\/+$/, '');
+          if (!/^https:\/\/[^/]+\.workers\.dev$/i.test(url)) throw new Error('Unexpected Worker URL: ' + url);
+          fs.writeFileSync('site-config.json', JSON.stringify({ backendUrl: url }, null, 2) + '\n');
+          EOF
+          branch="configure-worker-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add site-config.json
+          git commit -m "Configure public CMS backend"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "Configure Bellissimo CMS backend" --body "Connects the public website and admin panel to the Worker deployed by run ${GITHUB_RUN_ID}. The Worker URL is public configuration, not a secret."
