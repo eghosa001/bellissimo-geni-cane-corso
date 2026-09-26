@@ -215,7 +215,7 @@ async function kvPut(env, key, value) {
 }
 
 async function kvDelete(env, key) {
-  await kvDelete(env, key);
+  await env.ADMIN.delete(key);
   const prefix = indexedCollectionPrefix(key);
   if (prefix) {
     const id = String(key).slice(prefix.length);
