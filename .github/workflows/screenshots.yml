@@ -300,7 +300,7 @@ jobs:
             }
             const dogText = await page.locator('#profile').innerText();
             if (!dogText.includes('Dragoslav Custodi Nos') || !dogText.includes('Himera Custodi Nos')) throw new Error('Branco parent links missing');
-            if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || dogText.includes('STATUS')) throw new Error('Current-dog owner row is incorrect');
+            if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || !dogText.includes('STATUS') || !dogText.includes('Bellissimo Geni dog')) throw new Error('Current-dog owner/status rows are incomplete');
 
             await page.goto(base + 'dogs.html?dog=dragoslav-custodi-nos', { waitUntil: 'networkidle' });
             const dragoslavText = await page.locator('#profile').innerText();
