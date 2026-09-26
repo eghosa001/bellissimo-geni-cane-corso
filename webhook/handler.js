@@ -959,7 +959,7 @@ async function handleAdminContent(req, env) {
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
   const url = new URL(req.url);
   const page = url.searchParams.get('page') || '';
-  const ALLOWED_PAGES = ['about', 'breeding', 'standards', 'socialization', 'social', 'contact'];
+  const ALLOWED_PAGES = ['about', 'breeding', 'standards', 'socialization', 'social'];
 
   if (!ALLOWED_PAGES.includes(page)) return json(400, { ok: false, error: 'unknown_page' });
   const key = CONTENT_PREFIX + page;
