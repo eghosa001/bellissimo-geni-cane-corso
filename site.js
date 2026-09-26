@@ -125,28 +125,52 @@
     } catch (_) {}
   }
 
-  // Data loader — tries public API first (no auth), then admin API with stored token, then local JSON
+  // Data loader — discovers the deployed public API, then falls back to static JSON.
+  var apiBasePromise = null;
+
+  function normalizeApiBase(value) {
+    return String(value || '').trim().replace(/\/+$/, '');
+  }
+
+  function resolveApiBase() {
+    var direct = normalizeApiBase(window.BG_WEBHOOK_URL || '');
+    if (direct) return Promise.resolve(direct);
+    if (apiBasePromise) return apiBasePromise;
+
+    apiBasePromise = fetch('site-config.json', { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : {}; })
+      .then(function(config) {
+        var discovered = normalizeApiBase(config && config.backendUrl);
+        if (discovered) window.BG_WEBHOOK_URL = discovered;
+        return discovered;
+      })
+      .catch(function() { return ''; });
+
+    return apiBasePromise;
+  }
+
   function loadAdminJSON(path, fallbackPath) {
-    var apiBase = window.BG_WEBHOOK_URL || '';
-    if (apiBase) {
-      // Step 1: Try unauthenticated public endpoint (/api/dogs, /api/puppies, etc.)
-      return fetch(apiBase + '/api/' + path, { headers: { 'Accept': 'application/json' } })
-        .then(function(r) { if (r.ok) return r.json(); throw new Error('public_fail'); })
-        .catch(function() {
-          // Step 2: Try authenticated admin endpoint if token exists
-          var token = window._bgAdminToken || '';
-          if (token) {
-            return fetch(apiBase + '/admin/api/' + path, {
-              headers: Object.assign({ 'Accept': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {})
-            }).then(function(r) { if (r.ok) return r.json(); throw new Error('admin_fail'); });
-          }
-          // Step 3: Fall back to local JSON file
-          if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
-          throw new Error('no_data');
-        });
-    }
-    if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
-    throw new Error('no_data');
+    return resolveApiBase().then(function(apiBase) {
+      if (apiBase) {
+        // Step 1: Try unauthenticated public endpoint (/api/dogs, /api/puppies, etc.)
+        return fetch(apiBase + '/api/' + path, { headers: { 'Accept': 'application/json' } })
+          .then(function(r) { if (r.ok) return r.json(); throw new Error('public_fail'); })
+          .catch(function() {
+            // Step 2: Try authenticated admin endpoint if token exists.
+            var token = window._bgAdminToken || '';
+            if (token) {
+              return fetch(apiBase + '/admin/api/' + path, {
+                headers: Object.assign({ 'Accept': 'application/json' }, { 'Authorization': 'Bearer ' + token })
+              }).then(function(r) { if (r.ok) return r.json(); throw new Error('admin_fail'); });
+            }
+            // Step 3: Keep the public site usable even if the Worker is unavailable.
+            if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
+            throw new Error('no_data');
+          });
+      }
+      if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
+      throw new Error('no_data');
+    });
   }
 
   function whatsappMessage(text) {
