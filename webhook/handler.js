@@ -1115,7 +1115,9 @@ export default {
         puppies: ADMIN_KEYS.puppies + ':',
         litters: ADMIN_KEYS.litters + ':',
         gallery: ADMIN_KEYS.gallery + ':',
-        sessions: 'admin:session:'
+        sessions: 'admin:session:',
+        auditEntries: AUDIT_LOG_KEY + ':entry:',
+        bootstrap: 'admin:bootstrap:'
       };
       const counts = {};
       for (const [name, prefix] of Object.entries(prefixes)) {
