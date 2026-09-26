@@ -374,11 +374,35 @@ async function doLogin() {
     document.getElementById('loginErr').textContent = 'Could not reach server.';
   }
 }
-function showAdmin() {
+async function ensureBaselineSeeded() {
+  if (!adminToken || !API_BASE) return;
+  try {
+    const [dogsFile, puppiesFile] = await Promise.all([
+      fetch('data/dogs.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {}),
+      fetch('data/puppies.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
+    ]);
+    await apiFetch('/admin/api/bootstrap', {
+      method: 'POST',
+      body: JSON.stringify({
+        dogs: Array.isArray(dogsFile.dogs) ? dogsFile.dogs : [],
+        puppies: Array.isArray(puppiesFile.puppies) ? puppiesFile.puppies : [],
+        litters: Array.isArray(puppiesFile.litters) ? puppiesFile.litters : [],
+        gallery: Array.isArray(puppiesFile.gallery) ? puppiesFile.gallery : []
+      })
+    });
+  } catch (_) {
+    // Keep login usable even if baseline seeding cannot run.
+  }
+}
+
+async function showAdmin() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminWrap').classList.add('active');
   document.getElementById('topDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'short',day:'numeric'});
-  if(adminToken) loadAllData();
+  if(adminToken) {
+    await ensureBaselineSeeded();
+    loadAllData();
+  }
 }
 
 // ── Navigation ──────────────────────────────────────────────────────────────
