@@ -141,6 +141,24 @@
       "bio": "Gyda Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
     },
     {
+      "id": "yasmin-bellissimo-geni",
+      "name": "Yasmin Bellissimo Geni",
+      "sex": "Female",
+      "dateOfBirth": "2025-08-02",
+      "colour": "Brindle",
+      "photo": "assets/puppies/yasmin-bellissimo-geni.webp",
+      "gallery": [],
+      "registration": "",
+      "status": "Past production",
+      "group": "past-production",
+      "sireId": "branco-custodi-nos",
+      "damId": "anthie-custodi-nos",
+      "bloodline": "Bellissimo Geni · Custodi Nos",
+      "health": "",
+      "achievements": "",
+      "bio": "Yasmin Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
+    },
+    {
       "id": "dragoslav-custodi-nos",
       "name": "Dragoslav Custodi Nos",
       "sex": "male",
