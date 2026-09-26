@@ -456,7 +456,7 @@
       "registration": "PK 47077/20",
       "status": "Pedigree ancestor",
       "group": "ancestor",
-      "sireId": "calistro-from-gda-god-of-troy-team",
+      "sireId": "calisto-from-gda-god-of-troy-team",
       "damId": "darling-ivoni-imperial",
       "bloodline": "",
       "health": "",
@@ -554,8 +554,8 @@
       "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
     },
     {
-      "id": "calistro-from-gda-god-of-troy-team",
-      "name": "Calistro From GDA God Of Troy Team",
+      "id": "calisto-from-gda-god-of-troy-team",
+      "name": "Calisto From GDA God Of Troy Team",
       "sex": "Male",
       "dateOfBirth": "",
       "colour": "",
