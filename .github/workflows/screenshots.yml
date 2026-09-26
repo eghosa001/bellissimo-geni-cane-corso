@@ -44,21 +44,13 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Reconstruct encoded site photos
+      - name: Reconstruct remaining encoded site photos
         run: |
           mkdir -p assets/dogs
-          cat .github/assets/family-dog1.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-01.webp
-          cat .github/assets/family-dog2.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-02.webp
           cat .github/assets/featured-black-corso.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-featured-black-corso.webp
           cat .github/assets/puppy-section.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-puppy-section.webp
-          cat .github/assets/tessa-sangue-magnifica.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/tessa-sangue-magnifica.webp
-          cat .github/assets/daisy-bellissimo-geni-jpg.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/daisy-bellissimo-geni.jpg
-          test -s assets/dogs/bellissimo-family-dog-01.webp
-          test -s assets/dogs/bellissimo-family-dog-02.webp
           test -s assets/dogs/bellissimo-featured-black-corso.webp
           test -s assets/dogs/bellissimo-puppy-section.webp
-          test -s assets/dogs/tessa-sangue-magnifica.webp
-          test -s assets/dogs/daisy-bellissimo-geni.jpg
 
       - name: Install Playwright
         run: |
@@ -508,6 +500,80 @@ jobs:
             const pedigree = await page.locator('main').innerText();
             for (const expected of ['Yasmin Bellissimo Geni','Branco Custodi Nos','Anthie Custodi Nos']) {
               if (!pedigree.includes(expected)) throw new Error('Yasmin pedigree missing ' + expected);
+            }
+
+            await browser.close();
+          })();
+          EOF
+
+      - name: Verify all published dog photography is HD
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
+            const base = process.env.BASE_URL;
+            await page.goto(base, { waitUntil: 'networkidle' });
+
+            const assets = [
+              'assets/dogs/bellissimo-dog-01-hd.webp',
+              'assets/dogs/bellissimo-dog-02-hd.webp',
+              'assets/dogs/branco-01.webp',
+              'assets/dogs/branco-02.webp',
+              'assets/dogs/karma-custodi-nos.webp',
+              'assets/dogs/karma-custodi-nos-02.webp',
+              'assets/dogs/anthie-custodi-nos-main.webp',
+              'assets/dogs/anthie-custodi-nos-02.webp',
+              'assets/dogs/anthie-custodi-nos-03.webp',
+              'assets/dogs/tessa-sangue-magnifica.webp',
+              'assets/dogs/daisy-bellissimo-geni.webp',
+              'assets/dogs/eden-01.webp',
+              'assets/dogs/gyda-01.webp',
+              'assets/dogs/dragoslav-custodi-nos.webp',
+              'assets/dogs/roman-custodi-nos.webp',
+              'assets/dogs/roman-custodi-nos-02.webp',
+              'assets/dogs/birba-sangue-magnifica.webp',
+              'assets/dogs/birba-sangue-magnifica-02.webp',
+              'assets/dogs/birba-sangue-magnifica-03.webp',
+              'assets/dogs/zz-top-sangue-magnifica.webp',
+              'assets/dogs/zz-top-sangue-magnifica-02.webp',
+              'assets/dogs/limoncello-sangue-magnifica-custodi-nos.webp',
+              'assets/puppies/safeera-bellissimo-geni.webp',
+              'assets/puppies/yasmin-bellissimo-geni.webp',
+              'assets/puppies/bellissimo-puppy-01.webp',
+              'assets/puppies/bellissimo-puppy-02.webp',
+              'assets/puppies/bellissimo-puppy-03.webp',
+              'assets/puppies/bellissimo-puppy-04.webp',
+              'assets/puppies/bellissimo-puppy-05.webp',
+              'assets/puppies/bellissimo-young-corso-01.webp'
+            ];
+
+            const results = await page.evaluate(async assets => {
+              const load = src => new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve({ src, ok: true, width: img.naturalWidth, height: img.naturalHeight });
+                img.onerror = () => resolve({ src, ok: false, width: 0, height: 0 });
+                img.src = new URL(src, document.baseURI).href;
+              });
+              return Promise.all(assets.map(load));
+            }, assets);
+
+            const broken = results.filter(x => !x.ok);
+            if (broken.length) throw new Error('Published photography failed to load: ' + broken.map(x => x.src).join(', '));
+
+            const lowRes = results.filter(x => Math.min(x.width, x.height) < 600);
+            if (lowRes.length) {
+              throw new Error('Published photography below HD source threshold: ' +
+                lowRes.map(x => x.src + ' (' + x.width + 'x' + x.height + ')').join(', '));
+            }
+
+            for (const path of ['index.html','gallery.html','dogs.html?dog=karma-custodi-nos','dogs.html?dog=tessa-sangue-magnifica','dogs.html?dog=daisy-bellissimo-geni']) {
+              await page.goto(base + path, { waitUntil: 'networkidle' });
+              const brokenVisible = await page.locator('img').evaluateAll(imgs => imgs
+                .filter(img => !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0)
+                .map(img => img.getAttribute('src') || img.alt || 'unknown'));
+              if (brokenVisible.length) throw new Error(path + ' contains broken images: ' + brokenVisible.join(', '));
             }
 
             await browser.close();
