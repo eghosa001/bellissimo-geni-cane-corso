@@ -246,10 +246,12 @@ async function handlePublicPuppies(req, env) {
   const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
   const litters = await kvList(env, ADMIN_KEYS.litters + ':');
   const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+  const gallery = await kvList(env, ADMIN_KEYS.gallery + ':');
   const publishedPups = pups.filter(p => p.publishStatus === 'published');
   const publishedLitters = litters.filter(l => l.publishStatus === 'published');
   const publishedDogs = dogs.filter(d => d.publishStatus === 'published');
-  return json(200, { ok: true, puppies: publishedPups, litters: publishedLitters, dogs: publishedDogs });
+  const publishedGallery = gallery.filter(g => g.publishStatus === 'published');
+  return json(200, { ok: true, puppies: publishedPups, litters: publishedLitters, dogs: publishedDogs, gallery: publishedGallery });
 }
 async function handlePublicGallery(req, env) {
   const items = await kvList(env, ADMIN_KEYS.gallery + ':');
@@ -523,6 +525,39 @@ async function handlePayment(req, env) {
 }
 
 // ─── Admin CRUD handlers ─────────────────────────────────────────────────────
+async function handleAdminBootstrap(req, env) {
+  const auth = await adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  const body = await readJson(req);
+  if (!body) return json(400, { ok: false, error: 'bad_json' });
+
+  const groups = [
+    { key: ADMIN_KEYS.dogs, records: Array.isArray(body.dogs) ? body.dogs : [] },
+    { key: ADMIN_KEYS.puppies, records: Array.isArray(body.puppies) ? body.puppies : [] },
+    { key: ADMIN_KEYS.litters, records: Array.isArray(body.litters) ? body.litters : [] },
+    { key: ADMIN_KEYS.gallery, records: Array.isArray(body.gallery) ? body.gallery : [] }
+  ];
+  const seeded = {};
+  for (const group of groups) {
+    const existing = await kvList(env, group.key + ':');
+    if (existing.length) {
+      seeded[group.key] = 0;
+      continue;
+    }
+    let count = 0;
+    for (const input of group.records) {
+      if (!input || !input.id) continue;
+      const record = { publishStatus: 'published', ...input };
+      await kvPut(env, group.key + ':' + record.id, record);
+      count++;
+    }
+    seeded[group.key] = count;
+  }
+  await auditLog(env, 'bootstrap', 'site', 'verified-baseline', seeded);
+  return json(200, { ok: true, seeded });
+}
+
 async function handleAdminDogs(req, env) {
   const auth = await adminAuth(req, env);
   if (!auth.ok) return json(401, { ok: false, error: auth.reason });
@@ -1061,6 +1096,7 @@ export default {
       const segment = parts[0];
       const subPath = parts.slice(1).join('/');
       switch (segment) {
+        case 'bootstrap':    return handleAdminBootstrap(request, env);
         case 'dogs':         return handleAdminDogs(request, env);
         case 'puppies':      return handleAdminPuppies(request, env);
         case 'litters':      return handleAdminLitters(request, env);
