@@ -53,7 +53,8 @@
       "colour": "Grey",
       "photo": "assets/dogs/anthie-custodi-nos-main.webp",
       "gallery": [
-        "assets/dogs/anthie-custodi-nos-02.webp"
+        "assets/dogs/anthie-custodi-nos-02.webp",
+        "assets/dogs/anthie-custodi-nos-03.webp"
       ],
       "registration": "NGCCKC2025769141E9 · JR710357CC",
       "status": "Bellissimo Geni dog",
@@ -63,7 +64,7 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Anthie Custodi Nos is a verified Bellissimo Geni female. Her supplied primary photograph is shown first, with the additional supplied photograph kept in her gallery.",
+      "bio": "Anthie Custodi Nos is a verified Bellissimo Geni female. Her supplied primary photograph is shown first, with the additional supplied photographs preserved in her gallery.",
       "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
@@ -181,8 +182,10 @@
       "sex": "male",
       "dateOfBirth": "",
       "colour": "",
-      "photo": "",
-      "gallery": [],
+      "photo": "assets/dogs/roman-custodi-nos.webp",
+      "gallery": [
+        "assets/dogs/roman-custodi-nos-02.webp"
+      ],
       "registration": "JR 708956 CC",
       "status": "Pedigree ancestor",
       "group": "ancestor",
@@ -191,7 +194,7 @@
       "bloodline": "Custodi Nos",
       "health": "HD A (as recorded on the supplied pedigree)",
       "achievements": "",
-      "bio": ""
+      "bio": "Roman Custodi Nos is the verified sire of Anthie Custodi Nos. Through Anthie, he is also part of Safeera Bellissimo Geni’s maternal pedigree."
     },
     {
       "id": "nefertiti-custodi-nos",
@@ -325,7 +328,7 @@
       "sex": "male",
       "dateOfBirth": "",
       "colour": "",
-      "photo": "",
+      "photo": "assets/dogs/limoncello-sangue-magnifica-custodi-nos.webp",
       "gallery": [],
       "registration": "JR 83065",
       "status": "Pedigree ancestor",
@@ -335,7 +338,7 @@
       "bloodline": "Sangue Magnifica · Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": ""
+      "bio": "Limoncello Sangue Magnifica Custodi Nos is the verified sire of Nefertiti Custodi Nos, placing him in Anthie Custodi Nos’s maternal pedigree."
     },
     {
       "id": "explosion-custodi-nos",
@@ -379,8 +382,10 @@
       "sex": "Male",
       "dateOfBirth": "2018-03-25",
       "colour": "",
-      "photo": "",
-      "gallery": [],
+      "photo": "assets/dogs/zz-top-sangue-magnifica.webp",
+      "gallery": [
+        "assets/dogs/zz-top-sangue-magnifica-02.webp"
+      ],
       "registration": "JR 700494 Cc",
       "status": "Pedigree ancestor",
       "group": "ancestor",
@@ -389,7 +394,7 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "ZZ Top Sangue Magnifica is the verified sire of Tessa Sangue Magnifica in Tessa’s supplied pedigree."
     },
     {
       "id": "birba-sangue-magnifica",
@@ -397,8 +402,11 @@
       "sex": "Female",
       "dateOfBirth": "2021-05-08",
       "colour": "",
-      "photo": "",
-      "gallery": [],
+      "photo": "assets/dogs/birba-sangue-magnifica.webp",
+      "gallery": [
+        "assets/dogs/birba-sangue-magnifica-02.webp",
+        "assets/dogs/birba-sangue-magnifica-03.webp"
+      ],
       "registration": "JR 706422 Cc",
       "status": "Pedigree ancestor",
       "group": "ancestor",
@@ -407,7 +415,7 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Birba Sangue Magnifica is the verified dam of Tessa Sangue Magnifica in Tessa’s supplied pedigree."
     },
     {
       "id": "mockingjay-custodi-nos-sangue-magnifica",
