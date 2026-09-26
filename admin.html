@@ -1131,12 +1131,12 @@ function toast(msg, type) {
 function sanitizeHTML(html) {
     // Strip dangerous tags and attributes — preserves safe HTML for the content editor
     return String(html || '')
-      .replace(/<script[^>]*>[sS]*?<\/script>/gi, '')
+      .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')
       .replace(/on\w+\s*=/gi, '')
-      .replace(/<iframe[^>]*>[sS]*?<\/iframe>/gi, '')
-      .replace(/<form[^>]*>[sS]*?<\/form>/gi, '')
+      .replace(/<iframe[^>]*>[\\s\\S]*?<\\/iframe>/gi, '')
+      .replace(/<form[^>]*>[\\s\\S]*?<\\/form>/gi, '')
       .replace(/javascript:/gi, '')
-      .replace(/<object[^>]*>[sS]*?<\/object>/gi, '')
+      .replace(/<object[^>]*>[\\s\\S]*?<\\/object>/gi, '')
       .replace(/<embed[^>]*[\/>]/gi, '');
   }
 
@@ -1153,14 +1153,25 @@ function navigate(page) {
 // ── Init ────────────────────────────────────────────────────────────────────
 // -- Edit Content Pages --
 async function renderEditContent() {
-  const PAGES = ['about','breeding','standards','socialization','social','contact'];
-  const results = await Promise.all(PAGES.map(p => apiFetch('/admin/api/content?page='+encodeURIComponent(p)).then(r=>({page:p,data:r.data||{html:''}}))));
+  const PAGES = ['about','breeding','standards','socialization','social'];
+  const results = await Promise.all(PAGES.map(async p => {
+    const remote = await apiFetch('/admin/api/content?page='+encodeURIComponent(p));
+    if (remote?.data?.html) return { page:p, data:remote.data };
+    try {
+      const source = await fetch(p+'.html', { cache:'no-store' }).then(r => r.ok ? r.text() : '');
+      const doc = new DOMParser().parseFromString(source, 'text/html');
+      const main = doc.querySelector('main');
+      return { page:p, data:{ html:main ? main.innerHTML : '' } };
+    } catch (_) {
+      return { page:p, data:{ html:'' } };
+    }
+  }));
   const tabs = PAGES.map((p,i) => '<div class="content-tab'+(i===0?' active':'')+'" onclick="switchContentTab('+JSON.stringify(p)+',this)">'+p.charAt(0).toUpperCase()+p.slice(1)+'</div>').join('');
   // Build editors populated with fetched content
   const pageMap = {};
   results.forEach(r => { pageMap[r.page] = r.data && r.data.html ? r.data.html : ''; });
   const editors = PAGES.map(p => `<div class="content-editor" id="editor-${p}" style="display:${p===PAGES[0]?'block':'none'}"><textarea name="html" rows="20">${esc(pageMap[p]||'')}</textarea><div style="margin-top:12px" class="btn-group"><button class="btn btn-gold" onclick="saveContent(${JSON.stringify(p)})">Save Content</button><span class="muted" style="font-size:11px;margin-left:8px">Saves to KV - goes live immediately</span></div></div>`).join('');
-  return '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">These pages are currently static HTML. Edit the HTML below to update live content without touching code.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
+  return '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">Edit these script-safe public pages. When no saved CMS version exists, the current static page is loaded as the starting point.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
 }
 window.switchContentTab = function(page, el) {
   document.querySelectorAll('.content-tab').forEach(t=>t.classList.remove('active'));
