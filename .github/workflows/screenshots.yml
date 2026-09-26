@@ -115,6 +115,9 @@ jobs:
           assert(pedigreePage.includes('DOG RECORD</p><h2><a href="') && pedigreePage.includes("'+profileHref+'"), 'Selected pedigree dog name must link to the full profile');
           assert(homeCss.includes('.dog-card-copy h3{') && homeCss.includes('text-decoration:underline'), 'Homepage featured dog names must be underlined');
           assert(sharedCss.includes('.puppy-parents a{text-decoration:underline'), 'Clickable puppy-parent dog names must be underlined');
+          assert(dogsPage.includes('function profileDetails(d)'), 'Dog profiles must build structured detail rows');
+          assert(dogsPage.includes("<dt>Status</dt>") && dogsPage.includes("<dt>Owner</dt>"), 'Dog profiles must support Status and Owner as separate rows');
+          assert(dogsPage.includes("<dt>Achievements</dt>"), 'Dog profiles must support supplied achievements');
 
           const site = fs.readFileSync('site.js', 'utf8');
           for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
@@ -297,7 +300,7 @@ jobs:
             }
             const dogText = await page.locator('#profile').innerText();
             if (!dogText.includes('Dragoslav Custodi Nos') || !dogText.includes('Himera Custodi Nos')) throw new Error('Branco parent links missing');
-            if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || dogText.includes('STATUS')) throw new Error('Current-dog owner row is incorrect');
+            if (!dogText.includes('OWNER') || !dogText.includes('Kelvin Omigie/BELLISSIMO GENI') || !dogText.includes('STATUS') || !dogText.includes('Bellissimo Geni dog')) throw new Error('Current-dog owner/status rows are incomplete');
 
             await page.goto(base + 'dogs.html?dog=dragoslav-custodi-nos', { waitUntil: 'networkidle' });
             const dragoslavText = await page.locator('#profile').innerText();
@@ -739,6 +742,12 @@ jobs:
             if (!branco.includes('JR710606CC') || branco.includes('NGCCKC2025D5F61D56')) {
               throw new Error('Branco registration cleanup failed');
             }
+            for (const expected of ['STATUS','Bellissimo Geni dog','OWNER','Kelvin Omigie/BELLISSIMO GENI']) {
+              if (!branco.includes(expected)) throw new Error('Branco profile missing structured detail: ' + expected);
+            }
+            if (branco.includes('Health record\nNot recorded') || branco.includes('Achievements\nNot recorded')) {
+              throw new Error('Unsupplied optional profile fields must not clutter the dog profile');
+            }
 
             const brancoImage = page.locator('.profile-media-main img');
             const brancoSrc = await brancoImage.getAttribute('src');
@@ -799,6 +808,12 @@ jobs:
             const himeraGallerySrc = await himeraGallery.first().getAttribute('src');
             if (!himeraGallerySrc || !himeraGallerySrc.endsWith('assets/dogs/himera-custodi-nos-02.avif')) {
               throw new Error('Himera secondary photo mapping is incorrect');
+            }
+
+            await page.goto(base + 'dogs.html?dog=igon-del-dyrium', { waitUntil: 'networkidle' });
+            const igon = await page.locator('#profile').innerText();
+            for (const expected of ['ACHIEVEMENTS', "J.EuW'15"]) {
+              if (!igon.includes(expected)) throw new Error('Igon achievement detail missing ' + expected);
             }
 
             await page.goto(base + 'dogs.html?dog=nefertiti-custodi-nos', { waitUntil: 'networkidle' });
