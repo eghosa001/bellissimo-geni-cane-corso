@@ -43,3 +43,10 @@ jobs:
           cat /tmp/admin-login.json
           test "$status" = "401"
           node -e 'const fs=require("fs"); const j=JSON.parse(fs.readFileSync("/tmp/admin-login.json","utf8")); if(j.ok!==false || j.error!=="unauthorized") process.exit(1)'
+
+      - name: Check ADMIN KV health
+        run: |
+          set +e
+          curl --silent --show-error --location --max-time 20 \
+            "https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/webhook/kv-health"
+          echo
