@@ -36,8 +36,16 @@
       header.insertBefore(quick, reserve || null);
     }
 
+    var interiorHeader = document.querySelector('.site-header');
     var toggle = document.querySelector('.mobile-nav-toggle');
     var menu = document.querySelector('.mobile-menu');
+    if (interiorHeader && toggle && !interiorHeader.querySelector('.mobile-quick-nav')) {
+      var quick = document.createElement('nav');
+      quick.className = 'mobile-quick-nav';
+      quick.setAttribute('aria-label', 'Quick links');
+      quick.innerHTML = '<a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a>';
+      interiorHeader.insertBefore(quick, toggle);
+    }
     if (toggle && menu) {
       toggle.addEventListener('click', function () {
         var open = menu.classList.toggle('open');
