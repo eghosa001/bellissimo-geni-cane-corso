@@ -1,6 +1,7 @@
 name = "bellissimo-geni-cane-corso"
 main = "handler.js"
 compatibility_date = "2024-12-01"
+workers_dev = true
 
 [[migrations]]
 tag = "v1"
@@ -21,7 +22,6 @@ binding = "ADMIN"
 [[r2_buckets]]
 binding = "UPLOADS"
 
-workers_dev = true
 
 [vars]
 PAYMENT_PROVIDER = "none"    # "paystack" or "flutterwave" or "none"
