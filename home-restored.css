@@ -316,6 +316,14 @@ button{font:inherit}
   font:600 37px/.95 var(--serif);
   margin:6px 0 5px;
   letter-spacing:.01em;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:5px;
+  text-decoration-skip-ink:auto;
+}
+.featured-dog-card:hover .dog-card-copy h3{
+  color:#e3b65f;
+  text-decoration-thickness:2px;
 }
 .dog-card-copy p{
   margin:0 0 15px;
