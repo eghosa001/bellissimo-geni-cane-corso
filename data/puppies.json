@@ -16,20 +16,6 @@
       "priceNote": "Price on enquiry",
       "notes": "Verified available Bellissimo Geni female.",
       "featuredOrder": 1
-    },
-    {
-      "id": "yasmin-bellissimo-geni",
-      "name": "Yasmin Bellissimo Geni",
-      "sex": "Female",
-      "dateOfBirth": "2025-08-02",
-      "colour": "Brindle",
-      "photo": "assets/puppies/yasmin-bellissimo-geni.webp",
-      "status": "",
-      "sireId": "branco-custodi-nos",
-      "damId": "anthie-custodi-nos",
-      "priceNote": "",
-      "notes": "Kennel-supplied Bellissimo Geni young female.",
-      "featuredOrder": 2
     }
   ],
   "gallery": [
