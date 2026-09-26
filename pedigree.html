@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="site.css">
 <style>
-.pedigree-page{max-width:1320px;margin:auto;padding:82px 7vw 120px}.pedigree-search{max-width:760px;margin:30px auto 16px;display:flex;gap:10px}.pedigree-search input{flex:1;min-width:0;border:1px solid var(--line);background:#fff;padding:16px 18px;outline:none}.pedigree-search input:focus{border-color:var(--gold)}.search-button{border:0;background:var(--ink);color:#fff;padding:0 25px;font-weight:800;cursor:pointer}.search-status{text-align:center;color:var(--muted);font-size:11px;min-height:22px;margin:0 auto 42px}.dog-result{display:none;background:#ebe7de;padding:28px;margin:0 auto 45px;max-width:820px}.dog-result.active{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}.dog-result img{width:130px;height:150px;object-fit:cover}.dog-result h2{font:600 48px/1 var(--serif);margin:0 0 7px}.dog-meta{color:var(--muted);font-size:11px}.pedigree-shell{padding:4px 0 35px}.generation-block{margin:0 auto 34px;max-width:1120px}.generation-label{text-align:center;font-size:9px;letter-spacing:.2em;color:var(--gold);font-weight:800;margin:22px 0 12px}.generation{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.parent-card{background:#fff;border:1px solid var(--line);padding:14px;position:relative;transition:border-color .2s,transform .2s;min-height:110px}.parent-card a{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}.parent-thumb{width:70px;height:86px;display:block;overflow:hidden;background:#171715}.parent-thumb img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 38%;background:transparent}.parent-copy{min-width:0}.parent-card .role{font-size:8px;letter-spacing:.13em;color:var(--gold);font-weight:800}.parent-card strong{display:block;font:600 22px/1 var(--serif);margin:7px 0}.parent-card small{color:var(--muted);font-size:10px;line-height:1.45}.parent-card:hover{border-color:var(--gold);transform:translateY(-2px)}.ancestry-note{text-align:center;color:var(--muted);font-size:11px;margin:25px auto;max-width:680px}.source-note{max-width:760px;margin:0 auto 35px;padding:13px 15px;border-left:2px solid var(--gold);background:#f2eee6;color:#655c50;font-size:10px;line-height:1.6}
+.pedigree-page{max-width:1320px;margin:auto;padding:82px 7vw 120px}.pedigree-search{max-width:760px;margin:30px auto 16px;display:flex;gap:10px}.pedigree-search input{flex:1;min-width:0;border:1px solid var(--line);background:#fff;padding:16px 18px;outline:none}.pedigree-search input:focus{border-color:var(--gold)}.search-button{border:0;background:var(--ink);color:#fff;padding:0 25px;font-weight:800;cursor:pointer}.search-status{text-align:center;color:var(--muted);font-size:11px;min-height:22px;margin:0 auto 42px}.search-status button{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:3px 5px}.dog-result{display:none;background:#ebe7de;padding:28px;margin:0 auto 45px;max-width:820px}.dog-result.active{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}.dog-result img{width:130px;height:150px;object-fit:cover}.dog-result h2{font:600 48px/1 var(--serif);margin:0 0 7px}.dog-meta{color:var(--muted);font-size:11px}.pedigree-shell{padding:4px 0 35px}.generation-block{margin:0 auto 34px;max-width:1120px}.generation-label{text-align:center;font-size:9px;letter-spacing:.2em;color:var(--gold);font-weight:800;margin:22px 0 12px}.generation{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.parent-card{background:#fff;border:1px solid var(--line);padding:14px;position:relative;transition:border-color .2s,transform .2s;min-height:110px}.parent-card a{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}.parent-thumb{width:70px;height:86px;display:block;overflow:hidden;background:#171715}.parent-thumb img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 38%;background:transparent}.parent-copy{min-width:0}.parent-card .role{font-size:8px;letter-spacing:.13em;color:var(--gold);font-weight:800}.parent-card strong{display:block;font:600 22px/1 var(--serif);margin:7px 0}.parent-card small{color:var(--muted);font-size:10px;line-height:1.45}.parent-card:hover{border-color:var(--gold);transform:translateY(-2px)}.ancestry-note{text-align:center;color:var(--muted);font-size:11px;margin:25px auto;max-width:680px}.source-note{max-width:760px;margin:0 auto 35px;padding:13px 15px;border-left:2px solid var(--gold);background:#f2eee6;color:#655c50;font-size:10px;line-height:1.6}
 @media(max-width:600px){.pedigree-page{padding:60px 5vw 90px}.pedigree-search{flex-direction:column}.search-button{padding:15px}.dog-result.active{grid-template-columns:1fr}.dog-result img{width:100%;height:auto;max-height:440px}.dog-result h2{font-size:40px}.generation{grid-template-columns:1fr}}
 </style>
 </head>
@@ -29,7 +29,7 @@
 <main id="main" class="pedigree-page">
 <div style="text-align:center"><p class="eyebrow">BELLISSIMO GENI PEDIGREE</p><h1 style="font:600 clamp(58px,8vw,112px)/.88 var(--serif);letter-spacing:-.04em">Trace the <em>lineage.</em></h1><p style="max-width:680px;margin:25px auto;color:var(--muted)">Search a Bellissimo Geni dog and follow each verified Sire and Dam relationship. The pedigree engine supports up to seven generations and stops wherever the supplied record stops.</p></div>
 <div class="source-note">Only kennel-supplied pedigree information is shown. Sire and Dam relationships are resolved automatically from the shared records; unknown ancestry is never guessed. Microchip numbers and private owner details are not displayed publicly.</div>
-<form class="pedigree-search" id="pedigree-search"><input id="dog-search" name="dog" autocomplete="off" placeholder="Search a dog, e.g. Gyda or Branco" aria-label="Search a dog"><button class="search-button" type="submit">Search</button></form>
+<form class="pedigree-search" id="pedigree-search" role="search"><input id="dog-search" name="dog" list="dog-options" autocomplete="off" placeholder="Search by dog name, registration or bloodline" aria-label="Search pedigree records"><datalist id="dog-options"></datalist><button class="search-button" type="submit">Search</button></form>
 <p class="search-status" id="search-status" aria-live="polite"></p>
 <section id="dog-result" class="dog-result"></section>
 <section id="pedigree-shell" class="pedigree-shell"></section>
@@ -39,14 +39,41 @@
 <script>
 window.BG_WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 (function(){
-var RECORDS=[],family=null,form=document.getElementById('pedigree-search'),input=document.getElementById('dog-search'),status=document.getElementById('search-status'),result=document.getElementById('dog-result'),shell=document.getElementById('pedigree-shell');
-function findDog(v){
-  var q=String(v||'').trim().toLowerCase();
-  if(!q)return null;
+var RECORDS=[],family=null,
+  form=document.getElementById('pedigree-search'),
+  input=document.getElementById('dog-search'),
+  options=document.getElementById('dog-options'),
+  status=document.getElementById('search-status'),
+  result=document.getElementById('dog-result'),
+  shell=document.getElementById('pedigree-shell');
+
+function norm(v){return String(v||'').trim().toLowerCase();}
+function recordText(d){
+  return [d.id,d.name,d.registration,d.bloodline,d.sex,d.colour,d.status]
+    .filter(Boolean).join(' ').toLowerCase();
+}
+function matches(v){
+  var q=norm(v);
+  if(!q)return [];
   var exact=family&&family.resolve(q);
-  if(exact)return exact.record;
-  return RECORDS.find(function(d){return String(d.name||'').toLowerCase()===q;})||
-    RECORDS.find(function(d){return String(d.name||'').toLowerCase().indexOf(q)>=0;})||null;
+  if(exact)return [exact.record];
+  var exactRecord=RECORDS.find(function(d){
+    return norm(d.name)===q||norm(d.id)===q||norm(d.registration)===q;
+  });
+  if(exactRecord)return [exactRecord];
+  return RECORDS.filter(function(d){return recordText(d).indexOf(q)>=0;});
+}
+function findDog(v){
+  var found=matches(v);
+  return found.length?found[0]:null;
+}
+function showMatches(found){
+  if(!found.length){status.textContent='No matching dog found.';return}
+  if(found.length===1){status.textContent='1 matching pedigree record found.';return}
+  var shown=found.slice(0,6);
+  status.innerHTML=BG.esc(String(found.length))+' matches: '+shown.map(function(d){
+    return '<button type="button" data-pedigree-dog="'+BG.esc(d.id)+'">'+BG.esc(d.name)+'</button>';
+  }).join(' · ')+(found.length>shown.length?' · …':'');
 }
 function card(dog,role){
   if(!dog)return '<div class="parent-card"><span class="role">'+BG.esc(role)+'</span><strong>Not recorded</strong><small>This ancestor has not been supplied.</small></div>';
@@ -54,9 +81,19 @@ function card(dog,role){
   var photo=dog.photo?'<span class="parent-thumb"><img src="'+BG.esc(dog.photo)+'" alt="'+BG.esc(dog.name)+'" loading="lazy" decoding="async"></span>':'';
   return '<article class="parent-card"><a href="?dog='+encodeURIComponent(dog.id)+'">'+photo+'<span class="parent-copy"><span class="role">'+BG.esc(role)+'</span><strong>'+BG.esc(dog.name)+'</strong><small>'+BG.esc(meta||'Verified pedigree record')+'</small></span></a></article>';
 }
+function setUrl(id){
+  history.replaceState(null,'','?dog='+encodeURIComponent(id));
+}
 function render(start){
-  if(!start){status.textContent='No matching dog found.';result.classList.remove('active');shell.innerHTML='';return}
+  if(!start){
+    result.classList.remove('active');
+    result.innerHTML='';
+    shell.innerHTML='';
+    return;
+  }
   status.textContent='';
+  input.value=start.name;
+  setUrl(start.id);
   var pic=start.photo?'<img src="'+BG.esc(start.photo)+'" alt="'+BG.esc(start.name)+'">':'';
   var startItem=family&&family.resolve(start.id);
   var profileHref=startItem&&startItem.kind==='puppy'?'puppies.html?puppy='+encodeURIComponent(start.id):'dogs.html?dog='+encodeURIComponent(start.id);
@@ -90,12 +127,34 @@ function render(start){
         });
       });
     });
-    if(!parents.length){shell.insertAdjacentHTML('beforeend','<p class="ancestry-note">'+(g===1?'No parent records are currently attached to this dog.':'The supplied verified pedigree ends here.')+'</p>');break}
+    if(!parents.length){
+      shell.insertAdjacentHTML('beforeend','<p class="ancestry-note">'+(g===1?'No parent records are currently attached to this dog.':'The supplied verified pedigree ends here.')+'</p>');
+      break;
+    }
     shell.insertAdjacentHTML('beforeend','<div class="generation-block"><div class="generation-label">GENERATION '+g+' • '+(g===1?'PARENTS':g===2?'GRANDPARENTS':g===3?'GREAT GRANDPARENTS':'ANCESTRY')+'</div><div class="generation">'+parents.map(function(p){return card(p.dog,p.role)}).join('')+'</div></div>');
     current=parents.filter(function(p){return !!p.dog}).map(function(p){return {dog:p.dog,path:p.path};});
   }
 }
-form.addEventListener('submit',function(e){e.preventDefault();var d=findDog(input.value);if(d)history.replaceState(null,'','?dog='+encodeURIComponent(d.id));render(d);});
+form.addEventListener('submit',function(e){
+  e.preventDefault();
+  var found=matches(input.value);
+  if(found.length===1){render(found[0]);return}
+  showMatches(found);
+  result.classList.remove('active');
+  result.innerHTML='';
+  shell.innerHTML='';
+});
+input.addEventListener('input',function(){
+  var q=norm(input.value);
+  if(q.length<2){status.textContent='';return}
+  showMatches(matches(q));
+});
+status.addEventListener('click',function(e){
+  var btn=e.target.closest('[data-pedigree-dog]');
+  if(!btn)return;
+  var item=family&&family.resolve(btn.getAttribute('data-pedigree-dog'));
+  if(item)render(item.record);
+});
 Promise.all([
   BG.loadAdminJSON('dogs','data/dogs.json'),
   BG.loadAdminJSON('puppies','data/puppies.json').catch(function(){return {puppies:[]};})
@@ -104,9 +163,16 @@ Promise.all([
   var young=rows[1].puppies||rows[1].data||[];
   family=BG.familyIndex([{kind:'dog',records:dogs},{kind:'puppy',records:young}]);
   RECORDS=family.entries.map(function(item){return item.record;});
+  options.innerHTML=RECORDS.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).map(function(d){
+    return '<option value="'+BG.esc(d.name)+'"></option>';
+  }).join('');
   var init=new URLSearchParams(location.search).get('dog');
-  if(init){var d=findDog(init);if(d){input.value=d.name;render(d);}}
-}).catch(function(){status.textContent='Could not load pedigree records.';});
+  if(init){
+    var d=findDog(init);
+    if(d)render(d);
+    else status.textContent='That pedigree record could not be found.';
+  }
+}).catch(function(){status.textContent='Could not load pedigree records. Please refresh the page.';});
 })();
 </script>
 </body>

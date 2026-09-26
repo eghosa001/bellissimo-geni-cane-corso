@@ -33,10 +33,17 @@
 .profile dl{display:grid;grid-template-columns:145px 1fr;border-top:1px solid var(--line);margin:22px 0 0}.profile dt,.profile dd{padding:11px 0;border-bottom:1px solid var(--line);font-size:11px}.profile dt{font-weight:800;text-transform:uppercase;letter-spacing:.09em}.profile dd{margin:0}
 .profile-relations{margin-top:22px;padding:16px 0 2px;border-top:1px solid var(--line)}.profile-relations h3{font:600 24px/1 var(--serif);margin:0 0 12px}.relation-list{display:flex;flex-wrap:wrap;gap:8px}.relation-link{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--line);background:#f8f4ed;font-size:10px}.relation-link span{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--gold)}.profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.profile-gallery{grid-column:1/-1;margin-top:5px}.profile-gallery h3{font:600 30px var(--serif);margin:0 0 14px}.gallery-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.gallery-strip a{aspect-ratio:4/5;overflow:hidden;background:#e8e1d5}.gallery-strip img{width:100%;height:100%;object-fit:cover;object-position:center 38%;display:block;background:transparent}
 .privacy-note{margin:30px 0 0;color:var(--muted);font-size:10px}
+.dogs-search-form{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.dogs-search-form input{min-width:0}
+.dogs-search-form button{min-height:46px;padding:0 18px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:800;cursor:pointer}
+.dogs-search-form .search-clear{background:transparent;color:var(--ink)}
+.dog-search-status{margin:10px 0 0;min-height:20px;color:var(--muted);font-size:11px}
+.direct-dog-profile .dog-section,.dog-search-profile .dog-section{display:none}
+.direct-dog-profile .privacy-note,.dog-search-profile .privacy-note{margin-top:0}
 @media(max-width:1100px){#current-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.dog-list{grid-template-columns:1fr 1fr}.profile{grid-template-columns:1fr}.profile-media-main{max-height:none}.gallery-strip{grid-template-columns:repeat(3,1fr)}}
 .direct-dog-profile .dogs-intro,.direct-dog-profile .toolbar{display:none}.direct-dog-profile .dogs-page{padding-top:42px}
-@media(max-width:560px){.direct-dog-profile .dogs-page{padding-top:24px}.dogs-page{padding:55px 5vw 82px}.dog-list,#current-list{grid-template-columns:1fr}.dog-section-head{display:block}.dog-section-head p{margin-top:10px}.profile{padding:16px;gap:20px}.profile dl{grid-template-columns:112px 1fr}.gallery-strip{grid-template-columns:1fr 1fr}.profile-actions .btn{width:100%;text-align:center}}
+@media(max-width:560px){.direct-dog-profile .dogs-page{padding-top:24px}.dogs-page{padding:55px 5vw 82px}.dogs-search-form{grid-template-columns:1fr 1fr}.dogs-search-form input{grid-column:1/-1}.dogs-search-form button{min-height:44px}.dog-list,#current-list{grid-template-columns:1fr}.dog-section-head{display:block}.dog-section-head p{margin-top:10px}.profile{padding:16px;gap:20px}.profile dl{grid-template-columns:112px 1fr}.gallery-strip{grid-template-columns:1fr 1fr}.profile-actions .btn{width:100%;text-align:center}}
 </style>
 </head>
 <body>
@@ -50,7 +57,14 @@
 
 <main id="main" class="dogs-page">
 <section class="dogs-intro"><p class="eyebrow">OUR DOGS</p><h1>The Bellissimo <em>family.</em></h1><p>Open a dog to see its profile, photography, verified Sire and Dam, and direct pedigree link. Information that has not yet been supplied is left pending rather than guessed.</p></section>
-<div class="toolbar"><input id="q" placeholder="Search our dogs…" aria-label="Search dogs"></div>
+<div class="toolbar">
+<form id="dog-search-form" class="dogs-search-form" role="search">
+<input id="q" type="search" placeholder="Search by name, colour, bloodline or parent…" aria-label="Search dogs" autocomplete="off">
+<button type="submit">Search</button>
+<button class="search-clear" id="dog-search-clear" type="button">Clear</button>
+</form>
+<p class="dog-search-status" id="dog-search-status" aria-live="polite"></p>
+</div>
 <section id="profile" aria-live="polite"></section>
 <section class="dog-section" id="current-section"><div class="dog-section-head"><div><p class="eyebrow">AT THE KENNEL</p><h2>Our Dogs</h2></div><p>The dogs currently presented as part of the Bellissimo Geni family.</p></div><div class="dog-list" id="current-list"></div></section>
 <section class="dog-section" id="past-section"><div class="dog-section-head"><div><p class="eyebrow">BELLISSIMO GENI</p><h2>Past Productions</h2></div><p>Dogs produced through the Bellissimo Geni program, preserved here with their verified records and lineage.</p></div><div class="dog-list" id="past-list"></div></section>
@@ -62,7 +76,17 @@
 <script>
 window.BG_WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 (function(){
-var all=[],young=[],family=null,q=document.getElementById('q'),profile=document.getElementById('profile'),current=document.getElementById('current-list'),past=document.getElementById('past-list');
+var all=[],young=[],family=null,
+  q=document.getElementById('q'),
+  searchForm=document.getElementById('dog-search-form'),
+  clearSearch=document.getElementById('dog-search-clear'),
+  searchStatus=document.getElementById('dog-search-status'),
+  profile=document.getElementById('profile'),
+  current=document.getElementById('current-list'),
+  past=document.getElementById('past-list'),
+  currentSection=document.getElementById('current-section'),
+  pastSection=document.getElementById('past-section');
+
 function byId(id){return BG.dogById(all,id)}
 function safe(v,fallback){return v?BG.esc(v):fallback||'Not recorded'}
 function displayDate(v){
@@ -70,31 +94,77 @@ function displayDate(v){
   return m?BG.esc(m[3]+'/'+m[2]+'/'+m[1]):safe(v,'Not recorded');
 }
 function media(d){
-  return d.photo?'<div class="dog-card-media"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager" decoding="sync" onerror="this.remove()"></div>':'<div class="dog-card-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
+  return d.photo?'<div class="dog-card-media"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager" decoding="async" onerror="this.remove()"></div>':'<div class="dog-card-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
 }
 function card(d){
   var summary=[d.sex,d.colour].filter(Boolean).join(' • ')||'Profile';
-  return '<article class="dog-card">'+media(d)+'<div class="card-body"><span class="meta">'+BG.esc(summary.toUpperCase())+'</span><h3>'+BG.esc(d.name)+'</h3><p>'+BG.esc(d.bio||'Verified profile details will be added as supplied by the kennel.')+'</p><div class="dog-card-links"><a href="dogs.html?dog='+encodeURIComponent(d.id)+'">Profile →</a><a href="pedigree.html?dog='+encodeURIComponent(d.id)+'">Pedigree →</a></div></div></article>';
+  return '<article class="dog-card" data-dog-id="'+BG.esc(d.id)+'">'+media(d)+'<div class="card-body"><span class="meta">'+BG.esc(summary.toUpperCase())+'</span><h3>'+BG.esc(d.name)+'</h3><p>'+BG.esc(d.bio||'Verified profile details will be added as supplied by the kennel.')+'</p><div class="dog-card-links"><a href="dogs.html?dog='+encodeURIComponent(d.id)+'">Profile →</a><a href="pedigree.html?dog='+encodeURIComponent(d.id)+'">Pedigree →</a></div></div></article>';
+}
+function normalized(v){return String(v||'').trim().toLowerCase();}
+function searchText(d){
+  var sire=byId(d.sireId),dam=byId(d.damId);
+  return [
+    d.name,d.sex,d.colour,d.status,d.group,d.bloodline,d.registration,d.bio,
+    sire&&sire.name,dam&&dam.name
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+function setSearchUrl(id){
+  var params=new URLSearchParams(location.search);
+  if(id) params.set('dog',id); else params.delete('dog');
+  var qs=params.toString();
+  history.replaceState({},'',location.pathname+(qs?'?'+qs:''));
 }
 function renderLists(){
-  var term=q.value.trim().toLowerCase();
-  var visible=all.filter(function(d){return d.group==='current'||d.group==='past-production'}).filter(function(d){return !term||d.name.toLowerCase().indexOf(term)>=0;});
+  var term=normalized(q.value);
+  var published=all.filter(function(d){return d.group==='current'||d.group==='past-production';});
+  var exact=term&&published.find(function(d){
+    return normalized(d.name)===term||normalized(d.id)===term||normalized(d.registration)===term;
+  });
+  var nameMatches=term?published.filter(function(d){
+    return normalized(d.name).indexOf(term)>=0||normalized(d.id).indexOf(term)>=0;
+  }):[];
+  var visible=exact?[exact]:(nameMatches.length?nameMatches:published.filter(function(d){return !term||searchText(d).indexOf(term)>=0;}));
   var c=visible.filter(function(d){return d.group==='current'}),p=visible.filter(function(d){return d.group==='past-production'});
+
+  document.body.classList.remove('dog-search-profile');
+  currentSection.hidden=false;
+  pastSection.hidden=false;
+
   current.innerHTML=c.length?c.map(card).join(''):'<p>No current dogs match this search.</p>';
   past.innerHTML=p.length?p.map(card).join(''):'<p>No past productions match this search.</p>';
-  if(term.length>=3&&visible.length===1){
-    var match=visible[0],params=new URLSearchParams(location.search);
-    if(params.get('dog')!==match.id){
-      params.set('dog',match.id);
-      history.replaceState({},'',location.pathname+'?'+params.toString());
-    }
-    renderProfile(match.id,true);
+
+  if(!term){
+    searchStatus.textContent='';
+    if(!document.body.classList.contains('direct-dog-profile')) profile.innerHTML='';
+    if(!document.body.classList.contains('direct-dog-profile')) setSearchUrl('');
+    return;
   }
+
+  searchStatus.textContent=visible.length===1?'1 matching dog found.':visible.length+' matching dogs found.';
+
+  if(visible.length===1){
+    var match=visible[0];
+    setSearchUrl(match.id);
+    renderProfile(match.id,false);
+    document.body.classList.add('dog-search-profile');
+    currentSection.hidden=true;
+    pastSection.hidden=true;
+    return;
+  }
+
+  if(!document.body.classList.contains('direct-dog-profile')) profile.innerHTML='';
+  setSearchUrl('');
 }
 function gallery(d){
-  var imgs=[d.photo].concat(d.gallery||[]).filter(Boolean);
-  if(imgs.length<2)return '';
-  return '<div class="profile-gallery"><h3>Gallery</h3><div class="gallery-strip">'+imgs.map(function(src,i){return '<a href="'+BG.esc(src)+'" target="_blank" rel="noopener"><img src="'+BG.esc(src)+'" alt="'+BG.esc(d.name)+' photograph '+(i+1)+'" loading="lazy"></a>';}).join('')+'</div></div>';
+  var main=d.photo||'';
+  var seen={};
+  var imgs=(d.gallery||[]).filter(function(src){
+    if(!src||src===main||seen[src]) return false;
+    seen[src]=true;
+    return true;
+  });
+  if(!imgs.length)return '';
+  return '<div class="profile-gallery"><h3>More photographs</h3><div class="gallery-strip">'+imgs.map(function(src,i){return '<a href="'+BG.esc(src)+'" target="_blank" rel="noopener"><img src="'+BG.esc(src)+'" alt="'+BG.esc(d.name)+' additional photograph '+(i+1)+'" loading="lazy" decoding="async"></a>';}).join('')+'</div></div>';
 }
 function parentLink(id){
   var d=byId(id);
@@ -118,11 +188,20 @@ function renderProfile(id,shouldScroll){
   if(!id){profile.innerHTML='';return}
   var d=byId(id);
   if(!d){profile.innerHTML='<div class="notice">Dog not found.</div>';return}
-  var hero=d.photo?'<div class="profile-media-main"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager" decoding="sync" onerror="this.remove()"></div>':'<div class="profile-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
+  var hero=d.photo?'<div class="profile-media-main"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager" decoding="async" onerror="this.remove()"></div>':'<div class="profile-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
   profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl><dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd><dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd><dt>Date of birth</dt><dd>'+displayDate(d.dateOfBirth)+'</dd><dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>'+ownerOrStatusRow(d)+'<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd><dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd><dt>Bloodline</dt><dd>'+safe(d.bloodline,'Not recorded')+'</dd><dt>Health record</dt><dd>'+safe(d.health,'Not recorded')+'</dd></dl>'+familyRelationships(d)+'<div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
   if(shouldScroll!==false)profile.scrollIntoView({behavior:'smooth',block:'start'});
 }
+searchForm.addEventListener('submit',function(e){e.preventDefault();renderLists();});
 q.addEventListener('input',renderLists);
+clearSearch.addEventListener('click',function(){
+  q.value='';
+  document.body.classList.remove('direct-dog-profile','dog-search-profile');
+  profile.innerHTML='';
+  setSearchUrl('');
+  renderLists();
+  q.focus();
+});
 Promise.all([
   BG.loadAdminJSON('dogs','data/dogs.json'),
   BG.loadAdminJSON('puppies','data/puppies.json').catch(function(){return {puppies:[]};})
@@ -131,11 +210,20 @@ Promise.all([
   all=dj.data||dj.dogs||[];
   young=pj.puppies||pj.data||[];
   family=BG.familyIndex([{kind:'dog',records:all},{kind:'puppy',records:young}]);
-  renderLists();
   var id=new URLSearchParams(location.search).get('dog');
-  if(id){document.body.classList.add('direct-dog-profile');renderProfile(id,false);}
-}).catch(function(){current.innerHTML='<div class="notice">Could not load dog records.</div>';});
-})();
+  if(id){
+    document.body.classList.add('direct-dog-profile');
+    currentSection.hidden=true;
+    pastSection.hidden=true;
+    renderProfile(id,false);
+  }else{
+    renderLists();
+  }
+}).catch(function(){
+  searchStatus.textContent='Could not load dog records. Please refresh the page.';
+  current.innerHTML='<div class="notice">Could not load dog records.</div>';
+});
+})();;
 </script>
 </body>
 </html>
