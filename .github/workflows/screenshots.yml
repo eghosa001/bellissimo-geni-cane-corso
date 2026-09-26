@@ -495,13 +495,13 @@ jobs:
               throw new Error('Branco registration cleanup failed');
             }
 
-            await page.goto(base + 'puppies.html?puppy=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
-            const yasmin = page.locator('#yasmin-bellissimo-geni');
+            await page.goto(base + 'dogs.html?dog=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
+            const yasmin = page.locator('#profile');
             const yasminText = await yasmin.innerText();
-            for (const expected of ['Yasmin Bellissimo Geni','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos']) {
+            for (const expected of ['Yasmin Bellissimo Geni','Female','Brindle','02/08/2025','Branco Custodi Nos','Anthie Custodi Nos','Past production']) {
               if (!yasminText.includes(expected)) throw new Error('Yasmin record missing ' + expected);
             }
-            const image = yasmin.locator('img');
+            const image = yasmin.locator('.profile-media-main img');
             if (!(await image.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Yasmin photo failed to load');
 
             await page.goto(base + 'pedigree.html?dog=yasmin-bellissimo-geni', { waitUntil: 'networkidle' });
