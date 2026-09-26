@@ -162,7 +162,7 @@
       "sex": "Male",
       "dateOfBirth": "2025-10-26",
       "colour": "Black",
-      "photo": "assets/dogs/diesel-bellissimo-geni.avif",
+      "photo": "",
       "gallery": [],
       "registration": "NG-CCKC2026389197AE",
       "status": "Past production",
@@ -180,7 +180,7 @@
       "sex": "Male",
       "dateOfBirth": "2025-10-26",
       "colour": "Black",
-      "photo": "assets/dogs/rocco-bellissimo-geni.avif",
+      "photo": "",
       "gallery": [],
       "registration": "NG-CCKC20267B948A24",
       "status": "Past production",
@@ -216,8 +216,10 @@
       "sex": "female",
       "dateOfBirth": "",
       "colour": "",
-      "photo": "",
-      "gallery": [],
+      "photo": "assets/dogs/himera-custodi-nos-main.avif",
+      "gallery": [
+        "assets/dogs/himera-custodi-nos-02.avif"
+      ],
       "registration": "JR 702294 CC",
       "status": "Pedigree ancestor",
       "group": "ancestor",
@@ -226,7 +228,7 @@
       "bloodline": "Custodi Nos",
       "health": "Official HD A · ED 0 · OCD free",
       "achievements": "",
-      "bio": "Himera Custodi Nos is a verified pedigree ancestor, by Igon del Dyrium out of Bisera Custodi Nos. Her supplied health status is Official HD A, ED 0, OCD free."
+      "bio": "Himera Custodi Nos is a verified pedigree ancestor, by Igon del Dyrium out of Bisera Custodi Nos. Her supplied main and secondary photographs are published with her record. Her supplied health status is Official HD A, ED 0, OCD free."
     },
     {
       "id": "roman-custodi-nos",

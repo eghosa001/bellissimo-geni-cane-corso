@@ -60,10 +60,12 @@ jobs:
           cat .github/assets/puppy-section.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-puppy-section.webp
           test -s assets/dogs/bellissimo-featured-black-corso.webp
           test -s assets/dogs/bellissimo-puppy-section.webp
-          cat .github/assets/diesel-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/diesel-bellissimo-geni.avif
-          cat .github/assets/rocco-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/rocco-bellissimo-geni.avif
-          test -s assets/dogs/diesel-bellissimo-geni.avif
-          test -s assets/dogs/rocco-bellissimo-geni.avif
+          # These two encoded photographs were originally mislabelled as Diesel/Rocco.
+          # The WhatsApp source explicitly identifies them as Himera, with the portrait as the main photo.
+          cat .github/assets/rocco-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/himera-custodi-nos-main.avif
+          cat .github/assets/diesel-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/himera-custodi-nos-02.avif
+          test -s assets/dogs/himera-custodi-nos-main.avif
+          test -s assets/dogs/himera-custodi-nos-02.avif
 
       - name: Install Playwright
         run: |
@@ -89,6 +91,13 @@ jobs:
 
           const pkg = JSON.parse(fs.readFileSync('webhook/package.json', 'utf8'));
           assert(pkg.devDependencies && pkg.devDependencies.wrangler, 'Wrangler must be pinned for automatic provisioning');
+
+          const dogRecords = JSON.parse(fs.readFileSync('data/dogs.json', 'utf8')).dogs || [];
+          const dogById = id => dogRecords.find(d => d.id === id) || {};
+          assert(!dogById('diesel-bellissimo-geni').photo, 'Diesel must not display Himera photography');
+          assert(!dogById('rocco-bellissimo-geni').photo, 'Rocco must not display Himera photography');
+          assert(dogById('himera-custodi-nos').photo === 'assets/dogs/himera-custodi-nos-main.avif', 'Himera main photo mapping is incorrect');
+          assert((dogById('himera-custodi-nos').gallery || []).includes('assets/dogs/himera-custodi-nos-02.avif'), 'Himera secondary photo mapping is incorrect');
 
           const site = fs.readFileSync('site.js', 'utf8');
           for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
@@ -738,9 +747,12 @@ jobs:
               for (const expected of [record[1],'Male','Black','26/10/2025',record[2],'Past production','Branco Custodi Nos','Tessa Sangue Magnifica']) {
                 if (!txt.includes(expected)) throw new Error(record[1] + ' missing ' + expected);
               }
-              const dogPhoto = page.locator('.profile-media-main img');
-              if (!(await dogPhoto.evaluate(img => img.complete && img.naturalWidth >= 600 && img.naturalHeight >= 600))) {
-                throw new Error(record[1] + ' source photo is missing or below the HD threshold');
+              if (await page.locator('.profile-media-main img').count()) {
+                throw new Error(record[1] + ' must not display Himera photography');
+              }
+              const placeholder = await page.locator('.profile-placeholder').innerText();
+              if (!/photography pending/i.test(placeholder)) {
+                throw new Error(record[1] + ' must use the photography-pending placeholder');
               }
             }
 
@@ -756,6 +768,20 @@ jobs:
             const himera = await page.locator('#profile').innerText();
             for (const expected of ['Himera Custodi Nos','Igon del Dyrium','Bisera Custodi Nos','Official HD A · ED 0 · OCD free']) {
               if (!himera.includes(expected)) throw new Error('Himera record missing ' + expected);
+            }
+            const himeraMain = page.locator('#profile .profile-media-main img');
+            if (!(await himeraMain.evaluate(img => img.complete && img.naturalWidth >= 600 && img.naturalHeight >= 600))) {
+              throw new Error('Himera main supplied photo is missing or below the HD threshold');
+            }
+            const himeraMainSrc = await himeraMain.getAttribute('src');
+            if (!himeraMainSrc || !himeraMainSrc.endsWith('assets/dogs/himera-custodi-nos-main.avif')) {
+              throw new Error('Himera main photo is not the supplied main photograph');
+            }
+            const himeraGallery = page.locator('#profile .profile-gallery img');
+            if (await himeraGallery.count() !== 1) throw new Error('Himera secondary supplied photograph is missing');
+            const himeraGallerySrc = await himeraGallery.first().getAttribute('src');
+            if (!himeraGallerySrc || !himeraGallerySrc.endsWith('assets/dogs/himera-custodi-nos-02.avif')) {
+              throw new Error('Himera secondary photo mapping is incorrect');
             }
 
             await page.goto(base + 'dogs.html?dog=nefertiti-custodi-nos', { waitUntil: 'networkidle' });
@@ -794,8 +820,8 @@ jobs:
               'assets/dogs/anthie-custodi-nos-03.webp',
               'assets/dogs/tessa-sangue-magnifica.webp',
               'assets/dogs/daisy-bellissimo-geni.webp',
-              'assets/dogs/diesel-bellissimo-geni.avif',
-              'assets/dogs/rocco-bellissimo-geni.avif',
+              'assets/dogs/himera-custodi-nos-main.avif',
+              'assets/dogs/himera-custodi-nos-02.avif',
               'assets/dogs/eden-01.webp',
               'assets/dogs/gyda-01.webp',
               'assets/dogs/dragoslav-custodi-nos.webp',
