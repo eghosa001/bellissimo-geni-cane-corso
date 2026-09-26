@@ -572,6 +572,7 @@ function renderDogForm(dog) {
             <div class="field"><label>Registration</label><input name="registration" value="${esc(dog?.registration||'')}"><span class="hint">AKC / KC / other</span></div>
             <div class="field"><label>Owner</label><input name="owner" value="${esc(dog?.owner||'')}" placeholder="e.g. Kelvin Omigie/BELLISSIMO GENI"></div>
             <div class="field"><label>Publish Status</label><select name="publishStatus"><option value="published" ${dog?.publishStatus!=='draft'?'selected':''}>Published</option><option value="draft" ${dog?.publishStatus==='draft'?'selected':''}>Draft</option></select><span class="hint">Draft hides from public site</span></div>
+            <div class="field"><label>Website Group</label><select name="group"><option value="current" ${!dog?.group||dog?.group==='current'?'selected':''}>Current dog</option><option value="past-production" ${dog?.group==='past-production'?'selected':''}>Past production</option><option value="ancestor" ${dog?.group==='ancestor'?'selected':''}>Pedigree ancestor</option></select><span class="hint">Controls where this dog appears on the public site</span></div>
             <div class="field"><label>Status</label><select name="status"><option value="active" ${dog?.status==='active'||!dog?.status?'selected':''}>Active</option><option value="retired" ${dog?.status==='retired'?'selected':''}>Retired</option><option value="development" ${dog?.status==='development'?'selected':''}>Development</option></select></div>
             <div class="field full"><label>Photo</label>
               <div class="upload-zone" id="dogUploadZone" onclick="document.getElementById('dogFileInput').click()">
@@ -647,10 +648,11 @@ async function saveDog(e, id) {
   e.preventDefault();
   const f = e.target;
   const body = {};
-  ['name','sex','colour','dateOfBirth','sireId','damId','registration','owner','status','photo','bio','health','achievements','publishStatus'].forEach(k => {
+  ['name','sex','colour','dateOfBirth','sireId','damId','registration','owner','status','group','photo','bio','health','achievements','publishStatus'].forEach(k => {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
   if(!body.publishStatus) body.publishStatus = 'published';
+  if(!body.group) body.group = 'current';
   const url = id ? '/admin/api/dogs?id='+encodeURIComponent(id) : '/admin/api/dogs';
   const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
   if(j.ok) { toast(id?'Dog updated':'Dog created'); closeModal(); loadAllData(); }
