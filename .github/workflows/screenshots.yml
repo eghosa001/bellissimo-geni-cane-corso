@@ -68,10 +68,10 @@ jobs:
           test -s assets/dogs/himera-custodi-nos-02.avif
 
           mkdir -p assets/puppies
-          cat .github/assets/x-bellissimo-geni-main-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.avif
-          cat .github/assets/x-bellissimo-geni-standing-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.avif
-          test -s assets/puppies/x-bellissimo-geni-main.avif
-          test -s assets/puppies/x-bellissimo-geni-standing.avif
+          cat .github/assets/x-bellissimo-geni-main-jpg.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.jpg
+          cat .github/assets/x-bellissimo-geni-standing-jpg.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.jpg
+          test -s assets/puppies/x-bellissimo-geni-main.jpg
+          test -s assets/puppies/x-bellissimo-geni-standing.jpg
 
       - name: Install Playwright
         run: |
@@ -138,8 +138,8 @@ jobs:
           assert(xPuppy.status === 'AVAILABLE' && xPuppy.sex === 'Female' && xPuppy.colour === 'Black Brindle', 'X Bellissimo Geni core details are incorrect');
           assert(xPuppy.dateOfBirth === '2025-08-02', 'X Bellissimo Geni DOB is incorrect');
           assert(xPuppy.sireId === 'branco-custodi-nos' && xPuppy.damId === 'anthie-custodi-nos', 'X Bellissimo Geni parents are incorrect');
-          assert(xPuppy.photo === 'assets/puppies/x-bellissimo-geni-main.avif', 'Sitting photo must remain X Bellissimo Geni main image');
-          assert(Array.isArray(xPuppy.gallery) && xPuppy.gallery.includes('assets/puppies/x-bellissimo-geni-standing.avif'), 'Standing photo must remain in X Bellissimo Geni gallery');
+          assert(xPuppy.photo === 'assets/puppies/x-bellissimo-geni-main.jpg', 'Sitting photo must remain X Bellissimo Geni main image');
+          assert(Array.isArray(xPuppy.gallery) && xPuppy.gallery.includes('assets/puppies/x-bellissimo-geni-standing.jpg'), 'Standing photo must remain in X Bellissimo Geni gallery');
           assert(safeera && safeera.photo === 'assets/puppies/safeera-bellissimo-geni.webp', 'Safeera availability photo must remain intact');
           const homePage = fs.readFileSync('index.html', 'utf8');
           assert(homePage.includes('assets/puppies/safeera-bellissimo-geni.webp'), 'Safeera must remain the homepage available-dog banner photo');
@@ -888,8 +888,8 @@ jobs:
               'assets/dogs/zz-top-sangue-magnifica-02.webp',
               'assets/dogs/limoncello-sangue-magnifica-custodi-nos.webp',
               'assets/puppies/safeera-bellissimo-geni.webp',
-              'assets/puppies/x-bellissimo-geni-main.avif',
-              'assets/puppies/x-bellissimo-geni-standing.avif',
+              'assets/puppies/x-bellissimo-geni-main.jpg',
+              'assets/puppies/x-bellissimo-geni-standing.jpg',
               'assets/puppies/yasmin-bellissimo-geni.webp',
               'assets/puppies/bellissimo-puppy-01.webp',
               'assets/puppies/bellissimo-puppy-02.webp',
