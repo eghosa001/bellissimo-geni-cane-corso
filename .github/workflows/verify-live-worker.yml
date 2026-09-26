@@ -61,3 +61,9 @@ jobs:
               console.log("litter_count="+((p.litters||[]).length));
             ' "$dogs" "$puppies" || true
           done
+
+      - name: Check storage counts
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 \
+            "https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/webhook/storage-counts"
