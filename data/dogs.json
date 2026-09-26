@@ -9,10 +9,8 @@
       "sex": "male",
       "dateOfBirth": "2023-10-01",
       "colour": "Black",
-      "photo": "assets/dogs/branco-01.webp",
-      "gallery": [
-        "assets/dogs/branco-02.webp"
-      ],
+      "photo": "assets/dogs/branco-02.webp",
+      "gallery": [],
       "registration": "JR710606CC",
       "status": "Bellissimo Geni dog",
       "group": "current",
@@ -83,7 +81,7 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Tessa Sangue Magnifica’s supplied pedigree verifies her as a black female born 27 March 2024, by ZZ Top Sangue Magnifica out of Birba Sangue Magnifica.",
+      "bio": "Tessa Sangue Magnifica is a beautiful black female, out of ZZ Top Sangue Magnifica and Birba Sangue Magnifica.",
       "owner": "Kelvin Omigie/BELLISSIMO GENI"
     },
     {
@@ -141,6 +139,60 @@
       "bio": "Gyda Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
     },
     {
+      "id": "yasmin-bellissimo-geni",
+      "name": "Yasmin Bellissimo Geni",
+      "sex": "Female",
+      "dateOfBirth": "2025-08-02",
+      "colour": "Brindle",
+      "photo": "assets/puppies/yasmin-bellissimo-geni.webp",
+      "gallery": [],
+      "registration": "",
+      "status": "Past production",
+      "group": "past-production",
+      "sireId": "branco-custodi-nos",
+      "damId": "anthie-custodi-nos",
+      "bloodline": "Bellissimo Geni · Custodi Nos",
+      "health": "",
+      "achievements": "",
+      "bio": "Yasmin Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
+    },
+    {
+      "id": "diesel-bellissimo-geni",
+      "name": "Diesel Bellissimo Geni",
+      "sex": "Male",
+      "dateOfBirth": "2025-10-26",
+      "colour": "Black",
+      "photo": "assets/dogs/diesel-bellissimo-geni.avif",
+      "gallery": [],
+      "registration": "NG-CCKC2026389197AE",
+      "status": "Past production",
+      "group": "past-production",
+      "sireId": "branco-custodi-nos",
+      "damId": "tessa-sangue-magnifica",
+      "bloodline": "Bellissimo Geni · Custodi Nos · Sangue Magnifica",
+      "health": "",
+      "achievements": "",
+      "bio": "Diesel Bellissimo Geni is a verified Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica."
+    },
+    {
+      "id": "rocco-bellissimo-geni",
+      "name": "Rocco Bellissimo Geni",
+      "sex": "Male",
+      "dateOfBirth": "2025-10-26",
+      "colour": "Black",
+      "photo": "assets/dogs/rocco-bellissimo-geni.avif",
+      "gallery": [],
+      "registration": "NG-CCKC20267B948A24",
+      "status": "Past production",
+      "group": "past-production",
+      "sireId": "branco-custodi-nos",
+      "damId": "tessa-sangue-magnifica",
+      "bloodline": "Bellissimo Geni · Custodi Nos · Sangue Magnifica",
+      "health": "",
+      "achievements": "",
+      "bio": "Rocco Bellissimo Geni is a verified Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica."
+    },
+    {
       "id": "dragoslav-custodi-nos",
       "name": "Dragoslav Custodi Nos",
       "sex": "male",
@@ -172,9 +224,9 @@
       "sireId": "igon-del-dyrium",
       "damId": "bisera-custodi-nos",
       "bloodline": "Custodi Nos",
-      "health": "HD A (as recorded on the supplied pedigree)",
+      "health": "Official HD A · ED 0 · OCD free",
       "achievements": "",
-      "bio": ""
+      "bio": "Himera Custodi Nos is a verified pedigree ancestor, by Igon del Dyrium out of Bisera Custodi Nos. Her supplied health status is Official HD A, ED 0, OCD free."
     },
     {
       "id": "roman-custodi-nos",
@@ -210,7 +262,7 @@
       "sireId": "limoncello-sangue-magnifica-custodi-nos",
       "damId": "branella-custodi-nos",
       "bloodline": "Custodi Nos",
-      "health": "HD A (as recorded on the supplied pedigree)",
+      "health": "HD A · ED 0",
       "achievements": "",
       "bio": ""
     },
