@@ -31,7 +31,7 @@
       var quick = document.createElement('nav');
       quick.className = 'mobile-quick-links';
       quick.setAttribute('aria-label', 'Quick links');
-      quick.innerHTML = '<a href="puppies.html">Puppies</a><a href="dogs.html">Our Dogs</a>';
+      quick.innerHTML = '<a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a>';
       var reserve = header.querySelector('.nav-cta');
       header.insertBefore(quick, reserve || null);
     }
