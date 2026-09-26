@@ -43,7 +43,10 @@ Six kennel-supplied puppy/young-dog photographs arrived with voice notes. They m
 - whether each image is intended for public listing, general gallery use, or internal reference
 
 ### Cloudflare production configuration
-Wrangler now auto-provisions ADMIN KV, RESERVATIONS KV and the R2 media bucket. The only remaining production inputs are Cloudflare authentication, an ADMIN_PASSWORD Worker secret, and the deployed Worker URL for the admin sign-in screen.
+Wrangler now auto-provisions ADMIN KV, RESERVATIONS KV and the R2 media bucket. The deployment workflow seeds verified baseline records once and opens the backend configuration PR automatically. The remaining production inputs are the Cloudflare API token/account ID, the admin-password secret, running the deployment workflow, and merging the generated configuration PR.
+
+### Custom domain
+Repository-side activation is implemented. Final activation still depends on control of `bellissimogeni.com`, the required GitHub Pages DNS records, and a `PAGES_ADMIN_TOKEN` secret with Pages/Administration write access.
 
 ### Payment
 Payment remains disabled by design until approved:
