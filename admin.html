@@ -291,7 +291,7 @@ let API_BASE = normalizeApiBase(window.BG_WEBHOOK_URL || '');
 const backendUrlInput = document.getElementById('backendUrl');
 if (backendUrlInput) backendUrlInput.value = API_BASE || savedBackendUrl;
 
-fetch('site-config.json', { cache: 'no-store' })
+const apiConfigReady = fetch('site-config.json', { cache: 'no-store' })
   .then(r => r.ok ? r.json() : {})
   .then(config => {
     const discovered = normalizeApiBase(config && config.backendUrl);
@@ -299,16 +299,20 @@ fetch('site-config.json', { cache: 'no-store' })
       API_BASE = discovered;
       if (backendUrlInput) backendUrlInput.value = discovered;
       localStorage.setItem('bg_backend_url', discovered);
-    } else if (!API_BASE && savedBackendUrl) {
+      return API_BASE;
+    }
+    if (!API_BASE && savedBackendUrl) {
       API_BASE = savedBackendUrl;
       if (backendUrlInput) backendUrlInput.value = savedBackendUrl;
     }
+    return API_BASE;
   })
   .catch(() => {
     if (!API_BASE && savedBackendUrl) {
       API_BASE = savedBackendUrl;
       if (backendUrlInput) backendUrlInput.value = savedBackendUrl;
     }
+    return API_BASE;
   });
 // Token stored in memory only — never in localStorage (survives XSS but not page reload)
 let adminToken = null;
@@ -336,6 +340,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   document.getElementById('adminWrap').classList.remove('active');
 });
 async function doLogin() {
+  await apiConfigReady;
   const pw = document.getElementById('loginPw').value;
   API_BASE = normalizeApiBase(document.getElementById('backendUrl')?.value || API_BASE);
   if (!API_BASE) {
@@ -1288,14 +1293,14 @@ async function savePedigree(dogId) {
   if(j.ok){toast('Pedigree updated');renderPedigreeTree(dogId);loadAllData();}else{toast(j.error||'Failed','err');}
 }
 
-(function(){
-  // Try to restore a session token from sessionStorage (survives page reload, cleared on tab close)
-  // NOT localStorage — avoids XSS exposure of persistent credentials
+(async function(){
+  // Restore only after the canonical backend URL has resolved.
+  await apiConfigReady;
   const savedToken = sessionStorage.getItem('bg_session_token');
   if (savedToken) {
     adminToken = savedToken;
     window._bgAdminToken = savedToken;
-    loadAllData();
+    await showAdmin();
   }
 })();
 </script>
