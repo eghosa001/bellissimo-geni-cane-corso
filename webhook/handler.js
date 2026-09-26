@@ -1,3 +1,4 @@
+// Bellissimo Geni owner CMS Worker
 export const STATUS = Object.freeze({
   REQUESTED: 'REQUESTED',
   PAYMENT_PENDING: 'PAYMENT_PENDING',
