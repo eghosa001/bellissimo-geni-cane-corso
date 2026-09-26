@@ -212,6 +212,9 @@
       <h1>Kennel Admin</h1>
       <p class="sub">BELLISSIMO GENI • NIGERIA</p>
     </div>
+    <label>Backend URL</label>
+    <input type="url" id="backendUrl" placeholder="https://bellissimo-geni-webhook.your-subdomain.workers.dev" autocomplete="url">
+    <p class="sub" style="margin:6px 0 14px;text-align:left;letter-spacing:0;text-transform:none">Saved on this device only. Use the Worker URL shown by the deployment workflow.</p>
     <label>Password</label>
     <input type="password" id="loginPw" placeholder="Enter admin password" autocomplete="current-password">
     <button class="btn-login" id="loginBtn">Sign In</button>
@@ -278,7 +281,24 @@
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
-const API_BASE = window.BG_WEBHOOK_URL || '';
+function normalizeApiBase(value) {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+let API_BASE = normalizeApiBase(window.BG_WEBHOOK_URL || localStorage.getItem('bg_backend_url') || '');
+const backendUrlInput = document.getElementById('backendUrl');
+if (backendUrlInput) backendUrlInput.value = API_BASE;
+if (!API_BASE && backendUrlInput) {
+  fetch('site-config.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : {})
+    .then(config => {
+      const discovered = normalizeApiBase(config && config.backendUrl);
+      if (discovered && !backendUrlInput.value) {
+        API_BASE = discovered;
+        backendUrlInput.value = discovered;
+      }
+    })
+    .catch(() => {});
+}
 // Token stored in memory only — never in localStorage (survives XSS but not page reload)
 let adminToken = null;
 let currentPuppyCatalog = [];
@@ -296,7 +316,17 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 });
 async function doLogin() {
   const pw = document.getElementById('loginPw').value;
+  API_BASE = normalizeApiBase(document.getElementById('backendUrl')?.value || API_BASE);
+  if (!API_BASE) {
+    document.getElementById('loginErr').textContent = 'Enter the deployed Worker backend URL.';
+    return;
+  }
+  if (!/^https:\/\//i.test(API_BASE)) {
+    document.getElementById('loginErr').textContent = 'Backend URL must start with https://';
+    return;
+  }
   if (!pw) return;
+  localStorage.setItem('bg_backend_url', API_BASE);
   try {
     const r = await fetch(API_BASE + '/admin/api/login', {
       method: 'POST',
@@ -512,6 +542,7 @@ function renderDogForm(dog) {
             <div class="field"><label>Sire</label><select name="sireId" onchange="checkCircular(this,'damId','${dog?.id||''}')"><option value="">None</option>${sireOpts}</select></div>
             <div class="field"><label>Dam</label><select name="damId" onchange="checkCircular(this,'sireId','${dog?.id||''}')"><option value="">None</option>${damOpts}</select></div>
             <div class="field"><label>Registration</label><input name="registration" value="${esc(dog?.registration||'')}"><span class="hint">AKC / KC / other</span></div>
+            <div class="field"><label>Owner</label><input name="owner" value="${esc(dog?.owner||'')}" placeholder="e.g. Kelvin Omigie/BELLISSIMO GENI"></div>
             <div class="field"><label>Publish Status</label><select name="publishStatus"><option value="published" ${dog?.publishStatus!=='draft'?'selected':''}>Published</option><option value="draft" ${dog?.publishStatus==='draft'?'selected':''}>Draft</option></select><span class="hint">Draft hides from public site</span></div>
             <div class="field"><label>Status</label><select name="status"><option value="active" ${dog?.status==='active'||!dog?.status?'selected':''}>Active</option><option value="retired" ${dog?.status==='retired'?'selected':''}>Retired</option><option value="development" ${dog?.status==='development'?'selected':''}>Development</option></select></div>
             <div class="field full"><label>Photo</label>
@@ -588,7 +619,7 @@ async function saveDog(e, id) {
   e.preventDefault();
   const f = e.target;
   const body = {};
-  ['name','sex','colour','dateOfBirth','sireId','damId','registration','status','photo','bio','health','achievements','publishStatus'].forEach(k => {
+  ['name','sex','colour','dateOfBirth','sireId','damId','registration','owner','status','photo','bio','health','achievements','publishStatus'].forEach(k => {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
   if(!body.publishStatus) body.publishStatus = 'published';
@@ -1098,15 +1129,16 @@ function toast(msg, type) {
 
 // ── Escaper ─────────────────────────────────────────────────────────────────
 function sanitizeHTML(html) {
-    // Strip dangerous tags and attributes — preserves safe HTML for the content editor
+    // Strip executable/embedded content and inline event handlers before publishing.
     return String(html || '')
-      .replace(/<script[^>]*>[sS]*?<\/script>/gi, '')
-      .replace(/on\w+\s*=/gi, '')
-      .replace(/<iframe[^>]*>[sS]*?<\/iframe>/gi, '')
-      .replace(/<form[^>]*>[sS]*?<\/form>/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/<object[^>]*>[sS]*?<\/object>/gi, '')
-      .replace(/<embed[^>]*[\/>]/gi, '');
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+      .replace(/<form[^>]*>[\s\S]*?<\/form>/gi, '')
+      .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '')
+      .replace(/<embed[^>]*[\/>]/gi, '')
+      .replace(/\son\w+\s*=\s*(["']).*?\1/gi, '')
+      .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+      .replace(/javascript:/gi, '');
   }
 
 function esc(s) {
@@ -1122,14 +1154,25 @@ function navigate(page) {
 // ── Init ────────────────────────────────────────────────────────────────────
 // -- Edit Content Pages --
 async function renderEditContent() {
-  const PAGES = ['about','breeding','standards','socialization','social','contact'];
-  const results = await Promise.all(PAGES.map(p => apiFetch('/admin/api/content?page='+encodeURIComponent(p)).then(r=>({page:p,data:r.data||{html:''}}))));
+  const PAGES = ['about','breeding','standards','socialization','social'];
+  const results = await Promise.all(PAGES.map(async p => {
+    const remote = await apiFetch('/admin/api/content?page='+encodeURIComponent(p));
+    if (remote?.data?.html) return { page:p, data:remote.data };
+    try {
+      const source = await fetch(p+'.html', { cache:'no-store' }).then(r => r.ok ? r.text() : '');
+      const doc = new DOMParser().parseFromString(source, 'text/html');
+      const main = doc.querySelector('main');
+      return { page:p, data:{ html:main ? main.innerHTML : '' } };
+    } catch (_) {
+      return { page:p, data:{ html:'' } };
+    }
+  }));
   const tabs = PAGES.map((p,i) => '<div class="content-tab'+(i===0?' active':'')+'" onclick="switchContentTab('+JSON.stringify(p)+',this)">'+p.charAt(0).toUpperCase()+p.slice(1)+'</div>').join('');
   // Build editors populated with fetched content
   const pageMap = {};
   results.forEach(r => { pageMap[r.page] = r.data && r.data.html ? r.data.html : ''; });
   const editors = PAGES.map(p => `<div class="content-editor" id="editor-${p}" style="display:${p===PAGES[0]?'block':'none'}"><textarea name="html" rows="20">${esc(pageMap[p]||'')}</textarea><div style="margin-top:12px" class="btn-group"><button class="btn btn-gold" onclick="saveContent(${JSON.stringify(p)})">Save Content</button><span class="muted" style="font-size:11px;margin-left:8px">Saves to KV - goes live immediately</span></div></div>`).join('');
-  return '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">These pages are currently static HTML. Edit the HTML below to update live content without touching code.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
+  return '<div class="panel"><div class="panel-header"><h3>Edit Website Pages</h3></div><div class="panel-body"><p class="muted" style="margin-bottom:16px">Edit these script-safe public pages. When no saved CMS version exists, the current static page is loaded as the starting point.</p><div class="content-tabs">'+tabs+'</div>'+editors+'</div></div>';
 }
 window.switchContentTab = function(page, el) {
   document.querySelectorAll('.content-tab').forEach(t=>t.classList.remove('active'));

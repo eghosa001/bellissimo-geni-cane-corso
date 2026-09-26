@@ -1,0 +1,106 @@
+name: Deploy Bellissimo Worker
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ADMIN_PASSWORD: ${{ secrets.BELLISSIMO_ADMIN_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate deployment secrets
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+          test -n "$ADMIN_PASSWORD" || { echo "Missing BELLISSIMO_ADMIN_PASSWORD"; exit 1; }
+
+      - name: Install Worker dependencies
+        working-directory: webhook
+        run: npm install
+
+      - name: Test Worker
+        working-directory: webhook
+        run: |
+          npm test
+          npm run check
+
+      - name: Deploy and auto-provision KV/R2
+        id: deploy
+        working-directory: webhook
+        run: |
+          export WRANGLER_OUTPUT_FILE_PATH="$RUNNER_TEMP/wrangler-output.ndjson"
+          npx wrangler deploy
+          printf '%s' "$ADMIN_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD
+          npx wrangler deploy
+          worker_url="$(grep -Eo 'https://[^"[:space:]]+\.workers\.dev' "$WRANGLER_OUTPUT_FILE_PATH" | tail -1)"
+          test -n "$worker_url" || { echo "Could not determine workers.dev deployment URL"; cat "$WRANGLER_OUTPUT_FILE_PATH"; exit 1; }
+          echo "worker_url=$worker_url" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Bellissimo Worker deployed"
+            echo
+            echo "Worker: $worker_url"
+            echo
+            echo "Wrangler automatically provisions the ADMIN and RESERVATIONS KV namespaces and UPLOADS R2 bucket."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bootstrap verified public data
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const base = String(process.env.WORKER_URL || '').replace(/\/+$/, '');
+          const password = String(process.env.ADMIN_PASSWORD || '');
+          const dogs = JSON.parse(fs.readFileSync('data/dogs.json','utf8'));
+          const puppies = JSON.parse(fs.readFileSync('data/puppies.json','utf8'));
+          const payload = {
+            dogs: dogs.dogs || [],
+            puppies: puppies.puppies || [],
+            litters: puppies.litters || [],
+            gallery: puppies.gallery || []
+          };
+          fetch(base + '/admin/api/bootstrap', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + password, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).then(async response => {
+            const body = await response.text();
+            if (!response.ok) throw new Error('Bootstrap failed: ' + response.status + ' ' + body);
+            console.log(body);
+          }).catch(error => { console.error(error); process.exit(1); });
+          EOF
+
+      - name: Prepare public-site backend configuration
+        env:
+          WORKER_URL: ${{ steps.deploy.outputs.worker_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const url = String(process.env.WORKER_URL || '').replace(/\/+$/, '');
+          if (!/^https:\/\/[^/]+\.workers\.dev$/i.test(url)) throw new Error('Unexpected Worker URL: ' + url);
+          fs.writeFileSync('site-config.json', JSON.stringify({ backendUrl: url }, null, 2) + '\n');
+          EOF
+          branch="configure-worker-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add site-config.json
+          git commit -m "Configure public CMS backend"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "Configure Bellissimo CMS backend" --body "Connects the public website and admin panel to the Worker deployed by run ${GITHUB_RUN_ID}. The Worker URL is public configuration, not a secret."

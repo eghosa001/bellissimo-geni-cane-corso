@@ -36,8 +36,23 @@
       header.insertBefore(quick, reserve || null);
     }
 
-    var toggle = document.querySelector('.mobile-nav-toggle');
     var menu = document.querySelector('.mobile-menu');
+    if (menu) {
+      menu.innerHTML = [
+        '<a href="index.html">Home</a>',
+        '<a href="dogs.html">Our Dogs</a>',
+        '<a href="puppies.html">Puppies</a>',
+        '<a href="pedigree.html">Pedigree</a>',
+        '<a href="breeding.html">Breeding</a>',
+        '<a href="gallery.html">Gallery</a>',
+        '<a href="about.html">About</a>',
+        '<a href="social.html">Social</a>',
+        '<a href="contact.html#export">Export</a>',
+        '<a href="reserve.html">Reserve</a>',
+        '<a href="contact.html">Contact</a>'
+      ].join('');
+    }
+    var toggle = document.querySelector('.mobile-nav-toggle');
     if (toggle && menu) {
       toggle.addEventListener('click', function () {
         var open = menu.classList.toggle('open');
@@ -59,6 +74,7 @@
       if (el.tagName === 'A') el.href = CONTACT.whatsappDirect;
     });
     initReveal();
+    hydrateManagedContent();
   });
 
   function initReveal() {
@@ -110,28 +126,78 @@
     } catch (_) {}
   }
 
-  // Data loader — tries public API first (no auth), then admin API with stored token, then local JSON
+  // Data loader — discovers the deployed public API, then falls back to static JSON.
+  var apiBasePromise = null;
+
+  function normalizeApiBase(value) {
+    return String(value || '').trim().replace(/\/+$/, '');
+  }
+
+  function resolveApiBase() {
+    var direct = normalizeApiBase(window.BG_WEBHOOK_URL || '');
+    if (direct) return Promise.resolve(direct);
+    if (apiBasePromise) return apiBasePromise;
+
+    apiBasePromise = fetch('site-config.json', { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : {}; })
+      .then(function(config) {
+        var discovered = normalizeApiBase(config && config.backendUrl);
+        if (discovered) window.BG_WEBHOOK_URL = discovered;
+        return discovered;
+      })
+      .catch(function() { return ''; });
+
+    return apiBasePromise;
+  }
+
+  function hydrateManagedContent() {
+    var file = (window.location.pathname.split('/').pop() || '').toLowerCase();
+    var page = file.replace(/\.html$/, '');
+    var managedPages = ['about','breeding','standards','socialization','social'];
+    if (managedPages.indexOf(page) === -1) return Promise.resolve(false);
+
+    return resolveApiBase().then(function(apiBase) {
+      if (!apiBase) return null;
+      return fetch(apiBase + '/api/content?page=' + encodeURIComponent(page), {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      }).then(function(r) { return r.ok ? r.json() : null; });
+    }).then(function(payload) {
+      var html = payload && payload.data && String(payload.data.html || '').trim();
+      if (!html) return false;
+      var main = document.querySelector('main');
+      if (!main) return false;
+      main.innerHTML = html;
+      if (!main.id) main.id = 'main';
+      initReveal();
+      return true;
+    }).catch(function() {
+      return false;
+    });
+  }
+
   function loadAdminJSON(path, fallbackPath) {
-    var apiBase = window.BG_WEBHOOK_URL || '';
-    if (apiBase) {
-      // Step 1: Try unauthenticated public endpoint (/api/dogs, /api/puppies, etc.)
-      return fetch(apiBase + '/api/' + path, { headers: { 'Accept': 'application/json' } })
-        .then(function(r) { if (r.ok) return r.json(); throw new Error('public_fail'); })
-        .catch(function() {
-          // Step 2: Try authenticated admin endpoint if token exists
-          var token = window._bgAdminToken || '';
-          if (token) {
-            return fetch(apiBase + '/admin/api/' + path, {
-              headers: Object.assign({ 'Accept': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {})
-            }).then(function(r) { if (r.ok) return r.json(); throw new Error('admin_fail'); });
-          }
-          // Step 3: Fall back to local JSON file
-          if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
-          throw new Error('no_data');
-        });
-    }
-    if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
-    throw new Error('no_data');
+    return resolveApiBase().then(function(apiBase) {
+      if (apiBase) {
+        // Step 1: Try unauthenticated public endpoint (/api/dogs, /api/puppies, etc.)
+        return fetch(apiBase + '/api/' + path, { headers: { 'Accept': 'application/json' } })
+          .then(function(r) { if (r.ok) return r.json(); throw new Error('public_fail'); })
+          .catch(function() {
+            // Step 2: Try authenticated admin endpoint if token exists.
+            var token = window._bgAdminToken || '';
+            if (token) {
+              return fetch(apiBase + '/admin/api/' + path, {
+                headers: Object.assign({ 'Accept': 'application/json' }, { 'Authorization': 'Bearer ' + token })
+              }).then(function(r) { if (r.ok) return r.json(); throw new Error('admin_fail'); });
+            }
+            // Step 3: Keep the public site usable even if the Worker is unavailable.
+            if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
+            throw new Error('no_data');
+          });
+      }
+      if (fallbackPath) return fetch(fallbackPath).then(function(r) { return r.json(); });
+      throw new Error('no_data');
+    });
   }
 
   function whatsappMessage(text) {
@@ -199,6 +265,8 @@
     esc: esc,
     loadJSON: loadJSON,
     loadAdminJSON: loadAdminJSON,
+    resolveApiBase: resolveApiBase,
+    hydrateManagedContent: hydrateManagedContent,
     dogById: dogById,
     validPhone: validPhone,
     track: track,

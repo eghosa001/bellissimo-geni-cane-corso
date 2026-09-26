@@ -48,7 +48,7 @@
 <script>
 (function(){
   var form=document.getElementById('resForm'),sum=document.getElementById('summary');
-var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'',WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
+var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'';
 var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
 var PUPPS=[],family=null;
 function ref(){var d=new Date();return 'BG-'+d.getFullYear()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
@@ -77,7 +77,7 @@ var text=['Hello Bellissimo Geni, I would like to reserve a puppy.','','Referenc
 sum.innerHTML='<div class="ref">Reservation reference: <strong>'+BG.esc(rec.ref)+'</strong> — '+BG.esc(p.name)+'</div><p class="hint">Saved on this device. Send it to the kennel to confirm availability and payment steps.</p><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" target="_blank" rel="noopener" href="'+BG.whatsappMessage(text)+'">Confirm via WhatsApp →</a><a class="btn ghost" href="contact.html">Contact instead</a></div>';
 BG.track('reservation_request',p.id);
 var payload={action:'reserve',version:2,data:{puppy:p.id,puppyName:p.name,name:name,phone:phone,email:email,message:msg,ref:rec.ref,status:'REQUESTED'},timestamp:rec.at};
-function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},payload,{token:token||null})).replace(/\u200B/g,'')}).then(function(r){return r.json().catch(function(){return null;});}).then(function(j){if(j&&j.payment_url){sum.insertAdjacentHTML('beforeend','<p class="hint">Online payment is ready: <a class="btn gold" target="_blank" rel="noopener" href="'+BG.esc(j.payment_url)+'">Pay deposit to confirm →</a></p>');}else if(j&&j.error){sum.insertAdjacentHTML('beforeend','<p class="hint">Reservation status: '+BG.esc(String(j.error).replace(/_/g,' '))+'.</p>');}}).catch(function(){});}catch(err){}}
+function postWebhook(token){BG.resolveApiBase().then(function(base){if(!base)return null;return fetch(base+'/webhook/reserve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},payload,{token:token||null})).replace(/\u200B/g,'')});}).then(function(resp){return resp?resp.json().catch(function(){return null;}):null;}).then(function(j){if(j&&j.payment_url){sum.insertAdjacentHTML('beforeend','<p class="hint">Online payment is ready: <a class="btn gold" target="_blank" rel="noopener" href="'+BG.esc(j.payment_url)+'">Pay deposit to confirm →</a></p>');}else if(j&&j.error){sum.insertAdjacentHTML('beforeend','<p class="hint">Reservation status: '+BG.esc(String(j.error).replace(/_/g,' '))+'.</p>');}}).catch(function(){});}
 if(RECAPTCHA_SITE_KEY&&typeof grecaptcha!=='undefined'){grecaptcha.ready(function(){grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'reserve'}).then(function(token){BG.track('captcha_success',p.id);postWebhook(token);});});}
 else{setTimeout(function(){postWebhook(null);},500);}
 });

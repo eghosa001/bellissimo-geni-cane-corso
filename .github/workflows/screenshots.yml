@@ -23,6 +23,15 @@ on:
       - "testimonials.html"
       - "data/puppies.json"
       - "assets/**"
+      - "admin.html"
+      - "webhook/**"
+      - "CNAME"
+      - "robots.txt"
+      - "sitemap.xml"
+      - "scripts/set-production-domain.mjs"
+      - ".github/workflows/activate-domain.yml"
+      - ".github/workflows/deploy-worker.yml"
+      - "site-config.json"
   workflow_run:
     workflows: ["GitHub Pages"]
     types: [completed]
@@ -60,6 +69,56 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
+
+      - name: Regression-test remaining production gaps
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const assert = (ok, msg) => { if (!ok) throw new Error(msg); };
+
+          const admin = fs.readFileSync('admin.html', 'utf8');
+          assert(/name="owner"/.test(admin), 'Admin dog editor must expose an owner field');
+          assert(/\['name','sex','colour','dateOfBirth','sireId','damId','registration','owner','status'/.test(admin), 'Dog save payload must persist owner');
+
+          const wrangler = fs.readFileSync('webhook/wrangler.toml', 'utf8');
+          assert(!/\bid\s*=\s*""/.test(wrangler), 'Wrangler config must not contain blank KV IDs');
+          assert(!/\bbucket_name\s*=\s*""/.test(wrangler), 'Wrangler config must not contain a blank R2 bucket name');
+          assert(/\[\[kv_namespaces\]\][\s\S]*binding\s*=\s*"RESERVATIONS"/.test(wrangler), 'RESERVATIONS auto-provision binding missing');
+          assert(/\[\[kv_namespaces\]\][\s\S]*binding\s*=\s*"ADMIN"/.test(wrangler), 'ADMIN auto-provision binding missing');
+          assert(/\[\[r2_buckets\]\][\s\S]*binding\s*=\s*"UPLOADS"/.test(wrangler), 'UPLOADS auto-provision binding missing');
+
+          const pkg = JSON.parse(fs.readFileSync('webhook/package.json', 'utf8'));
+          assert(pkg.devDependencies && pkg.devDependencies.wrangler, 'Wrangler must be pinned for automatic provisioning');
+
+          const site = fs.readFileSync('site.js', 'utf8');
+          for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
+            assert(site.includes('>' + label + '<'), 'Canonical mobile menu missing ' + label);
+          }
+          assert(site.includes('function resolveApiBase()'), 'Public site must resolve its deployed CMS backend');
+          assert(site.includes("fetch('site-config.json'"), 'Public site must load site-config.json before falling back to static JSON');
+          const siteConfig = JSON.parse(fs.readFileSync('site-config.json', 'utf8'));
+          assert(typeof siteConfig.backendUrl === 'string', 'site-config.json must expose backendUrl');
+          assert(!siteConfig.backendUrl || /^https:\/\//.test(siteConfig.backendUrl), 'Configured backend URL must be HTTPS');
+          assert(admin.includes("fetch('site-config.json'"), 'Admin login must auto-discover the deployed Worker URL');
+          const domainWorkflow = fs.readFileSync('.github/workflows/activate-domain.yml', 'utf8');
+          assert(domainWorkflow.includes('PAGES_ADMIN_TOKEN'), 'Custom-domain activation must require a Pages admin token');
+          assert(domainWorkflow.includes('gh api --method PUT') && domainWorkflow.includes('repos/$GITHUB_REPOSITORY/pages'), 'Custom-domain activation must configure GitHub Pages via API');
+          assert(domainWorkflow.includes('185.199.108.153'), 'Custom-domain activation must verify GitHub Pages DNS targets');
+
+          const reserve = fs.readFileSync('reserve.html', 'utf8');
+          assert(site.includes('resolveApiBase: resolveApiBase'), 'Shared site helper must expose backend resolution to interactive flows');
+          assert(reserve.includes('BG.resolveApiBase()'), 'Reservation webhook must resolve the deployed backend at submission time');
+          assert(site.includes('function hydrateManagedContent()'), 'Managed static pages must consume saved CMS content');
+          assert(site.includes("'/api/content?page='"), 'Managed content must load from the public Worker content endpoint');
+          assert(site.includes("['about','breeding','standards','socialization','social']"), 'Only script-safe content pages may be live-replaced');
+          assert(admin.includes("const PAGES = ['about','breeding','standards','socialization','social'];"), 'Admin content editor must match the live-managed page set');
+          assert(admin.includes("fetch(p+'.html'"), 'Empty CMS records must fall back to the current static page content for editing');
+          EOF
+
+      - name: Run Worker unit tests
+        run: |
+          node --test webhook/test.js
+          node --check webhook/handler.js
 
       - name: Choose screenshot target
         run: |

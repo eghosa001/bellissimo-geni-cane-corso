@@ -16,12 +16,12 @@ For each photograph supplied on 24 September 2026, provide or confirm:
 Do not infer these values from appearance.
 
 ## 2. Cloudflare production setup
-Needed before the owner CMS can be used in production:
-- ADMIN KV namespace
-- RESERVATIONS KV namespace
-- R2 media bucket
-- strong ADMIN_PASSWORD stored as a Worker secret
-- final deployed Worker URL
+KV/R2 creation, verified-data seeding and backend URL handoff are automated. Before the owner CMS can be used in production, the repository still needs:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- strong `BELLISSIMO_ADMIN_PASSWORD`
+- one run of **Deploy Bellissimo Worker**, followed by merging its generated configuration PR
+- for `bellissimogeni.com`: `PAGES_ADMIN_TOKEN` and the required DNS records
 
 Never commit passwords, API keys or private credentials.
 
