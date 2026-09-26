@@ -404,10 +404,7 @@ async function showAdmin() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminWrap').classList.add('active');
   document.getElementById('topDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'short',day:'numeric'});
-  if(adminToken) {
-    await ensureBaselineSeeded();
-    loadAllData();
-  }
+  if(adminToken) loadAllData();
 }
 
 // ── Navigation ──────────────────────────────────────────────────────────────
@@ -434,44 +431,99 @@ function closeMobile() { sidebar.classList.remove('open'); overlayBg.classList.r
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
   if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
-  const r = await fetch(API_BASE + path, { ...opts, headers });
-  return r.json();
+  const controller = new AbortController();
+  const timeoutMs = Number(opts.timeoutMs || 15000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const fetchOpts = { ...opts, headers, signal: controller.signal };
+    delete fetchOpts.timeoutMs;
+    const r = await fetch(API_BASE + path, fetchOpts);
+    const text = await r.text();
+    let payload = {};
+    try { payload = text ? JSON.parse(text) : {}; } catch (_) {
+      throw new Error('Server returned an invalid response.');
+    }
+    if (!r.ok && !payload.error) payload.error = 'HTTP ' + r.status;
+    return payload;
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('Server request timed out.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function loadAllData() {
-  const [dogsRes, pupsRes, resRes] = await Promise.all([
-    apiFetch('/admin/api/dogs'),
-    apiFetch('/admin/api/puppies'),
-    apiFetch('/admin/api/reservations')
-  ]);
-  currentDogs = dogsRes.data || [];
-  const pups = pupsRes.data || [];
-  currentPuppyCatalog = pups.map(p => p.id);
-  document.getElementById('dogCount').textContent = currentDogs.length;
-  document.getElementById('pupCount').textContent = pups.length;
-  document.getElementById('resCount').textContent = (resRes.data||[]).length;
-  renderPage('dashboard');
+let baselineSeedAttempted = false;
+async function loadAllData(options = {}) {
+  const area = document.getElementById('contentArea');
+  try {
+    const [dogsRes, pupsRes, resRes] = await Promise.all([
+      apiFetch('/admin/api/dogs'),
+      apiFetch('/admin/api/puppies'),
+      apiFetch('/admin/api/reservations')
+    ]);
+
+    if (dogsRes.error === 'unauthorized' || pupsRes.error === 'unauthorized' || resRes.error === 'unauthorized') {
+      sessionStorage.removeItem('bg_session_token');
+      adminToken = null;
+      window._bgAdminToken = null;
+      document.getElementById('loginScreen').style.display = '';
+      document.getElementById('adminWrap').classList.remove('active');
+      document.getElementById('loginErr').textContent = 'Your admin session expired. Sign in again.';
+      return;
+    }
+
+    currentDogs = dogsRes.data || [];
+    const pups = pupsRes.data || [];
+    currentPuppyCatalog = pups.map(p => p.id);
+    currentPups = pups;
+    document.getElementById('dogCount').textContent = currentDogs.length;
+    document.getElementById('pupCount').textContent = pups.length;
+    document.getElementById('resCount').textContent = (resRes.data||[]).length;
+
+    await renderPage('dashboard');
+
+    if (!baselineSeedAttempted && currentDogs.length === 0 && pups.length === 0) {
+      baselineSeedAttempted = true;
+      toast('Restoring the verified catalogue…');
+      ensureBaselineSeeded()
+        .then(() => loadAllData({ skipSeed: true }))
+        .catch(() => toast('Catalogue restore failed. You can still use the admin panel.', 'err'));
+    }
+  } catch (e) {
+    if (area) {
+      area.innerHTML = '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>Could not load admin data</h3><p class="muted">' + esc(e.message || 'Connection failed') + '</p><button class="btn btn-gold" onclick="loadAllData()">Retry</button></div></div>';
+    }
+    toast(e.message || 'Could not load admin data', 'err');
+  }
 }
 
 // ── Page router ─────────────────────────────────────────────────────────────
 async function renderPage(page) {
   const area = document.getElementById('contentArea');
   area.innerHTML = '<p class="muted" style="padding:40px;text-align:center">Loading…</p>';
-  switch(page) {
-    case 'dashboard':   area.innerHTML = await renderDashboard(); break;
-    case 'dogs':        area.innerHTML = await renderDogsList(); break;
-    case 'add-dog':     area.innerHTML = await renderDogForm(null); break;
-    case 'puppies':     area.innerHTML = await renderPuppiesList(); break;
-    case 'litters':     area.innerHTML = await renderLittersList(); break;
-    case 'add-puppy':   area.innerHTML = await renderPuppyForm(null); break;
-    case 'reservations':area.innerHTML = await renderReservationsList(); break;
-    case 'testimonials':area.innerHTML = await renderTestimonialsList(); break;
-    case 'gallery':     area.innerHTML = await renderGalleryList(); break;
-    case 'edit-content':area.innerHTML = await renderEditContent(); break;
-    case 'pedigree-editor':area.innerHTML = await renderPedigreeEditor(); break;
-    case 'audit':       area.innerHTML = await renderAuditTrail(); break;
-    case 'settings':    area.innerHTML = await renderSettings(); break;
-    default:            area.innerHTML = '<p class="muted" style="padding:40px">Unknown page.</p>';
+  try {
+    switch(page) {
+      case 'dashboard':   area.innerHTML = await renderDashboard(); break;
+      case 'dogs':        area.innerHTML = await renderDogsList(); break;
+      case 'add-dog':     area.innerHTML = await renderDogForm(null); break;
+      case 'puppies':
+        area.innerHTML = renderPuppiesList();
+        await refreshPuppies();
+        break;
+      case 'litters':     area.innerHTML = await renderLittersList(); break;
+      case 'add-puppy':   area.innerHTML = await renderPuppyForm(null); break;
+      case 'reservations':area.innerHTML = await renderReservationsList(); break;
+      case 'testimonials':area.innerHTML = await renderTestimonialsList(); break;
+      case 'gallery':     area.innerHTML = await renderGalleryList(); break;
+      case 'edit-content':area.innerHTML = await renderEditContent(); break;
+      case 'pedigree-editor':area.innerHTML = await renderPedigreeEditor(); break;
+      case 'audit':       area.innerHTML = await renderAuditTrail(); break;
+      case 'settings':    area.innerHTML = await renderSettings(); break;
+      default:            area.innerHTML = '<p class="muted" style="padding:40px">Unknown page.</p>';
+    }
+  } catch (e) {
+    area.innerHTML = '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>Could not load this page</h3><p class="muted">' + esc(e.message || 'Connection failed') + '</p><button class="btn btn-gold" onclick="renderPage(\'' + page + '\')">Retry</button></div></div>';
   }
 }
 
@@ -706,8 +758,6 @@ function renderPuppiesList() {
       <button class="btn" onclick="navigate('litters')">Manage Litters</button>
     </div>
     <div id="puppiesContent"><p class="muted" style="padding:20px">Loading…</p></div>`;
-  // Load puppy data immediately so page does not stay stuck on "Loading..."
-  refreshPuppies();
 }
 window.filterPups = function(term) {
   const status = document.getElementById('pupStatusFilter')?.value || '';
