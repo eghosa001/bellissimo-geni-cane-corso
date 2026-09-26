@@ -233,6 +233,9 @@ jobs:
             if (await muranoCards.count() !== 2) {
               throw new Error('Repeated pedigree ancestor Sangue Magnifica Murano must remain visible in both verified branches');
             }
+            if (await page.locator('#pedigree-shell .generation-block').count() !== 4) {
+              throw new Error('Tessa supplied pedigree should stop after its four verified ancestor generations');
+            }
             if (/microchip|tattoo/i.test(tessaPedigree.replace(/Microchip numbers and private owner details are not displayed publicly\./i,''))) {
               throw new Error('Private pedigree identifiers must not be exposed');
             }
