@@ -1465,12 +1465,19 @@ button{font:inherit}
   .reference-legacy-signature{display:none}
 }
 
-/* Framing safety: kennel photography must keep the full dog/head visible. */
-.featured-dog-card img,
+/* Photo framing: fill editorial cards without the dark pillar-box gutters.
+   Source files stay untouched at their original resolution; only presentation changes. */
+.featured-dog-card img{
+  object-fit:cover !important;
+  background:transparent;
+}
+.featured-dog-card:nth-child(1) img{object-position:center 34% !important}
+.featured-dog-card:nth-child(2) img{object-position:center 35% !important}
+.featured-dog-card:nth-child(3) img{object-position:center 38% !important}
 .puppies-photo-frame img{
-  object-fit:contain !important;
-  object-position:center center !important;
-  background:#10110f;
+  object-fit:cover !important;
+  object-position:center 42% !important;
+  background:transparent;
 }
 
 
