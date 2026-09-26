@@ -57,11 +57,14 @@ function render(start){
   result.innerHTML=pic+'<div><p class="eyebrow">DOG RECORD</p><h2>'+BG.esc(start.name)+'</h2><p class="dog-meta">'+BG.esc([start.sex,start.colour,start.registration].filter(Boolean).join(' • ')||'Verified pedigree record')+'</p><p style="margin-top:12px"><a href="dogs.html?dog='+encodeURIComponent(start.id)+'">Open full profile →</a></p></div>';
   shell.innerHTML='';
   var startKey=String(start.id).toLowerCase();
-  var current=[{dog:start,path:[startKey]}];
+  var current=[{dog:start,path:[startKey]}],expanded={};
   for(var g=1;g<=7;g++){
     var parents=[];
     current.forEach(function(node){
       if(!node||!node.dog)return;
+      var nodeKey=String(node.dog.id).toLowerCase();
+      if(expanded[nodeKey])return;
+      expanded[nodeKey]=1;
       [['sireId','SIRE'],['damId','DAM']].forEach(function(pair){
         var id=node.dog[pair[0]];
         if(!id)return;
