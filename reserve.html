@@ -50,7 +50,7 @@
   var form=document.getElementById('resForm'),sum=document.getElementById('summary');
 var RECAPTCHA_SITE_KEY=window.RECAPTCHA_SITE_KEY||'',WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 var sel=document.getElementById('puppy'),hint=document.getElementById('puppyHint');
-var PUPPS=[];
+var PUPPS=[],family=null;
 function ref(){var d=new Date();return 'BG-'+d.getFullYear()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
 function fill(){
   if(!PUPPS.length){
@@ -62,7 +62,7 @@ function fill(){
   sel.innerHTML=PUPPS.map(function(p){return '<option value="'+BG.esc(p.id)+'"'+(p.id===pre?' selected':'')+'>'+BG.esc(p.name)+' — '+BG.esc(p.status)+' — '+BG.esc(p.priceNote||'Price on enquiry')+'</option>';}).join('');
   upd();
 }
-function upd(){var p=PUPPS.find(function(x){return x.id===sel.value;});hint.textContent=p?((p.notes||'')+' Sire: '+(p.sireName||p.sireId||'—')+' · Dam: '+(p.damName||p.damId||'—')):'';}
+function upd(){var p=PUPPS.find(function(x){return x.id===sel.value;});if(!p){hint.textContent='';return;}var sire=family&&family.parentOf(p,'sire'),dam=family&&family.parentOf(p,'dam');hint.textContent=(p.notes||'')+' Sire: '+(sire?sire.record.name:(p.sireName||p.sireId||'—'))+' · Dam: '+(dam?dam.record.name:(p.damName||p.damId||'—'));}
 sel.addEventListener('change',upd);
 form.addEventListener('submit',function(e){
 e.preventDefault();
@@ -81,7 +81,7 @@ function postWebhook(token){if(!WEBHOOK_URL){return;}try{fetch(WEBHOOK_URL,{meth
 if(RECAPTCHA_SITE_KEY&&typeof grecaptcha!=='undefined'){grecaptcha.ready(function(){grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'reserve'}).then(function(token){BG.track('captcha_success',p.id);postWebhook(token);});});}
 else{setTimeout(function(){postWebhook(null);},500);}
 });
-BG.loadAdminJSON('puppies','data/puppies.json').then(function(j){PUPPS=j.puppies||j.data||[];fill();}).catch(function(){PUPPS=[];fill();});
+Promise.all([BG.loadAdminJSON('puppies','data/puppies.json'),BG.loadAdminJSON('dogs','data/dogs.json')]).then(function(rows){var allPuppies=rows[0].puppies||rows[0].data||[],dogs=rows[1].data||rows[1].dogs||[];family=BG.familyIndex([{kind:'dog',records:dogs},{kind:'puppy',records:allPuppies}]);PUPPS=allPuppies.filter(function(p){return p.status==='AVAILABLE';});fill();}).catch(function(){PUPPS=[];fill();});
 })();
 </script>
 </body>
