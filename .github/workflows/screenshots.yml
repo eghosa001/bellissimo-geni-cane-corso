@@ -108,6 +108,11 @@ jobs:
           const reserve = fs.readFileSync('reserve.html', 'utf8');
           assert(site.includes('resolveApiBase: resolveApiBase'), 'Shared site helper must expose backend resolution to interactive flows');
           assert(reserve.includes('BG.resolveApiBase()'), 'Reservation webhook must resolve the deployed backend at submission time');
+          assert(site.includes('function hydrateManagedContent()'), 'Managed static pages must consume saved CMS content');
+          assert(site.includes("'/api/content?page='"), 'Managed content must load from the public Worker content endpoint');
+          assert(site.includes("['about','breeding','standards','socialization','social']"), 'Only script-safe content pages may be live-replaced');
+          assert(admin.includes("const PAGES = ['about','breeding','standards','socialization','social'];"), 'Admin content editor must match the live-managed page set');
+          assert(admin.includes("fetch(p+'.html'"), 'Empty CMS records must fall back to the current static page content for editing');
           EOF
 
       - name: Run Worker unit tests
