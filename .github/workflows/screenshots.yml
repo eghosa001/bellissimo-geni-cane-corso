@@ -100,6 +100,11 @@ jobs:
           assert(typeof siteConfig.backendUrl === 'string', 'site-config.json must expose backendUrl');
           assert(!siteConfig.backendUrl || /^https:\/\//.test(siteConfig.backendUrl), 'Configured backend URL must be HTTPS');
           assert(admin.includes("fetch('site-config.json'"), 'Admin login must auto-discover the deployed Worker URL');
+          const domainWorkflow = fs.readFileSync('.github/workflows/activate-domain.yml', 'utf8');
+          assert(domainWorkflow.includes('PAGES_ADMIN_TOKEN'), 'Custom-domain activation must require a Pages admin token');
+          assert(/gh api[\\s\\S]*repos\\/\\$GITHUB_REPOSITORY\\/pages/.test(domainWorkflow), 'Custom-domain activation must configure GitHub Pages via API');
+          assert(domainWorkflow.includes('185.199.108.153'), 'Custom-domain activation must verify GitHub Pages DNS targets');
+
           const reserve = fs.readFileSync('reserve.html', 'utf8');
           assert(site.includes('resolveApiBase: resolveApiBase'), 'Shared site helper must expose backend resolution to interactive flows');
           assert(reserve.includes('BG.resolveApiBase()'), 'Reservation webhook must resolve the deployed backend at submission time');
