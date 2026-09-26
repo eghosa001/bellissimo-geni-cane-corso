@@ -74,6 +74,7 @@
       if (el.tagName === 'A') el.href = CONTACT.whatsappDirect;
     });
     initReveal();
+    hydrateManagedContent();
   });
 
   function initReveal() {
@@ -147,6 +148,32 @@
       .catch(function() { return ''; });
 
     return apiBasePromise;
+  }
+
+  function hydrateManagedContent() {
+    var file = (window.location.pathname.split('/').pop() || '').toLowerCase();
+    var page = file.replace(/\.html$/, '');
+    var managedPages = ['about','breeding','standards','socialization','social'];
+    if (managedPages.indexOf(page) === -1) return Promise.resolve(false);
+
+    return resolveApiBase().then(function(apiBase) {
+      if (!apiBase) return null;
+      return fetch(apiBase + '/api/content?page=' + encodeURIComponent(page), {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      }).then(function(r) { return r.ok ? r.json() : null; });
+    }).then(function(payload) {
+      var html = payload && payload.data && String(payload.data.html || '').trim();
+      if (!html) return false;
+      var main = document.querySelector('main');
+      if (!main) return false;
+      main.innerHTML = html;
+      if (!main.id) main.id = 'main';
+      initReveal();
+      return true;
+    }).catch(function() {
+      return false;
+    });
   }
 
   function loadAdminJSON(path, fallbackPath) {
@@ -239,6 +266,7 @@
     loadJSON: loadJSON,
     loadAdminJSON: loadAdminJSON,
     resolveApiBase: resolveApiBase,
+    hydrateManagedContent: hydrateManagedContent,
     dogById: dogById,
     validPhone: validPhone,
     track: track,
