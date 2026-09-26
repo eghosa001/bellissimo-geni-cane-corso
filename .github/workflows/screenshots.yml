@@ -23,6 +23,11 @@ on:
       - "testimonials.html"
       - "data/puppies.json"
       - "assets/**"
+      - "admin.html"
+      - "webhook/**"
+      - "CNAME"
+      - "robots.txt"
+      - "sitemap.xml"
   workflow_run:
     workflows: ["GitHub Pages"]
     types: [completed]
@@ -60,6 +65,32 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
+
+      - name: Regression-test remaining production gaps
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const assert = (ok, msg) => { if (!ok) throw new Error(msg); };
+
+          const admin = fs.readFileSync('admin.html', 'utf8');
+          assert(/name="owner"/.test(admin), 'Admin dog editor must expose an owner field');
+          assert(/\['name','sex','colour','dateOfBirth','sireId','damId','registration','owner','status'/.test(admin), 'Dog save payload must persist owner');
+
+          const wrangler = fs.readFileSync('webhook/wrangler.toml', 'utf8');
+          assert(!/\bid\s*=\s*""/.test(wrangler), 'Wrangler config must not contain blank KV IDs');
+          assert(!/\bbucket_name\s*=\s*""/.test(wrangler), 'Wrangler config must not contain a blank R2 bucket name');
+          assert(/\[\[kv_namespaces\]\][\s\S]*binding\s*=\s*"RESERVATIONS"/.test(wrangler), 'RESERVATIONS auto-provision binding missing');
+          assert(/\[\[kv_namespaces\]\][\s\S]*binding\s*=\s*"ADMIN"/.test(wrangler), 'ADMIN auto-provision binding missing');
+          assert(/\[\[r2_buckets\]\][\s\S]*binding\s*=\s*"UPLOADS"/.test(wrangler), 'UPLOADS auto-provision binding missing');
+
+          const pkg = JSON.parse(fs.readFileSync('webhook/package.json', 'utf8'));
+          assert(pkg.devDependencies && pkg.devDependencies.wrangler, 'Wrangler must be pinned for automatic provisioning');
+
+          const site = fs.readFileSync('site.js', 'utf8');
+          for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
+            assert(site.includes('>' + label + '<'), 'Canonical mobile menu missing ' + label);
+          }
+          EOF
 
       - name: Choose screenshot target
         run: |
