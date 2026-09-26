@@ -153,3 +153,33 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
   width:min(100%,380px);
   justify-self:center
 }
+
+
+/* WhatsApp integration — 2026-09-26: preserve full puppy photography and keep key mobile shortcuts in one row. */
+.mobile-quick-links{display:none}
+.puppy-card-media{aspect-ratio:auto;overflow:visible;background:#e8e1d5}
+.puppy-card-media img{width:100%;height:auto;max-height:none;object-fit:contain;object-position:center top;background:#e8e1d5}
+@media(max-width:760px){
+  .puppy-card-media{aspect-ratio:auto}
+  .site-header{
+    min-height:105px;height:105px;padding:0;gap:0;
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:70px 35px;
+  }
+  .site-header>.brand{grid-column:1/4;grid-row:1;justify-self:center;margin:0}
+  .site-header>.mobile-nav-toggle{
+    display:flex;grid-column:1;grid-row:2;align-items:center;justify-content:center;
+    width:100%;min-width:0;height:35px;min-height:35px;margin:0;padding:0 5px;
+    border:0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-radius:0;
+    font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:transparent;
+  }
+  .site-header>.mobile-quick-links{display:contents}
+  .site-header>.mobile-quick-links a{
+    display:flex;align-items:center;justify-content:center;height:35px;padding:0 5px;
+    border-top:1px solid var(--line);border-right:1px solid var(--line);
+    font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;
+  }
+  .site-header>.mobile-quick-links a:nth-child(1){grid-column:2;grid-row:2}
+  .site-header>.mobile-quick-links a:nth-child(2){grid-column:3;grid-row:2;border-right:0}
+  .site-header>.nav-cta{display:none}
+  .mobile-menu{top:105px}
+}
