@@ -1129,15 +1129,16 @@ function toast(msg, type) {
 
 // ── Escaper ─────────────────────────────────────────────────────────────────
 function sanitizeHTML(html) {
-    // Strip dangerous tags and attributes — preserves safe HTML for the content editor
+    // Strip executable/embedded content and inline event handlers before publishing.
     return String(html || '')
-      .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')
-      .replace(/on\w+\s*=/gi, '')
-      .replace(/<iframe[^>]*>[\\s\\S]*?<\\/iframe>/gi, '')
-      .replace(/<form[^>]*>[\\s\\S]*?<\\/form>/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/<object[^>]*>[\\s\\S]*?<\\/object>/gi, '')
-      .replace(/<embed[^>]*[\/>]/gi, '');
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+      .replace(/<form[^>]*>[\s\S]*?<\/form>/gi, '')
+      .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '')
+      .replace(/<embed[^>]*[\/>]/gi, '')
+      .replace(/\son\w+\s*=\s*(["']).*?\1/gi, '')
+      .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+      .replace(/javascript:/gi, '');
   }
 
 function esc(s) {
