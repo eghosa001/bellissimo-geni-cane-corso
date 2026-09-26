@@ -745,6 +745,7 @@ function renderPuppyForm(pup) {
               <input type="file" id="pupFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'pupPhotoUrl')">
               <input name="photo" id="pupPhotoUrl" value="${esc(pup?.photo||'')}" placeholder="Or paste image URL" style="margin-top:6px">
             </div>
+            <div class="field full"><label>Gallery Photo URLs</label><textarea name="gallery" rows="3" placeholder="One image URL per line">${esc((pup?.gallery||[]).join('\n'))}</textarea><span class="hint">Main photo stays separate; add alternate standing/profile photos here.</span></div>
             <div class="field full"><label>Notes</label><textarea name="notes" rows="2">${esc(pup?.notes||'')}</textarea></div>
           </div>
           <div style="margin-top:20px"><button type="submit" class="btn btn-gold">${isEdit?'Save Changes':'Create Puppy'}</button></div>
@@ -759,6 +760,9 @@ async function savePuppy(e, id) {
   ['name','sex','colour','dateOfBirth','sireId','damId','litterId','status','priceNGN','priceNote','photo','notes','publishStatus'].forEach(k => {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
+  if(f.gallery?.value !== undefined) {
+    body.gallery = f.gallery.value.split(/\r?\n|,/).map(v=>v.trim()).filter(Boolean);
+  }
   if(!body.publishStatus) body.publishStatus = 'published';
   if(body.priceNGN) body.priceNGN = Number(body.priceNGN) || null;
   const url = id ? '/admin/api/puppies?id='+encodeURIComponent(id) : '/admin/api/puppies';
