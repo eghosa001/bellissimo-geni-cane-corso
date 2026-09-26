@@ -212,6 +212,9 @@
       <h1>Kennel Admin</h1>
       <p class="sub">BELLISSIMO GENI • NIGERIA</p>
     </div>
+    <label>Backend URL</label>
+    <input type="url" id="backendUrl" placeholder="https://bellissimo-geni-webhook.your-subdomain.workers.dev" autocomplete="url">
+    <p class="sub" style="margin:6px 0 14px;text-align:left;letter-spacing:0;text-transform:none">Saved on this device only. Use the Worker URL shown by the deployment workflow.</p>
     <label>Password</label>
     <input type="password" id="loginPw" placeholder="Enter admin password" autocomplete="current-password">
     <button class="btn-login" id="loginBtn">Sign In</button>
@@ -278,7 +281,12 @@
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
-const API_BASE = window.BG_WEBHOOK_URL || '';
+function normalizeApiBase(value) {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+let API_BASE = normalizeApiBase(window.BG_WEBHOOK_URL || localStorage.getItem('bg_backend_url') || '');
+const backendUrlInput = document.getElementById('backendUrl');
+if (backendUrlInput) backendUrlInput.value = API_BASE;
 // Token stored in memory only — never in localStorage (survives XSS but not page reload)
 let adminToken = null;
 let currentPuppyCatalog = [];
@@ -296,7 +304,17 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 });
 async function doLogin() {
   const pw = document.getElementById('loginPw').value;
+  API_BASE = normalizeApiBase(document.getElementById('backendUrl')?.value || API_BASE);
+  if (!API_BASE) {
+    document.getElementById('loginErr').textContent = 'Enter the deployed Worker backend URL.';
+    return;
+  }
+  if (!/^https:\/\//i.test(API_BASE)) {
+    document.getElementById('loginErr').textContent = 'Backend URL must start with https://';
+    return;
+  }
   if (!pw) return;
+  localStorage.setItem('bg_backend_url', API_BASE);
   try {
     const r = await fetch(API_BASE + '/admin/api/login', {
       method: 'POST',
@@ -512,6 +530,7 @@ function renderDogForm(dog) {
             <div class="field"><label>Sire</label><select name="sireId" onchange="checkCircular(this,'damId','${dog?.id||''}')"><option value="">None</option>${sireOpts}</select></div>
             <div class="field"><label>Dam</label><select name="damId" onchange="checkCircular(this,'sireId','${dog?.id||''}')"><option value="">None</option>${damOpts}</select></div>
             <div class="field"><label>Registration</label><input name="registration" value="${esc(dog?.registration||'')}"><span class="hint">AKC / KC / other</span></div>
+            <div class="field"><label>Owner</label><input name="owner" value="${esc(dog?.owner||'')}" placeholder="e.g. Kelvin Omigie/BELLISSIMO GENI"></div>
             <div class="field"><label>Publish Status</label><select name="publishStatus"><option value="published" ${dog?.publishStatus!=='draft'?'selected':''}>Published</option><option value="draft" ${dog?.publishStatus==='draft'?'selected':''}>Draft</option></select><span class="hint">Draft hides from public site</span></div>
             <div class="field"><label>Status</label><select name="status"><option value="active" ${dog?.status==='active'||!dog?.status?'selected':''}>Active</option><option value="retired" ${dog?.status==='retired'?'selected':''}>Retired</option><option value="development" ${dog?.status==='development'?'selected':''}>Development</option></select></div>
             <div class="field full"><label>Photo</label>
@@ -588,7 +607,7 @@ async function saveDog(e, id) {
   e.preventDefault();
   const f = e.target;
   const body = {};
-  ['name','sex','colour','dateOfBirth','sireId','damId','registration','status','photo','bio','health','achievements','publishStatus'].forEach(k => {
+  ['name','sex','colour','dateOfBirth','sireId','damId','registration','owner','status','photo','bio','health','achievements','publishStatus'].forEach(k => {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
   if(!body.publishStatus) body.publishStatus = 'published';
