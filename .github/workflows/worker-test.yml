@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "webhook/**"
+      - "wrangler.toml"
+      - "package.json"
       - ".github/workflows/worker-test.yml"
   push:
     branches:
       - main
     paths:
       - "webhook/**"
+      - "wrangler.toml"
+      - "package.json"
       - ".github/workflows/worker-test.yml"
 
 permissions:
@@ -19,9 +23,6 @@ jobs:
   worker-test:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    defaults:
-      run:
-        working-directory: webhook
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,3 +31,4 @@ jobs:
       - run: npm install
       - run: npm run check
       - run: npm test
+      - run: npx wrangler deploy --dry-run --outdir .wrangler-dry-run
