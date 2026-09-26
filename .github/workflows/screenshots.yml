@@ -229,6 +229,10 @@ jobs:
             for (const expected of ['Tessa Sangue Magnifica','ZZ Top Sangue Magnifica','Birba Sangue Magnifica','Mockingjay Custodi Nos Sangue Magnifica','Jaro Ivoni Imperial','Sangue Magnifica Murano']) {
               if (!tessaPedigree.includes(expected)) throw new Error('Tessa pedigree missing ' + expected);
             }
+            const muranoCards = page.locator('#pedigree-shell .parent-card strong').filter({ hasText: 'Sangue Magnifica Murano' });
+            if (await muranoCards.count() !== 2) {
+              throw new Error('Repeated pedigree ancestor Sangue Magnifica Murano must remain visible in both verified branches');
+            }
             if (/microchip|tattoo/i.test(tessaPedigree.replace(/Microchip numbers and private owner details are not displayed publicly\./i,''))) {
               throw new Error('Private pedigree identifiers must not be exposed');
             }
