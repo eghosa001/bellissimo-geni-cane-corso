@@ -207,7 +207,7 @@ jobs:
                 };
               });
               if (!state.loaded) throw new Error('Dog card image ' + i + ' failed to load');
-              if (state.fit !== 'contain') throw new Error('Dog card image ' + i + ' may crop the subject');
+              if (state.fit !== 'cover') throw new Error('Dog card image ' + i + ' is not filling its media frame');
               if (state.variance < 18) throw new Error('Dog card image ' + i + ' rendered as a flat/blank frame');
             }
             const dogText = await page.locator('#profile').innerText();
@@ -301,6 +301,19 @@ jobs:
             if (await page.locator('.contact-band .legacy-button-outline').count()) throw new Error('Removed contact CTA returned');
             if (await page.locator('.footer-contact .legacy-button').count()) throw new Error('Removed footer CTA returned');
             if (await page.locator('.reference-social a').count() !== 3) throw new Error('Homepage social links incomplete');
+            const featuredPhotos = page.locator('.featured-dog-card img');
+            if (await featuredPhotos.count() !== 3) throw new Error('Homepage featured dog photography is incomplete');
+            for (let i = 0; i < await featuredPhotos.count(); i++) {
+              const state = await featuredPhotos.nth(i).evaluate(el => ({
+                loaded: el.complete && el.naturalWidth > 0,
+                fit: getComputedStyle(el).objectFit,
+                width: el.getBoundingClientRect().width,
+                height: el.getBoundingClientRect().height
+              }));
+              if (!state.loaded) throw new Error('Homepage featured dog image ' + i + ' failed to load');
+              if (state.fit !== 'cover') throw new Error('Homepage featured dog image ' + i + ' is not filling the card');
+              if (state.width < 1 || state.height < 1) throw new Error('Homepage featured dog image ' + i + ' has no rendered area');
+            }
 
             await page.goto(base + 'gallery.html', { waitUntil: 'networkidle' });
             const gallery = page.locator('.gallery-grid img');
@@ -312,7 +325,7 @@ jobs:
             for (let i = 0; i < await gallery.count(); i++) {
               const img = gallery.nth(i);
               if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) throw new Error('Gallery image ' + i + ' failed');
-              if ((await img.evaluate(el => getComputedStyle(el).objectFit)) !== 'contain') throw new Error('Gallery image ' + i + ' may crop the dog');
+              if ((await img.evaluate(el => getComputedStyle(el).objectFit)) !== 'cover') throw new Error('Gallery image ' + i + ' is not filling its media frame');
               const pixels = await img.evaluate(el => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 32; canvas.height = 32;
