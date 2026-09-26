@@ -31,3 +31,15 @@ jobs:
           body="$(curl --fail --silent --show-error --location --max-time 20 "$url")"
           echo "$body" | head -c 1000
           node -e 'const j=JSON.parse(process.argv[1]); if(j.ok!==true || !Array.isArray(j.dogs)) process.exit(1)' "$body"
+
+      - name: Check admin login protection
+        run: |
+          set -euo pipefail
+          url="https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/admin/api/login"
+          status="$(curl --silent --show-error --output /tmp/admin-login.json --write-out "%{http_code}" --max-time 20 \
+            -H "Content-Type: application/json" \
+            --data '{"password":"__bellissimo_invalid_smoke_test__"}' \
+            "$url")"
+          cat /tmp/admin-login.json
+          test "$status" = "401"
+          node -e 'const fs=require("fs"); const j=JSON.parse(fs.readFileSync("/tmp/admin-login.json","utf8")); if(j.ok!==false || j.error!=="unauthorized") process.exit(1)'
