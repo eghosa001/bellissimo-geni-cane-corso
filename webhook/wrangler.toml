@@ -15,16 +15,13 @@ class_name = "PuppyLock"
 [[kv_namespaces]]
 binding = "RESERVATIONS"
 id = "62443108e65242478947658b65f4adaf"
-id = "62443108e65242478947658b65f4adaf"
 
 [[kv_namespaces]]
 binding = "ADMIN"
 id = "d41ceb74ca574463a698233b76e0016d"
-id = "d41ceb74ca574463a698233b76e0016d"
 
 [[r2_buckets]]
 binding = "UPLOADS"
-bucket_name = "bellissimo-geni-cane-corso-uploads"
 bucket_name = "bellissimo-geni-cane-corso-uploads"
 
 
