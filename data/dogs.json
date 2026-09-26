@@ -456,7 +456,7 @@
       "registration": "PK 47077/20",
       "status": "Pedigree ancestor",
       "group": "ancestor",
-      "sireId": "calisto-from-gda-god-of-troy-team",
+      "sireId": "calistro-from-gda-god-of-troy-team",
       "damId": "darling-ivoni-imperial",
       "bloodline": "",
       "health": "",
@@ -510,7 +510,7 @@
       "registration": "JR 81234 Cc",
       "status": "Pedigree ancestor",
       "group": "ancestor",
-      "sireId": "genesiosteew",
+      "sireId": "genesiosteewe",
       "damId": "zoe-del-rosso-malpelo",
       "bloodline": "",
       "health": "",
@@ -554,8 +554,8 @@
       "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
     },
     {
-      "id": "calisto-from-gda-god-of-troy-team",
-      "name": "Calisto From GDA God Of Troy Team",
+      "id": "calistro-from-gda-god-of-troy-team",
+      "name": "Calistro From GDA God Of Troy Team",
       "sex": "Male",
       "dateOfBirth": "",
       "colour": "",
@@ -662,8 +662,8 @@
       "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
     },
     {
-      "id": "genesiosteew",
-      "name": "Genesiosteew",
+      "id": "genesiosteewe",
+      "name": "Genesiosteewe",
       "sex": "Male",
       "dateOfBirth": "",
       "colour": "",
