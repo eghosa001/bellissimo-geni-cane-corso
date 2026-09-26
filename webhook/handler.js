@@ -1108,6 +1108,19 @@ export default {
       return json(200, { ok: true, ts: Date.now() });
     }
 
+    // Temporary KV connectivity diagnostic; exposes only binding health/error text.
+    if (request.method === 'GET' && url.pathname === '/webhook/kv-health') {
+      try {
+        if (!env.ADMIN || typeof env.ADMIN.list !== 'function') {
+          return json(500, { ok: false, error: 'ADMIN binding unavailable' });
+        }
+        const page = await env.ADMIN.list({ limit: 1 });
+        return json(200, { ok: true, adminBinding: true, visibleKeys: page.keys.length });
+      } catch (e) {
+        return json(500, { ok: false, error: String(e && e.message || e) });
+      }
+    }
+
     // ── Public media uploaded by the owner ──
     if (url.pathname.startsWith('/uploads/')) {
       return handleUploadedMedia(request, env);
