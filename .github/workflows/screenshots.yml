@@ -481,6 +481,157 @@ jobs:
           })();
           EOF
 
+      - name: Audit all public site features
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
+            const base = process.env.BASE_URL;
+            const baseUrl = new URL(base);
+            const pageErrors = [];
+            page.on('pageerror', err => pageErrors.push(String(err && err.message || err)));
+
+            async function go(path) {
+              pageErrors.length = 0;
+              const response = await page.goto(base + path, { waitUntil: 'networkidle', timeout: 60000 });
+              if (!response || response.status() >= 400) throw new Error(path + ' failed to load');
+              if (pageErrors.length) throw new Error(path + ' JavaScript error: ' + pageErrors.join(' | '));
+            }
+
+            // Dog search: exact matches, broader metadata matches, clear/reset, and no duplicate card/profile photo.
+            await go('dogs.html');
+            await page.locator('#q').fill('Yasmin Bellissimo Geni');
+            await page.locator('#dog-search-form button[type="submit"]').click();
+            await page.locator('#profile h2').filter({ hasText: 'Yasmin Bellissimo Geni' }).waitFor();
+            if (!(await page.locator('#dog-search-status').innerText()).includes('1 matching dog')) {
+              throw new Error('Dog search does not report an exact match');
+            }
+            if (await page.locator('.dog-card:visible').count()) {
+              throw new Error('Exact dog search repeats the selected dog as a card below its profile');
+            }
+
+            await page.locator('#dog-search-clear').click();
+            if (await page.locator('#profile .profile').count()) throw new Error('Dog search clear did not reset the profile');
+            if (!(await page.locator('#current-list .dog-card').count()) || !(await page.locator('#past-list .dog-card').count())) {
+              throw new Error('Dog search clear did not restore the dog lists');
+            }
+
+            await page.locator('#q').fill('Brindle');
+            const broadStatus = await page.locator('#dog-search-status').innerText();
+            if (!/\d+ matching dogs found\./.test(broadStatus) || broadStatus.startsWith('0 ')) {
+              throw new Error('Dog search is not matching metadata such as colour');
+            }
+
+            await page.locator('#q').fill('Branco Custodi Nos');
+            await page.locator('#dog-search-form button[type="submit"]').click();
+            const brancoSearch = await page.locator('#profile h2').innerText();
+            if (brancoSearch.trim() !== 'Branco Custodi Nos') throw new Error('Exact dog-name search is not prioritized');
+
+            await go('dogs.html?dog=karma-custodi-nos');
+            if (await page.locator('.dog-card:visible').count()) throw new Error('Direct dog profile unnecessarily repeats list photography');
+            const heroSrc = await page.locator('.profile-media-main img').getAttribute('src');
+            const extraSrcs = await page.locator('.profile-gallery img').evaluateAll(imgs => imgs.map(img => img.getAttribute('src')));
+            if (!extraSrcs.length) throw new Error('Karma additional supplied photograph is missing');
+            if (extraSrcs.includes(heroSrc)) throw new Error('Dog profile gallery repeats the main profile photograph');
+
+            // Pedigree search works by registration and supports broad-match suggestions.
+            await go('pedigree.html');
+            await page.locator('#dog-search').fill('JR710606CC');
+            await page.locator('#pedigree-search button[type="submit"]').click();
+            await page.locator('#dog-result h2').filter({ hasText: 'Branco Custodi Nos' }).waitFor();
+            await page.locator('#dog-search').fill('Sangue Magnifica');
+            await page.locator('#pedigree-search button[type="submit"]').click();
+            if (await page.locator('#search-status [data-pedigree-dog]').count() < 2) {
+              throw new Error('Pedigree broad search does not expose matching records');
+            }
+
+            // Puppy status filter.
+            await go('puppies.html');
+            await page.locator('#f').selectOption({ label: 'SOLD' });
+            await page.locator('#list .testi-empty').waitFor();
+            await page.locator('#f').selectOption('');
+            await page.locator('#safeera-bellissimo-geni').waitFor();
+
+            // Reservation form generates a real local reference and a pre-filled verified WhatsApp hand-off.
+            await go('reserve.html?puppy=safeera-bellissimo-geni');
+            await page.locator('#resForm input[name="name"]').fill('Website QA');
+            await page.locator('#resForm input[name="phone"]').fill('08012345678');
+            await page.locator('#terms').check();
+            await page.locator('#resForm button[type="submit"]').click();
+            const reserveSummary = await page.locator('#summary').innerText();
+            if (!reserveSummary.includes('Reservation reference: BG-')) throw new Error('Reservation reference generation failed');
+            const reserveHref = await page.locator('#summary a.btn.gold').getAttribute('href');
+            if (!reserveHref || !reserveHref.startsWith('https://wa.me/2349137806866?text=')) {
+              throw new Error('Reservation WhatsApp hand-off is not using the verified number');
+            }
+
+            // Contact form produces the expected verified WhatsApp hand-off without navigating away during QA.
+            await go('contact.html');
+            await page.evaluate(() => {
+              window.__qaWhatsApp = '';
+              window.open = function(url) { window.__qaWhatsApp = String(url || ''); return null; };
+            });
+            await page.locator('#apply input[name="name"]').fill('Website QA');
+            await page.locator('#apply input[name="phone"]').fill('08012345678');
+            await page.locator('#apply textarea[name="message"]').fill('Full-site functionality check');
+            await page.locator('#apply button[type="submit"]').click();
+            const opened = await page.evaluate(() => window.__qaWhatsApp);
+            if (!opened.startsWith('https://wa.me/2349137806866?text=')) throw new Error('Contact enquiry WhatsApp hand-off failed');
+            if (!(await page.locator('#note').innerText()).includes('WhatsApp opened')) throw new Error('Contact form did not confirm submission');
+
+            // Mobile navigation opens and closes on generic pages.
+            await page.setViewportSize({ width: 390, height: 844 });
+            await go('about.html');
+            const toggle = page.locator('.mobile-nav-toggle');
+            await toggle.click();
+            if (!(await page.locator('.mobile-menu').evaluate(el => el.classList.contains('open') && getComputedStyle(el).display !== 'none'))) {
+              throw new Error('Mobile navigation did not open');
+            }
+            await toggle.click();
+            if (await page.locator('.mobile-menu').evaluate(el => el.classList.contains('open'))) {
+              throw new Error('Mobile navigation did not close');
+            }
+
+            // Gallery intentionally does not reuse the three homepage featured photographs.
+            await page.setViewportSize({ width: 1365, height: 900 });
+            await go('');
+            const featured = new Set(await page.locator('.featured-dog-card img').evaluateAll(imgs => imgs.map(img => new URL(img.src).pathname)));
+            await go('gallery.html');
+            const gallery = await page.locator('.gallery-grid img').evaluateAll(imgs => imgs.map(img => new URL(img.src).pathname));
+            const repeatedHomepagePhotos = gallery.filter(src => featured.has(src));
+            if (repeatedHomepagePhotos.length) {
+              throw new Error('Gallery unnecessarily repeats homepage featured photographs: ' + repeatedHomepagePhotos.join(', '));
+            }
+
+            // Every public page loads without JS exceptions; all internal links resolve.
+            const publicPages = [
+              'index.html','dogs.html','puppies.html','pedigree.html','breeding.html','gallery.html',
+              'reserve.html','contact.html','about.html','social.html','socialization.html','standards.html','testimonials.html'
+            ];
+            const internal = new Set();
+            for (const path of publicPages) {
+              await go(path);
+              const hrefs = await page.locator('a[href]').evaluateAll(as => as.map(a => a.getAttribute('href')).filter(Boolean));
+              for (const href of hrefs) {
+                if (/^(mailto:|tel:|javascript:|#)/i.test(href)) continue;
+                const u = new URL(href, page.url());
+                if (u.origin !== baseUrl.origin) continue;
+                if (!u.pathname.startsWith(baseUrl.pathname)) continue;
+                u.hash = '';
+                internal.add(u.href);
+              }
+            }
+            for (const url of internal) {
+              const response = await page.request.get(url, { timeout: 30000, failOnStatusCode: false });
+              if (response.status() >= 400) throw new Error('Broken internal link: ' + url + ' returned ' + response.status());
+            }
+
+            await browser.close();
+          })();
+          EOF
+
       - name: Verify automatic family links and Yasmin
         run: |
           node <<'EOF'
