@@ -62,7 +62,7 @@
 <script>
 window.BG_WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 (function(){
-var all=[],q=document.getElementById('q'),profile=document.getElementById('profile'),current=document.getElementById('current-list'),past=document.getElementById('past-list');
+var all=[],young=[],family=null,q=document.getElementById('q'),profile=document.getElementById('profile'),current=document.getElementById('current-list'),past=document.getElementById('past-list');
 function byId(id){return BG.dogById(all,id)}
 function safe(v,fallback){return v?BG.esc(v):fallback||'Not recorded'}
 function displayDate(v){
@@ -105,12 +105,13 @@ function ownerOrStatusRow(d){
   return d.status?'<dt>Status</dt><dd>'+BG.esc(d.status)+'</dd>':'';
 }
 function familyRelationships(d){
-  var id=String(d.id||'').toLowerCase();
-  var children=all.filter(function(x){return String(x.sireId||'').toLowerCase()===id||String(x.damId||'').toLowerCase()===id;});
+  var children=family?family.childrenOf(d):[];
   if(!children.length)return '';
-  return '<div class="profile-relations"><h3>Family relationships</h3><div class="relation-list">'+children.map(function(child){
-    var role=String(child.sireId||'').toLowerCase()===id?'Sire of':'Dam of';
-    return '<a class="relation-link" href="dogs.html?dog='+encodeURIComponent(child.id)+'"><span>'+role+'</span><strong>'+BG.esc(child.name)+'</strong></a>';
+  return '<div class="profile-relations"><h3>Family relationships</h3><div class="relation-list">'+children.map(function(rel){
+    var child=rel.record;
+    var role=rel.role==='sire'?'Sire of':'Dam of';
+    var href=rel.kind==='puppy'?'puppies.html?puppy='+encodeURIComponent(child.id):'dogs.html?dog='+encodeURIComponent(child.id);
+    return '<a class="relation-link" href="'+href+'"><span>'+role+'</span><strong>'+BG.esc(child.name)+'</strong></a>';
   }).join('')+'</div></div>';
 }
 function renderProfile(id,shouldScroll){
@@ -122,7 +123,18 @@ function renderProfile(id,shouldScroll){
   if(shouldScroll!==false)profile.scrollIntoView({behavior:'smooth',block:'start'});
 }
 q.addEventListener('input',renderLists);
-BG.loadAdminJSON('dogs','data/dogs.json').then(function(j){all=j.data||j.dogs||[];renderLists();var id=new URLSearchParams(location.search).get('dog');if(id){document.body.classList.add('direct-dog-profile');renderProfile(id,false);}}).catch(function(){current.innerHTML='<div class="notice">Could not load dog records.</div>';});
+Promise.all([
+  BG.loadAdminJSON('dogs','data/dogs.json'),
+  BG.loadAdminJSON('puppies','data/puppies.json').catch(function(){return {puppies:[]};})
+]).then(function(rows){
+  var dj=rows[0],pj=rows[1];
+  all=dj.data||dj.dogs||[];
+  young=pj.puppies||pj.data||[];
+  family=BG.familyIndex([{kind:'dog',records:all},{kind:'puppy',records:young}]);
+  renderLists();
+  var id=new URLSearchParams(location.search).get('dog');
+  if(id){document.body.classList.add('direct-dog-profile');renderProfile(id,false);}
+}).catch(function(){current.innerHTML='<div class="notice">Could not load dog records.</div>';});
 })();
 </script>
 </body>
