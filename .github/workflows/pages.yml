@@ -55,13 +55,14 @@ jobs:
           test -s assets/dogs/bellissimo-puppy-section.webp
           file assets/dogs/bellissimo-puppy-section.webp
 
-          # Reconstruct the latest supplied Diesel and Rocco source photographs.
-          cat .github/assets/diesel-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/diesel-bellissimo-geni.avif
-          cat .github/assets/rocco-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/rocco-bellissimo-geni.avif
-          test -s assets/dogs/diesel-bellissimo-geni.avif
-          test -s assets/dogs/rocco-bellissimo-geni.avif
-          file assets/dogs/diesel-bellissimo-geni.avif
-          file assets/dogs/rocco-bellissimo-geni.avif
+          # These encoded photographs belong to Himera Custodi Nos.
+          # The former Diesel/Rocco filenames were a provenance error.
+          cat .github/assets/rocco-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/himera-custodi-nos-main.avif
+          cat .github/assets/diesel-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/himera-custodi-nos-02.avif
+          test -s assets/dogs/himera-custodi-nos-main.avif
+          test -s assets/dogs/himera-custodi-nos-02.avif
+          file assets/dogs/himera-custodi-nos-main.avif
+          file assets/dogs/himera-custodi-nos-02.avif
 
           rm -rf build
           mkdir -p build
