@@ -200,3 +200,41 @@ test('bootstrap preserves verified record IDs and makes them public', async () =
   assert.equal(pupBody.puppies[0].id, 'verified-pup');
   assert.equal(pupBody.gallery[0].id, 'verified-photo');
 });
+
+
+test('bootstrap runs only once even if an owner later empties a collection', async () => {
+  const store = new Map();
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); },
+      async list({ prefix = '' } = {}) {
+        return {
+          keys: [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })),
+          cursor: null,
+          list_complete: true
+        };
+      }
+    }
+  };
+
+  const callBootstrap = dogs => worker.fetch(new Request('https://worker.example/admin/api/bootstrap', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer secret', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dogs, puppies: [], litters: [], gallery: [] })
+  }), env);
+
+  const first = await callBootstrap([{ id: 'original-dog', name: 'Original Dog' }]);
+  assert.equal(first.status, 200);
+  assert.equal(store.has('admin:dogs:original-dog'), true);
+
+  store.delete('admin:dogs:original-dog');
+
+  const second = await callBootstrap([{ id: 'replacement-dog', name: 'Replacement Dog' }]);
+  assert.equal(second.status, 200);
+  const secondBody = await second.json();
+  assert.equal(secondBody.alreadySeeded, true);
+  assert.equal(store.has('admin:dogs:replacement-dog'), false);
+});
