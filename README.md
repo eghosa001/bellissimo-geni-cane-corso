@@ -43,8 +43,10 @@ Late puppy photographs supplied on 24 September 2026 are published only in a cle
 
 The owner CMS and Worker implementation are present. The repository now uses Wrangler automatic provisioning for the ADMIN/RESERVATIONS KV namespaces and R2 media bucket, so account-specific resource IDs are no longer committed or manually pasted.
 
-Production deployment still requires Cloudflare authentication plus:
-- ADMIN_PASSWORD Worker secret
+Production deployment still requires repository Actions secrets for:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `BELLISSIMO_ADMIN_PASSWORD`
 
 Payment remains deliberately disabled:
 - `PAYMENT_PROVIDER = "none"`
@@ -58,30 +60,21 @@ Push/merge verified work to `main`. The GitHub Pages workflow deploys automatica
 
 ## Deploying the Worker
 
-From `webhook/`:
-
-```bash
-npm install
-wrangler login
-npm install
-wrangler deploy
-wrangler secret put ADMIN_PASSWORD
-```
-
-After deployment, open `admin.html` and enter the Worker URL once on the sign-in screen. It is stored locally on that device; the admin password remains a Worker secret.
+Use the **Deploy Bellissimo Worker** GitHub Actions workflow after the three required secrets are configured. The workflow tests the Worker, auto-provisions KV/R2, deploys it, seeds the verified baseline records exactly once, and opens a small configuration PR that connects the public site and admin panel to the deployed Worker. Later CMS edits are never overwritten by redeployment.
 
 ## Release gate
 
 Before calling the full production stack complete:
 
 1. Confirm any late puppy identities/listing facts that should be public.
-2. Configure Cloudflare KV, R2 and the admin password secret.
-3. Decide whether payment should remain enquiry-only or be enabled with approved commercial terms.
-4. Run the Website Screenshots workflow and confirm desktop/mobile views.
-5. Verify contact, WhatsApp, dogs, pedigree, puppies and reservation flows on the deployed site.
+2. Configure the Cloudflare deployment secrets and run **Deploy Bellissimo Worker**.
+3. Merge the generated Worker configuration PR.
+4. Decide whether payment should remain enquiry-only or be enabled with approved commercial terms.
+5. Run the Website Screenshots workflow and confirm desktop/mobile views.
+6. Verify contact, WhatsApp, dogs, pedigree, puppies and reservation flows on the deployed site.
 
 See `IMPLEMENTATION_STATUS.md` for the authoritative handoff state.
 
 ## Custom domain activation
 
-The requested production domain is `bellissimogeni.com`, but the repository deliberately does not add a `CNAME` until the domain is owned and its DNS resolves. Once DNS is configured for GitHub Pages, run the **Prepare Bellissimo Custom Domain** workflow. It verifies DNS first and opens a pull request that adds the CNAME and migrates canonical, Open Graph, sitemap, robots and production screenshot URLs in one controlled change.
+The requested production domain is `bellissimogeni.com`. Configure a repository secret named `PAGES_ADMIN_TOKEN` with permission to manage GitHub Pages, then run **Prepare Bellissimo Custom Domain**. The workflow registers the domain in GitHub Pages first, verifies all four required apex A records, and only then opens the activation PR that migrates canonical, Open Graph, sitemap, robots and production screenshot URLs. HTTPS is enabled automatically when GitHub reports the certificate ready.
