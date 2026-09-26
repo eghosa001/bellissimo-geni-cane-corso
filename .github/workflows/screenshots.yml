@@ -102,7 +102,7 @@ jobs:
           assert(admin.includes("fetch('site-config.json'"), 'Admin login must auto-discover the deployed Worker URL');
           const domainWorkflow = fs.readFileSync('.github/workflows/activate-domain.yml', 'utf8');
           assert(domainWorkflow.includes('PAGES_ADMIN_TOKEN'), 'Custom-domain activation must require a Pages admin token');
-          assert(/gh api[\\s\\S]*repos\\/\\$GITHUB_REPOSITORY\\/pages/.test(domainWorkflow), 'Custom-domain activation must configure GitHub Pages via API');
+          assert(domainWorkflow.includes('gh api --method PUT') && domainWorkflow.includes('repos/$GITHUB_REPOSITORY/pages'), 'Custom-domain activation must configure GitHub Pages via API');
           assert(domainWorkflow.includes('185.199.108.153'), 'Custom-domain activation must verify GitHub Pages DNS targets');
 
           const reserve = fs.readFileSync('reserve.html', 'utf8');
