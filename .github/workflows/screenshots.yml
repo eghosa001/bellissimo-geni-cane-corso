@@ -3,6 +3,7 @@ name: Website Screenshots
 on:
   pull_request:
     paths:
+      - ".github/workflows/screenshots.yml"
       - "index.html"
       - "home-restored.css"
       - "dogs.html"
