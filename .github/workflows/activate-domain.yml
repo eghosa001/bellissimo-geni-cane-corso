@@ -1,0 +1,75 @@
+name: Prepare Bellissimo Custom Domain
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Custom domain that already has DNS configured for GitHub Pages"
+        required: true
+        default: "bellissimogeni.com"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DOMAIN: ${{ inputs.domain }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify DNS resolves before changing canonical URLs
+        run: |
+          python3 - "$DOMAIN" <<'PY'
+          import socket, sys
+          domain = sys.argv[1].strip().lower()
+          try:
+              answers = socket.getaddrinfo(domain, 443, type=socket.SOCK_STREAM)
+          except socket.gaierror as exc:
+              raise SystemExit(f"DNS for {domain} does not resolve yet: {exc}")
+          if not answers:
+              raise SystemExit(f"DNS for {domain} returned no addresses")
+          print(f"DNS resolves for {domain}")
+          PY
+
+      - name: Prepare custom-domain files
+        run: node scripts/set-production-domain.mjs "$DOMAIN"
+
+      - name: Validate generated domain metadata
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const domain = process.env.DOMAIN.toLowerCase();
+          const base = 'https://' + domain;
+          if (fs.readFileSync('CNAME','utf8').trim() !== domain) throw new Error('CNAME mismatch');
+          const sitemap = fs.readFileSync('sitemap.xml','utf8');
+          if (!sitemap.includes(base + '/') || sitemap.includes('eghosa001.github.io')) throw new Error('Sitemap was not migrated');
+          const robots = fs.readFileSync('robots.txt','utf8');
+          if (!robots.includes('Sitemap: ' + base + '/sitemap.xml')) throw new Error('robots.txt was not migrated');
+          for (const name of fs.readdirSync('.').filter(x => x.endsWith('.html'))) {
+            const html = fs.readFileSync(name,'utf8');
+            if (html.includes('eghosa001.github.io/bellissimo-geni-cane-corso')) throw new Error(name + ' still contains the old canonical host');
+          }
+          EOF
+
+      - name: Open activation pull request
+        run: |
+          branch="activate-domain-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add CNAME robots.txt sitemap.xml .github/workflows/screenshots.yml ./*.html
+          git commit -m "Activate custom domain $DOMAIN"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "Activate $DOMAIN" --body "DNS resolved before this workflow ran. This PR adds the GitHub Pages CNAME and migrates canonical, Open Graph, sitemap, robots and production screenshot URLs to https://$DOMAIN."
