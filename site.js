@@ -238,6 +238,7 @@
     esc: esc,
     loadJSON: loadJSON,
     loadAdminJSON: loadAdminJSON,
+    resolveApiBase: resolveApiBase,
     dogById: dogById,
     validPhone: validPhone,
     track: track,
