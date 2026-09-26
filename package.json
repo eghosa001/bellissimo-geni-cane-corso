@@ -1,0 +1,14 @@
+{
+  "name": "bellissimo-geni-cane-corso-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "check": "node --check webhook/handler.js",
+    "test": "node --test webhook/test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  }
+}
