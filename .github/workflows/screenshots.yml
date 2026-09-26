@@ -10,6 +10,7 @@ on:
       - "pedigree.html"
       - "data/dogs.json"
       - "site.js"
+      - "runtime-config.js"
       - "site.css"
       - "social.html"
       - "contact.html"
@@ -89,6 +90,18 @@ jobs:
 
           const pkg = JSON.parse(fs.readFileSync('webhook/package.json', 'utf8'));
           assert(pkg.devDependencies && pkg.devDependencies.wrangler, 'Wrangler must be pinned for automatic provisioning');
+
+          const publicHtml = fs.readdirSync('.').filter(name => name.endsWith('.html') && name !== 'admin.html');
+          for (const name of publicHtml) {
+            const html = fs.readFileSync(name, 'utf8');
+            const sitePos = html.indexOf('<script src="site.js"></script>');
+            if (sitePos < 0) continue;
+            const configPos = html.indexOf('<script src="runtime-config.js"></script>');
+            assert(configPos >= 0 && configPos < sitePos, 'Public pages must load runtime-config.js before site.js: ' + name);
+          }
+          assert(fs.existsSync('runtime-config.js'), 'runtime-config.js must exist');
+          const runtime = fs.readFileSync('runtime-config.js', 'utf8');
+          assert(runtime.includes('window.BG_WEBHOOK_URL'), 'runtime config must expose BG_WEBHOOK_URL');
 
           const site = fs.readFileSync('site.js', 'utf8');
           for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
