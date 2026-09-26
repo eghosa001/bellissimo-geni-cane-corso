@@ -117,7 +117,10 @@ function setSearchUrl(id){
 function renderLists(){
   var term=normalized(q.value);
   var published=all.filter(function(d){return d.group==='current'||d.group==='past-production';});
-  var visible=published.filter(function(d){return !term||searchText(d).indexOf(term)>=0;});
+  var exact=term&&published.find(function(d){
+    return normalized(d.name)===term||normalized(d.id)===term||normalized(d.registration)===term;
+  });
+  var visible=exact?[exact]:published.filter(function(d){return !term||searchText(d).indexOf(term)>=0;});
   var c=visible.filter(function(d){return d.group==='current'}),p=visible.filter(function(d){return d.group==='past-production'});
 
   document.body.classList.remove('dog-search-profile');
