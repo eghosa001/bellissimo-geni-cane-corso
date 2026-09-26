@@ -460,6 +460,7 @@ jobs:
               ['gallery', 'gallery.html'],
               ['puppies', 'puppies.html'],
               ['pedigree', 'pedigree.html?dog=gyda-bellissimo-geni'],
+              ['pedigree-tessa', 'pedigree.html?dog=tessa-sangue-magnifica'],
               ['breeding', 'breeding.html'],
               ['socialization', 'socialization.html'],
               ['standards', 'standards.html'],
