@@ -81,3 +81,7 @@ Before calling the full production stack complete:
 5. Verify contact, WhatsApp, dogs, pedigree, puppies and reservation flows on the deployed site.
 
 See `IMPLEMENTATION_STATUS.md` for the authoritative handoff state.
+
+## Custom domain activation
+
+The requested production domain is `bellissimogeni.com`, but the repository deliberately does not add a `CNAME` until the domain is owned and its DNS resolves. Once DNS is configured for GitHub Pages, run the **Prepare Bellissimo Custom Domain** workflow. It verifies DNS first and opens a pull request that adds the CNAME and migrates canonical, Open Graph, sitemap, robots and production screenshot URLs in one controlled change.
