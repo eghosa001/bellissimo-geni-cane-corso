@@ -887,13 +887,31 @@ async function handleAdminUpload(req, env) {
     if (file.size > 10 * 1024 * 1024) return json(400, { ok: false, error: 'too_large' });
     const key = 'media/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
     await env.UPLOADS.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
-    const bucketName = env.UPLOADS_BUCKET_NAME || '';
-    const url = bucketName ? `https://${bucketName}.r2.cloudflarestorage.com/${key}` : `/uploads/${key}`;
+    const publicUrl = new URL('/uploads/' + key, req.url).href;
     await auditLog(env, 'upload', 'image', key, { size: file.size, type: file.type });
-    return json(200, { ok: true, url: key, publicUrl: url });
+    return json(200, { ok: true, url: key, publicUrl });
   } catch (e) {
     return json(500, { ok: false, error: 'upload_failed', message: e.message });
   }
+}
+ 
+async function handleUploadedMedia(req, env) {
+  if (req.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
+  if (!env.UPLOADS) return json(503, { ok: false, error: 'r2_not_configured' });
+  const url = new URL(req.url);
+  const prefix = '/uploads/';
+  const key = decodeURIComponent(url.pathname.slice(prefix.length));
+  if (!key || !key.startsWith('media/')) return json(404, { ok: false, error: 'not_found' });
+  const object = await env.UPLOADS.get(key);
+  if (!object) return json(404, { ok: false, error: 'not_found' });
+  const headers = new Headers(CORS_HEADERS);
+  if (typeof object.writeHttpMetadata === 'function') object.writeHttpMetadata(headers);
+  if (!headers.has('Content-Type') && object.httpMetadata && object.httpMetadata.contentType) {
+    headers.set('Content-Type', object.httpMetadata.contentType);
+  }
+  if (object.httpEtag) headers.set('ETag', object.httpEtag);
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  return new Response(object.body, { status: 200, headers });
 }
 
 async function handleAdminContent(req, env) {
@@ -908,13 +926,13 @@ async function handleAdminContent(req, env) {
 
   if (req.method === 'GET') {
     const raw = await kvGet(env, key);
-    return json(200, { ok: true, data: raw || { html: '', lastEdited: null } });
+    return json(200, { ok: true, data: raw ? { publishStatus: 'published', ...raw } : { html: '', lastEdited: null, publishStatus: 'published' } });
   }
 
   if (req.method === 'POST') {
     const body = await readJson(req);
     if (!body) return json(400, { ok: false, error: 'bad_json' });
-    const record = { html: String(body.html || '').slice(0, 50000), lastEdited: new Date().toISOString(), editedBy: 'admin' };
+    const record = { html: String(body.html || '').slice(0, 50000), lastEdited: new Date().toISOString(), editedBy: 'admin', publishStatus: 'published' };
     await kvPut(env, key, record);
     await auditLog(env, 'update', 'content', page, {});
     return json(200, { ok: true, data: record });
@@ -1007,7 +1025,7 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
-      return new Response('', {
+      return new Response(null, {
         status: 204,
         headers: CORS_HEADERS
       });
@@ -1016,6 +1034,11 @@ export default {
     // ── Public health endpoint ──
     if (request.method === 'GET' && url.pathname === '/webhook/health') {
       return json(200, { ok: true, ts: Date.now() });
+    }
+
+    // ── Public media uploaded by the owner ──
+    if (url.pathname.startsWith('/uploads/')) {
+      return handleUploadedMedia(request, env);
     }
 
     // ── Public read-only API (no auth, published records only) ──
@@ -1047,9 +1070,7 @@ export default {
         case 'settings':     return handleAdminSettings(request, env);
         case 'stats':        return handleAdminStats(request, env);
         case 'upload':       return handleAdminUpload(request, env);
-        case 'content':
-          if (subPath) return handleAdminContent(request, env);
-          return json(400, { ok: false, error: 'missing_page' });
+        case 'content':      return handleAdminContent(request, env);
         case 'audit':        return handleAdminAudit(request, env);
         case 'publish':      return handleAdminPublishToggle(request, env);
         case 'login':        return handleAdminLogin(request, env);
