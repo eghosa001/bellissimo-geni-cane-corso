@@ -55,6 +55,17 @@ jobs:
           test -s assets/dogs/bellissimo-puppy-section.webp
           file assets/dogs/bellissimo-puppy-section.webp
 
+          # Reconstruct the WhatsApp-supplied Anthie and Dragoslav photos.
+          cat .github/assets/anthie-custodi-nos-main.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/anthie-custodi-nos-main.webp
+          cat .github/assets/anthie-custodi-nos-02.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/anthie-custodi-nos-02.webp
+          cat .github/assets/dragoslav-custodi-nos.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/dragoslav-custodi-nos.webp
+          test -s assets/dogs/anthie-custodi-nos-main.webp
+          test -s assets/dogs/anthie-custodi-nos-02.webp
+          test -s assets/dogs/dragoslav-custodi-nos.webp
+          file assets/dogs/anthie-custodi-nos-main.webp
+          file assets/dogs/anthie-custodi-nos-02.webp
+          file assets/dogs/dragoslav-custodi-nos.webp
+
           # Reconstruct the supplied Tessa and Daisy kennel photos.
           cat .github/assets/tessa-sangue-magnifica.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/tessa-sangue-magnifica.webp
           cat .github/assets/daisy-bellissimo-geni-jpg.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/daisy-bellissimo-geni.jpg
