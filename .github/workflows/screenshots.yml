@@ -105,6 +105,17 @@ jobs:
           assert(!pagesWorkflow.includes('> assets/dogs/diesel-bellissimo-geni.avif'), 'Pages deployment must not publish Himera photography under Diesel');
           assert(!pagesWorkflow.includes('> assets/dogs/rocco-bellissimo-geni.avif'), 'Pages deployment must not publish Himera photography under Rocco');
 
+          const dogsPage = fs.readFileSync('dogs.html', 'utf8');
+          const pedigreePage = fs.readFileSync('pedigree.html', 'utf8');
+          const homeCss = fs.readFileSync('home-restored.css', 'utf8');
+          const sharedCss = fs.readFileSync('site.css', 'utf8');
+          assert(dogsPage.includes('<h3><a href="dogs.html?dog='), 'Dog-list names must be direct profile links');
+          assert(dogsPage.includes('.dog-card h3 a,.profile dd a strong,.relation-link strong{text-decoration:underline'), 'Clickable dog names on dog pages must be underlined');
+          assert(pedigreePage.includes('.parent-card strong{') && pedigreePage.includes('text-decoration:underline'), 'Pedigree dog names must be visibly underlined');
+          assert(pedigreePage.includes('<h2><a href="'+profileHref+'">'), 'Selected pedigree dog name must link to the full profile');
+          assert(homeCss.includes('.dog-card-copy h3{') && homeCss.includes('text-decoration:underline'), 'Homepage featured dog names must be underlined');
+          assert(sharedCss.includes('.puppy-parents a{text-decoration:underline'), 'Clickable puppy-parent dog names must be underlined');
+
           const site = fs.readFileSync('site.js', 'utf8');
           for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
             assert(site.includes('>' + label + '<'), 'Canonical mobile menu missing ' + label);
