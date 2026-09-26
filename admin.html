@@ -287,6 +287,18 @@ function normalizeApiBase(value) {
 let API_BASE = normalizeApiBase(window.BG_WEBHOOK_URL || localStorage.getItem('bg_backend_url') || '');
 const backendUrlInput = document.getElementById('backendUrl');
 if (backendUrlInput) backendUrlInput.value = API_BASE;
+if (!API_BASE && backendUrlInput) {
+  fetch('site-config.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : {})
+    .then(config => {
+      const discovered = normalizeApiBase(config && config.backendUrl);
+      if (discovered && !backendUrlInput.value) {
+        API_BASE = discovered;
+        backendUrlInput.value = discovered;
+      }
+    })
+    .catch(() => {});
+}
 // Token stored in memory only — never in localStorage (survives XSS but not page reload)
 let adminToken = null;
 let currentPuppyCatalog = [];
