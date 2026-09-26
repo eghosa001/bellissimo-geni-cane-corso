@@ -577,8 +577,7 @@ async function handleAdminDogs(req, env) {
       return json(200, dog ? { ok: true, data: ensurePublishStatus(dog) } : { ok: false, error: 'not_found' });
     }
     const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-    const published = filterPublished(dogs, { get: () => showAll ? 'all' : null });
-    return json(200, { ok: true, data: published.sort((a, b) => a.name.localeCompare(b.name)) });
+    return json(200, { ok: true, data: dogs.map(ensurePublishStatus).sort((a, b) => a.name.localeCompare(b.name)) });
   }
 
   if (req.method === 'POST') {
@@ -629,7 +628,7 @@ async function handleAdminPuppies(req, env) {
     const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
     const litters = await kvList(env, ADMIN_KEYS.litters + ':');
     const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-    return json(200, { ok: true, data: filterPublished(pups, { get: () => showAll ? 'all' : null }), litters, dogs });
+    return json(200, { ok: true, data: pups.map(ensurePublishStatus), litters: litters.map(ensurePublishStatus), dogs: dogs.map(ensurePublishStatus) });
   }
 
   if (req.method === 'POST') {
@@ -673,7 +672,7 @@ async function handleAdminLitters(req, env) {
 
   if (req.method === 'GET') {
     const list = await kvList(env, ADMIN_KEYS.litters + ':');
-    return json(200, { ok: true, data: filterPublished(list, { get: () => showAll ? 'all' : null }) });
+    return json(200, { ok: true, data: list.map(ensurePublishStatus) });
   }
 
   if (req.method === 'POST') {
@@ -770,8 +769,7 @@ async function handleAdminTestimonials(req, env) {
 
   if (req.method === 'GET') {
     const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
-    const published = filterPublished(items, { get: () => showAll ? 'all' : null });
-    return json(200, { ok: true, data: published.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
+    return json(200, { ok: true, data: items.map(ensurePublishStatus).sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
   }
 
   if (req.method === 'POST') {
@@ -923,7 +921,10 @@ async function handleAdminUpload(req, env) {
     if (!file || !(file instanceof File)) return json(400, { ok: false, error: 'no_file' });
     const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
     const allowed = ['jpg','jpeg','png','webp','avif','gif'];
-    if (!allowed.includes(ext)) return json(400, { ok: false, error: 'invalid_type' });
+    const allowedMime = ['image/jpeg','image/png','image/webp','image/avif','image/gif'];
+    if (!allowed.includes(ext) || !allowedMime.includes(String(file.type || '').toLowerCase())) {
+      return json(400, { ok: false, error: 'invalid_type' });
+    }
     if (file.size > 10 * 1024 * 1024) return json(400, { ok: false, error: 'too_large' });
     const key = 'media/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
     await env.UPLOADS.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
@@ -1004,29 +1005,59 @@ async function handleAdminAudit(req, env) {
 // ─── Login — server issues a short-lived token ──────────────────────────────
 async function handleAdminLogin(req, env) {
   if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
-  // Rate limit key based on client IP
   const ip = req.headers.get('CF-Connecting-IP') || req.headers.get('x-forwarded-for') || 'unknown';
   const rateKey = 'admin:login:rate:' + ip;
+  let rateData = { count: 0, until: 0 };
+  try {
+    const rateRaw = await env.ADMIN.get(rateKey);
+    if (rateRaw) rateData = JSON.parse(rateRaw);
+  } catch (_) {}
+  const now = Date.now();
+  if (Number(rateData.until) > now && Number(rateData.count || 0) >= LOGIN_RATE_MAX) {
+    return json(429, {
+      ok: false,
+      error: 'rate_limited',
+      retryAfter: Math.max(1, Math.ceil((Number(rateData.until) - now) / 1000))
+    });
+  }
+
   const body = await readJson(req);
   if (!body || !body.password) return json(400, { ok: false, error: 'missing_password' });
   const expected = env.ADMIN_PASSWORD;
   if (!expected || String(body.password) !== expected) {
-    // Increment rate limit counter on failure
     try {
-      const rateRaw = await env.ADMIN.get(rateKey);
-      const rateData = rateRaw ? JSON.parse(rateRaw) : { count: 0, until: 0 };
-      const newUntil = Number(rateData.until) > Date.now() ? Number(rateData.until) : Date.now() + LOGIN_RATE_WINDOW;
-      await env.ADMIN.put(rateKey, JSON.stringify({ count: (rateData.count || 0) + 1, until: newUntil }), { expirationTtl: Math.ceil(LOGIN_RATE_WINDOW / 1000) + 60 });
+      const windowEnd = Number(rateData.until) > now ? Number(rateData.until) : now + LOGIN_RATE_WINDOW;
+      await env.ADMIN.put(
+        rateKey,
+        JSON.stringify({ count: Number(rateData.count || 0) + 1, until: windowEnd }),
+        { expirationTtl: Math.ceil((windowEnd - now) / 1000) + 60 }
+      );
     } catch (_) {}
     return json(401, { ok: false, error: 'unauthorized' });
   }
-  // Issue a short-lived token (valid 8 hours) stored in KV
-  const tokenId = 'session-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-  const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
-  await kvPut(env, 'admin:session:' + tokenId, { created: new Date().toISOString(), expires: expiresAt });
-  // Reset rate limit on success
+
+  const random = new Uint8Array(24);
+  crypto.getRandomValues(random);
+  const tokenId = 'session-' + Array.from(random, value => value.toString(16).padStart(2, '0')).join('');
+  const sessionTtl = 8 * 60 * 60;
+  const expiresAt = now + sessionTtl * 1000;
+  await env.ADMIN.put(
+    'admin:session:' + tokenId,
+    JSON.stringify({ created: new Date(now).toISOString(), expires: expiresAt }),
+    { expirationTtl: sessionTtl }
+  );
   await env.ADMIN.put(rateKey, JSON.stringify({ count: 0, until: 0 }), { expirationTtl: 60 });
-  return json(200, { ok: true, token: tokenId, expiresAt: expiresAt });
+  return json(200, { ok: true, token: tokenId, expiresAt });
+}
+
+async function handleAdminLogout(req, env) {
+  if (req.method !== 'POST') return json(405, { ok: false, error: 'method_not_allowed' });
+  const auth = req.headers.get('Authorization') || '';
+  const token = auth.replace('Bearer ', '');
+  if (token && token.startsWith('session-')) {
+    await env.ADMIN.delete('admin:session:' + token);
+  }
+  return json(200, { ok: true });
 }
 
 // Helper to validate a session token
@@ -1115,6 +1146,7 @@ export default {
         case 'audit':        return handleAdminAudit(request, env);
         case 'publish':      return handleAdminPublishToggle(request, env);
         case 'login':        return handleAdminLogin(request, env);
+        case 'logout':       return handleAdminLogout(request, env);
         default:             return json(404, { ok: false, error: 'not_found' });
       }
     }

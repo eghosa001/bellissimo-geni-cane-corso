@@ -1,6 +1,6 @@
 # Bellissimo Geni — Implementation Status
 
-Updated: 25 September 2026
+Updated: 26 September 2026
 
 ## Public site
 
@@ -32,15 +32,21 @@ No puppy/litter records are published unless identity and availability are verif
 
 ## Admin / backend code
 
-Status: **implemented code, production infrastructure pending**.
+Status: **owner CMS implemented and hardened; production Cloudflare deployment still requires account credentials/secrets**.
 
-Not yet configured in `webhook/wrangler.toml`:
-- ADMIN KV ID
-- RESERVATIONS KV ID
-- R2 bucket
+Implemented:
+- password login that issues short-lived server-side sessions
+- enforced failed-login throttling
+- server-side session revocation on logout
+- dogs, puppies, litters, pedigree, reservations, testimonials, gallery and page-content management
+- draft records remain visible to the owner while public APIs expose only published records
+- R2 image uploads validate both extension and MIME type
+- KV/R2 bindings use Wrangler automatic provisioning
 
-Also required outside git:
-- ADMIN_PASSWORD Worker secret
+Required outside git for deployment:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `BELLISSIMO_ADMIN_PASSWORD`
 
 ## Payments
 

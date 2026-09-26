@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
 <title>Bellissimo Geni — Kennel Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -307,10 +309,20 @@ let currentDogs = [];
 // ── Auth ────────────────────────────────────────────────────────────────────
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('loginPw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('logoutBtn').addEventListener('click', () => {
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  const token = adminToken;
+  if (API_BASE && token) {
+    try {
+      await fetch(API_BASE + '/admin/api/logout', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+    } catch (_) {}
+  }
   sessionStorage.removeItem('bg_session_token');
   adminToken = null;
   window._bgAdminToken = null;
+  document.getElementById('loginPw').value = '';
   document.getElementById('loginScreen').style.display='';
   document.getElementById('adminWrap').classList.remove('active');
 });
@@ -340,7 +352,14 @@ async function doLogin() {
       sessionStorage.setItem('bg_session_token', j.token);
       showAdmin();
     } else {
-      document.getElementById('loginErr').textContent = j.error === 'unauthorized' ? 'Incorrect password.' : 'Connection error.';
+      if (j.error === 'unauthorized') {
+        document.getElementById('loginErr').textContent = 'Incorrect password.';
+      } else if (j.error === 'rate_limited') {
+        const minutes = Math.max(1, Math.ceil(Number(j.retryAfter || 60) / 60));
+        document.getElementById('loginErr').textContent = 'Too many attempts. Try again in about ' + minutes + ' minute' + (minutes === 1 ? '' : 's') + '.';
+      } else {
+        document.getElementById('loginErr').textContent = 'Connection error.';
+      }
     }
   } catch(e) {
     document.getElementById('loginErr').textContent = 'Could not reach server.';
