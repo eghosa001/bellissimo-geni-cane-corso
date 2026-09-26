@@ -120,7 +120,10 @@ function renderLists(){
   var exact=term&&published.find(function(d){
     return normalized(d.name)===term||normalized(d.id)===term||normalized(d.registration)===term;
   });
-  var visible=exact?[exact]:published.filter(function(d){return !term||searchText(d).indexOf(term)>=0;});
+  var nameMatches=term?published.filter(function(d){
+    return normalized(d.name).indexOf(term)>=0||normalized(d.id).indexOf(term)>=0;
+  }):[];
+  var visible=exact?[exact]:(nameMatches.length?nameMatches:published.filter(function(d){return !term||searchText(d).indexOf(term)>=0;}));
   var c=visible.filter(function(d){return d.group==='current'}),p=visible.filter(function(d){return d.group==='past-production'});
 
   document.body.classList.remove('dog-search-profile');
