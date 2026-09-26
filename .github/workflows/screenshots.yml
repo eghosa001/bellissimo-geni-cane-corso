@@ -99,6 +99,12 @@ jobs:
           assert(dogById('himera-custodi-nos').photo === 'assets/dogs/himera-custodi-nos-main.avif', 'Himera main photo mapping is incorrect');
           assert((dogById('himera-custodi-nos').gallery || []).includes('assets/dogs/himera-custodi-nos-02.avif'), 'Himera secondary photo mapping is incorrect');
 
+          const pagesWorkflow = fs.readFileSync('.github/workflows/pages.yml', 'utf8');
+          assert(pagesWorkflow.includes('> assets/dogs/himera-custodi-nos-main.avif'), 'Pages deployment must publish Himera main photo');
+          assert(pagesWorkflow.includes('> assets/dogs/himera-custodi-nos-02.avif'), 'Pages deployment must publish Himera secondary photo');
+          assert(!pagesWorkflow.includes('> assets/dogs/diesel-bellissimo-geni.avif'), 'Pages deployment must not publish Himera photography under Diesel');
+          assert(!pagesWorkflow.includes('> assets/dogs/rocco-bellissimo-geni.avif'), 'Pages deployment must not publish Himera photography under Rocco');
+
           const site = fs.readFileSync('site.js', 'utf8');
           for (const label of ['Home','Our Dogs','Puppies','Pedigree','Breeding','Gallery','About','Social','Export','Reserve','Contact']) {
             assert(site.includes('>' + label + '<'), 'Canonical mobile menu missing ' + label);
