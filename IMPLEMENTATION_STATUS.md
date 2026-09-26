@@ -18,6 +18,10 @@ Use this file instead of old chat instructions when deciding what still needs wo
 - Branco uses the requested former photograph as his published main image
 - explicit parent/offspring relationship context on dog profiles and pedigree cards
 - owner display for current kennel dogs
+- owner field is editable and persisted through the owner CMS
+- unified full mobile menu across public pages
+- live CMS-backed dog/puppy/reservation data with static fallbacks
+- script-safe About/Breeding/Standards/Socialization/Social page content can be edited live through the CMS
 - direct dog profiles and sire/dam navigation
 - multi-generation pedigree traversal
 - dog/photo anti-cropping treatment
@@ -45,13 +49,13 @@ Do not infer these from photographs.
 
 ## External production setup still required
 
-The admin/Worker code now uses Wrangler automatic provisioning for ADMIN KV, RESERVATIONS KV and R2 media storage. Production still requires:
-- Cloudflare account authentication/API token
-- ADMIN_PASSWORD stored as a Worker secret
-- one production Worker deployment
-- the resulting Worker URL entered on the admin sign-in screen
+The admin/Worker code now uses Wrangler automatic provisioning for ADMIN KV, RESERVATIONS KV and R2 media storage. The deployment workflow also seeds the verified baseline exactly once and opens the public-site backend configuration PR automatically. Production still requires:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `BELLISSIMO_ADMIN_PASSWORD`
+- running **Deploy Bellissimo Worker** and merging its generated configuration PR
 
-Secrets must never be committed.
+Custom-domain activation additionally requires `PAGES_ADMIN_TOKEN` plus the correct DNS records for `bellissimogeni.com`. Secrets must never be committed.
 
 ## Payment remains intentionally disabled
 
