@@ -577,7 +577,15 @@ jobs:
             const puppyPhotos = page.locator('#puppy-gallery img');
             if (await puppyPhotos.count() !== 6) throw new Error('Expected six supplied puppy/young-dog photos');
             for (let i = 0; i < 6; i++) {
-              if (!(await puppyPhotos.nth(i).evaluate(img => img.complete && img.naturalWidth > 0))) {
+              const img = puppyPhotos.nth(i);
+              await img.scrollIntoViewIfNeeded();
+              await img.evaluate(el => el.complete && el.naturalWidth > 0 ? true : new Promise(resolve => {
+                const done = () => resolve(true);
+                el.addEventListener('load', done, { once: true });
+                el.addEventListener('error', done, { once: true });
+                setTimeout(done, 4000);
+              }));
+              if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) {
                 throw new Error('Supplied puppy photo ' + i + ' failed to load');
               }
             }
