@@ -92,6 +92,11 @@ jobs:
           }
           EOF
 
+      - name: Run Worker unit tests
+        run: |
+          node --test webhook/test.js
+          node --check webhook/handler.js
+
       - name: Choose screenshot target
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
