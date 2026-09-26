@@ -211,6 +211,9 @@ jobs:
             await page.goto(base + 'dogs.html?dog=dragoslav-custodi-nos', { waitUntil: 'networkidle' });
             const dragoslavText = await page.locator('#profile').innerText();
             if (!dragoslavText.includes('STATUS') || !dragoslavText.includes('Pedigree ancestor')) throw new Error('Ancestor status should remain visible');
+            const dragoslavImage = page.locator('#profile .profile-media-main img');
+            if (!(await dragoslavImage.evaluate(img => img.complete && img.naturalWidth > 0))) throw new Error('Supplied Dragoslav photo failed to load');
+            if ((await dragoslavImage.evaluate(img => getComputedStyle(img).objectFit)) !== 'contain') throw new Error('Dragoslav photo may crop the dog');
             const dragoslavParents = page.locator('#profile dd a');
             if (await dragoslavParents.count() < 2) throw new Error('Dragoslav sire/dam links are not traceable');
 
@@ -220,6 +223,15 @@ jobs:
               if (!pedigree.includes(expected)) throw new Error('Pedigree missing ' + expected);
             }
             if (pedigree.includes('Henry')) throw new Error('Demo pedigree data still visible');
+
+            await page.goto(base + 'pedigree.html?dog=tessa-sangue-magnifica', { waitUntil: 'networkidle' });
+            const tessaPedigree = await page.locator('main').innerText();
+            for (const expected of ['Tessa Sangue Magnifica','ZZ Top Sangue Magnifica','Birba Sangue Magnifica','Mockingjay Custodi Nos Sangue Magnifica','Jaro Ivoni Imperial','Sangue Magnifica Murano']) {
+              if (!tessaPedigree.includes(expected)) throw new Error('Tessa pedigree missing ' + expected);
+            }
+            if (/microchip|tattoo/i.test(tessaPedigree.replace(/Microchip numbers and private owner details are not displayed publicly\./i,''))) {
+              throw new Error('Private pedigree identifiers must not be exposed');
+            }
 
             await browser.close();
           })();
@@ -248,7 +260,7 @@ jobs:
               if (!eden.includes(expected)) throw new Error('Eden profile missing ' + expected);
             }
 
-            for (const id of ['tessa-sangue-magnifica','daisy-bellissimo-geni']) {
+            for (const id of ['tessa-sangue-magnifica','daisy-bellissimo-geni','anthie-custodi-nos']) {
               await page.goto(base + 'dogs.html?dog=' + id, { waitUntil: 'networkidle' });
               const img = page.locator('#profile .profile-media-main img');
               if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) {
@@ -328,6 +340,29 @@ jobs:
                 .map(img => img.getAttribute('src') || img.getAttribute('alt') || 'unknown image'));
               if (brokenImages.length) throw new Error(path + ' contains broken images: ' + brokenImages.join(', '));
             }
+
+            await page.goto(base + 'puppies.html', { waitUntil: 'networkidle' });
+            const genericHeaderBoxes = await Promise.all([
+              page.locator('.mobile-quick-links a[href="dogs.html"]').boundingBox(),
+              page.locator('.mobile-quick-links a[href="puppies.html"]').boundingBox(),
+              page.locator('.mobile-nav-toggle').boundingBox()
+            ]);
+            if (!genericHeaderBoxes.every(Boolean) || !(genericHeaderBoxes[0].x < genericHeaderBoxes[1].x && genericHeaderBoxes[1].x < genericHeaderBoxes[2].x)) {
+              throw new Error('Generic mobile shortcut order must be Our Dogs, Puppies, Menu');
+            }
+            const mobileHeaderOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+            if (mobileHeaderOverflow > 1) throw new Error('Generic mobile header creates horizontal overflow');
+
+            const safeeraMobileImage = page.locator('#safeera-bellissimo-geni .puppy-card-media img');
+            const safeeraMobileFrame = await safeeraMobileImage.evaluate(img => ({
+              loaded: img.complete && img.naturalWidth > 0,
+              fit: getComputedStyle(img).objectFit,
+              height: getComputedStyle(img).height,
+              naturalRatio: img.naturalWidth / img.naturalHeight,
+              renderedRatio: img.getBoundingClientRect().width / img.getBoundingClientRect().height
+            }));
+            if (!safeeraMobileFrame.loaded || safeeraMobileFrame.fit !== 'contain') throw new Error('Safeera mobile image failed or may crop');
+            if (Math.abs(safeeraMobileFrame.naturalRatio - safeeraMobileFrame.renderedRatio) > 0.03) throw new Error('Safeera mobile image aspect ratio is being forced/cropped');
 
             await page.setViewportSize({ width: 1365, height: 900 });
             await page.goto(base + 'puppies.html', { waitUntil: 'networkidle' });
