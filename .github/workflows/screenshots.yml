@@ -479,6 +479,9 @@ jobs:
               if (overflow > 1) throw new Error(path + ' has horizontal overflow');
               const body = (await page.locator('body').innerText()).toLowerCase();
               for (const phrase of forbidden) if (body.includes(phrase)) throw new Error(path + ' still exposes staging copy: ' + phrase);
+              // Force lazy gallery images to start loading before declaring them broken.
+              await page.locator('img').evaluateAll(imgs => imgs.forEach(img => { img.loading = 'eager'; }));
+              await page.waitForTimeout(500);
               const brokenImages = await page.locator('img').evaluateAll(imgs => imgs
                 .filter(img => !img.complete || img.naturalWidth === 0 || img.naturalHeight === 0)
                 .map(img => img.getAttribute('src') || img.getAttribute('alt') || 'unknown image'));
