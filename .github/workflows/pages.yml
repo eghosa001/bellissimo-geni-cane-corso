@@ -67,12 +67,12 @@ jobs:
           # X Bellissimo Geni: preserve the supplied 856x1280 source dimensions.
           # Sitting portrait is the main photo; standing portrait is the secondary gallery photo.
           mkdir -p assets/puppies
-          cat .github/assets/x-bellissimo-geni-main-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.avif
-          cat .github/assets/x-bellissimo-geni-standing-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.avif
-          test -s assets/puppies/x-bellissimo-geni-main.avif
-          test -s assets/puppies/x-bellissimo-geni-standing.avif
-          file assets/puppies/x-bellissimo-geni-main.avif
-          file assets/puppies/x-bellissimo-geni-standing.avif
+          cat .github/assets/x-bellissimo-geni-main-jpg.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-main.jpg
+          cat .github/assets/x-bellissimo-geni-standing-jpg.b64.part* | tr -d '\n\r' | base64 --decode > assets/puppies/x-bellissimo-geni-standing.jpg
+          test -s assets/puppies/x-bellissimo-geni-main.jpg
+          test -s assets/puppies/x-bellissimo-geni-standing.jpg
+          file assets/puppies/x-bellissimo-geni-main.jpg
+          file assets/puppies/x-bellissimo-geni-standing.jpg
 
           rm -rf build
           mkdir -p build
