@@ -184,3 +184,13 @@ footer .foot-nav{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;mar
   .site-header>.nav-cta{display:none}
   .mobile-menu{top:105px}
 }
+
+/* Puppy profile gallery — main photo + non-duplicated secondary photography. */
+#list.grid-3{grid-template-columns:repeat(auto-fit,minmax(280px,380px));justify-content:center}
+.puppy-main-photo-link{display:block;width:100%}
+.puppy-profile-gallery{margin:18px 0 4px;padding-top:16px;border-top:1px solid var(--line)}
+.puppy-profile-gallery>strong{display:block;margin-bottom:10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.puppy-profile-gallery-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.puppy-profile-gallery-grid a{display:block;aspect-ratio:2/3;overflow:hidden;background:#e8e1d5;border:1px solid var(--line)}
+.puppy-profile-gallery-grid img{width:100%;height:100%;display:block;object-fit:contain;object-position:center;background:#e8e1d5}
+@media(max-width:760px){#list.grid-3{grid-template-columns:1fr}.puppy-profile-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
