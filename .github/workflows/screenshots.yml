@@ -742,7 +742,7 @@ jobs:
             if (!branco.includes('JR710606CC') || branco.includes('NGCCKC2025D5F61D56')) {
               throw new Error('Branco registration cleanup failed');
             }
-            for (const expected of ['Status','Bellissimo Geni dog','Owner','Kelvin Omigie/BELLISSIMO GENI']) {
+            for (const expected of ['STATUS','Bellissimo Geni dog','OWNER','Kelvin Omigie/BELLISSIMO GENI']) {
               if (!branco.includes(expected)) throw new Error('Branco profile missing structured detail: ' + expected);
             }
             if (branco.includes('Health record\nNot recorded') || branco.includes('Achievements\nNot recorded')) {
@@ -812,7 +812,7 @@ jobs:
 
             await page.goto(base + 'dogs.html?dog=igon-del-dyrium', { waitUntil: 'networkidle' });
             const igon = await page.locator('#profile').innerText();
-            for (const expected of ['Achievements', "J.EuW'15"]) {
+            for (const expected of ['ACHIEVEMENTS', "J.EuW'15"]) {
               if (!igon.includes(expected)) throw new Error('Igon achievement detail missing ' + expected);
             }
 
