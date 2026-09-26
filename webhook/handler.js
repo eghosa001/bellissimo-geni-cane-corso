@@ -127,10 +127,21 @@ export async function verifyRecaptcha(secret, token, action) {
   return { passed: ok, skipped: false, score: j.score, hostname: j.hostname };
 }
 
+const CORS_HEADERS = Object.freeze({
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Max-Age': '86400'
+});
+
 function json(status, payload) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
+    headers: {
+      ...CORS_HEADERS,
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store'
+    }
   });
 }
 
@@ -998,11 +1009,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response('', {
         status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-          'Access-Control-Max-Age': '86400'
-        }
+        headers: CORS_HEADERS
       });
     }
 
