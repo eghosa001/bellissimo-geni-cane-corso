@@ -16,12 +16,10 @@ For each photograph supplied on 24 September 2026, provide or confirm:
 Do not infer these values from appearance.
 
 ## 2. Cloudflare production setup
-Needed before the owner CMS can be used in production:
-- ADMIN KV namespace
-- RESERVATIONS KV namespace
-- R2 media bucket
+KV and R2 resource creation is now automatic during Wrangler deployment. Before the owner CMS can be used in production, the kennel still needs:
+- Cloudflare authentication/API token
 - strong ADMIN_PASSWORD stored as a Worker secret
-- final deployed Worker URL
+- final deployed Worker URL (entered once on the admin sign-in screen)
 
 Never commit passwords, API keys or private credentials.
 
