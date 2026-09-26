@@ -532,6 +532,10 @@ async function handleAdminBootstrap(req, env) {
   const body = await readJson(req);
   if (!body) return json(400, { ok: false, error: 'bad_json' });
 
+  const bootstrapKey = 'admin:bootstrap:verified-baseline:v1';
+  const alreadySeeded = await kvGet(env, bootstrapKey);
+  if (alreadySeeded) return json(200, { ok: true, alreadySeeded: true, seeded: {} });
+
   const groups = [
     { key: ADMIN_KEYS.dogs, records: Array.isArray(body.dogs) ? body.dogs : [] },
     { key: ADMIN_KEYS.puppies, records: Array.isArray(body.puppies) ? body.puppies : [] },
@@ -554,8 +558,9 @@ async function handleAdminBootstrap(req, env) {
     }
     seeded[group.key] = count;
   }
+  await kvPut(env, bootstrapKey, { completedAt: new Date().toISOString(), seeded });
   await auditLog(env, 'bootstrap', 'site', 'verified-baseline', seeded);
-  return json(200, { ok: true, seeded });
+  return json(200, { ok: true, alreadySeeded: false, seeded });
 }
 
 async function handleAdminDogs(req, env) {
