@@ -170,9 +170,20 @@ function parentLink(id){
   var d=byId(id);
   return d?'<a href="dogs.html?dog='+encodeURIComponent(d.id)+'"><strong>'+BG.esc(d.name)+'</strong></a>':'Not recorded';
 }
-function ownerOrStatusRow(d){
-  if(d.owner)return '<dt>Owner</dt><dd>'+BG.esc(d.owner)+'</dd>';
-  return d.status?'<dt>Status</dt><dd>'+BG.esc(d.status)+'</dd>':'';
+function profileDetails(d){
+  var rows='';
+  rows+='<dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd>';
+  rows+='<dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd>';
+  rows+='<dt>Date of birth</dt><dd>'+displayDate(d.dateOfBirth)+'</dd>';
+  rows+='<dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>';
+  if(d.status) rows+='<dt>Status</dt><dd>'+BG.esc(d.status)+'</dd>';
+  if(d.owner) rows+='<dt>Owner</dt><dd>'+BG.esc(d.owner)+'</dd>';
+  rows+='<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd>';
+  rows+='<dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd>';
+  if(d.bloodline) rows+='<dt>Bloodline</dt><dd>'+BG.esc(d.bloodline)+'</dd>';
+  if(d.health) rows+='<dt>Health record</dt><dd>'+BG.esc(d.health)+'</dd>';
+  if(d.achievements) rows+='<dt>Achievements</dt><dd>'+BG.esc(d.achievements)+'</dd>';
+  return rows;
 }
 function familyRelationships(d){
   var children=family?family.childrenOf(d):[];
@@ -189,7 +200,7 @@ function renderProfile(id,shouldScroll){
   var d=byId(id);
   if(!d){profile.innerHTML='<div class="notice">Dog not found.</div>';return}
   var hero=d.photo?'<div class="profile-media-main"><img src="'+BG.esc(d.photo)+'" alt="'+BG.esc(d.name)+'" loading="eager" decoding="async" onerror="this.remove()"></div>':'<div class="profile-placeholder"><div><b>'+BG.esc(d.name)+'</b><span>Photography pending</span></div></div>';
-  profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl><dt>Sex</dt><dd>'+safe(d.sex,'Not recorded')+'</dd><dt>Colour</dt><dd>'+safe(d.colour,'Not recorded')+'</dd><dt>Date of birth</dt><dd>'+displayDate(d.dateOfBirth)+'</dd><dt>Registration</dt><dd>'+safe(d.registration,'Not recorded')+'</dd>'+ownerOrStatusRow(d)+'<dt>Sire</dt><dd>'+parentLink(d.sireId)+'</dd><dt>Dam</dt><dd>'+parentLink(d.damId)+'</dd><dt>Bloodline</dt><dd>'+safe(d.bloodline,'Not recorded')+'</dd><dt>Health record</dt><dd>'+safe(d.health,'Not recorded')+'</dd></dl>'+familyRelationships(d)+'<div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
+  profile.innerHTML='<article class="profile">'+hero+'<div class="profile-copy"><p class="eyebrow">'+BG.esc((d.group==='past-production'?'PAST PRODUCTION':d.group==='ancestor'?'PEDIGREE RECORD':'DOG PROFILE'))+'</p><h2>'+BG.esc(d.name)+'</h2><p>'+BG.esc(d.bio||'Verified pedigree record.')+'</p><dl>'+profileDetails(d)+'</dl>'+familyRelationships(d)+'<div class="profile-actions"><a class="btn gold" href="pedigree.html?dog='+encodeURIComponent(d.id)+'">View pedigree</a><a class="btn ghost" href="dogs.html">All dogs</a></div></div>'+gallery(d)+'</article>';
   if(shouldScroll!==false)profile.scrollIntoView({behavior:'smooth',block:'start'});
 }
 searchForm.addEventListener('submit',function(e){e.preventDefault();renderLists();});
