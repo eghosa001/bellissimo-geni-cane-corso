@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       domain:
-        description: "Custom domain that already has DNS configured for GitHub Pages"
+        description: "Production domain to configure for GitHub Pages"
         required: true
         default: "bellissimogeni.com"
 
@@ -18,7 +18,8 @@ jobs:
     timeout-minutes: 10
     env:
       DOMAIN: ${{ inputs.domain }}
-      GH_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      PAGES_ADMIN_TOKEN: ${{ secrets.PAGES_ADMIN_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +30,48 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Verify DNS resolves before changing canonical URLs
+      - name: Validate Pages administration token
+        run: |
+          test -n "$PAGES_ADMIN_TOKEN" || {
+            echo "Missing PAGES_ADMIN_TOKEN."
+            echo "Use a token that can manage this repository's Pages settings (Pages write + Administration write)."
+            exit 1
+          }
+
+      - name: Register the custom domain in GitHub Pages
+        env:
+          GH_TOKEN: ${{ secrets.PAGES_ADMIN_TOKEN }}
+        run: |
+          gh api --method PUT             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2026-03-10"             "repos/$GITHUB_REPOSITORY/pages"             -f "cname=$DOMAIN"             -f "build_type=workflow"
+          echo "GitHub Pages is now expecting $DOMAIN."
+
+      - name: Verify DNS points to GitHub Pages
         run: |
           python3 - "$DOMAIN" <<'PY'
           import socket, sys
           domain = sys.argv[1].strip().lower()
+          expected = {
+              "185.199.108.153",
+              "185.199.109.153",
+              "185.199.110.153",
+              "185.199.111.153",
+          }
           try:
-              answers = socket.getaddrinfo(domain, 443, type=socket.SOCK_STREAM)
+              answers = socket.getaddrinfo(domain, 443, family=socket.AF_INET, type=socket.SOCK_STREAM)
           except socket.gaierror as exc:
-              raise SystemExit(f"DNS for {domain} does not resolve yet: {exc}")
-          if not answers:
-              raise SystemExit(f"DNS for {domain} returned no addresses")
-          print(f"DNS resolves for {domain}")
+              raise SystemExit(
+                  f"DNS for {domain} does not resolve yet: {exc}\n"
+                  "Configure the apex A records at the registrar/DNS provider, then re-run this workflow."
+              )
+          actual = {item[4][0] for item in answers}
+          missing = expected - actual
+          if missing:
+              raise SystemExit(
+                  f"{domain} is not fully pointed at GitHub Pages. "
+                  f"Resolved IPv4 addresses: {sorted(actual)}. "
+                  f"Required A records: {sorted(expected)}"
+              )
+          print(f"DNS is correct for {domain}: {sorted(actual)}")
           PY
 
       - name: Prepare custom-domain files
@@ -64,6 +95,8 @@ jobs:
           EOF
 
       - name: Open activation pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           branch="activate-domain-${GITHUB_RUN_ID}"
           git config user.name "github-actions[bot]"
@@ -72,4 +105,17 @@ jobs:
           git add CNAME robots.txt sitemap.xml .github/workflows/screenshots.yml ./*.html
           git commit -m "Activate custom domain $DOMAIN"
           git push origin "$branch"
-          gh pr create --base main --head "$branch" --title "Activate $DOMAIN" --body "DNS resolved before this workflow ran. This PR adds the GitHub Pages CNAME and migrates canonical, Open Graph, sitemap, robots and production screenshot URLs to https://$DOMAIN."
+          gh pr create             --base main             --head "$branch"             --title "Activate $DOMAIN"             --body "GitHub Pages has been configured for $DOMAIN and the apex DNS was verified against all four GitHub Pages A records. This PR migrates canonical, Open Graph, sitemap, robots and production screenshot URLs."
+
+      - name: Report HTTPS certificate state
+        env:
+          GH_TOKEN: ${{ secrets.PAGES_ADMIN_TOKEN }}
+        run: |
+          state="$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.https_certificate.state // "pending"')"
+          echo "HTTPS certificate state: $state" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$state" = "approved" ]; then
+            gh api --method PUT               -H "Accept: application/vnd.github+json"               -H "X-GitHub-Api-Version: 2026-03-10"               "repos/$GITHUB_REPOSITORY/pages"               -F https_enforced=true
+            echo "HTTPS enforcement enabled." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "GitHub may take up to 24 hours to issue the certificate. Re-run this workflow later to enable HTTPS once approved." >> "$GITHUB_STEP_SUMMARY"
+          fi
