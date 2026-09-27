@@ -1026,6 +1026,102 @@ jobs:
           })();
           EOF
 
+      - name: Mobile layout regression across public pages
+        run: |
+          node <<'EOF'
+          const { chromium } = require('playwright');
+          const pages = [
+            '', 'dogs.html', 'puppies.html', 'gallery.html', 'pedigree.html',
+            'contact.html', 'reserve.html', 'about.html', 'breeding.html',
+            'socialization.html', 'standards.html', 'testimonials.html'
+          ];
+          const widths = [390, 360];
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const base = process.env.BASE_URL;
+
+            for (const width of widths) {
+              for (const path of pages) {
+                const page = await browser.newPage({
+                  viewport: { width, height: 844 },
+                  deviceScaleFactor: 1
+                });
+                await page.goto(base + path + '?mobile-check=' + Date.now(), {
+                  waitUntil: 'networkidle',
+                  timeout: 60000
+                });
+                await page.waitForTimeout(150);
+
+                const layout = await page.evaluate(() => {
+                  const viewport = window.innerWidth;
+                  const overflow = document.documentElement.scrollWidth - viewport;
+                  const offenders = [...document.querySelectorAll('body *')]
+                    .filter(el => {
+                      const r = el.getBoundingClientRect();
+                      if (!r.width || getComputedStyle(el).position === 'fixed') return false;
+                      return r.right > viewport + 2 || r.left < -2;
+                    })
+                    .slice(0, 6)
+                    .map(el => ({
+                      tag: el.tagName,
+                      cls: el.className || '',
+                      left: Math.round(el.getBoundingClientRect().left),
+                      right: Math.round(el.getBoundingClientRect().right)
+                    }));
+
+                  const controls = [...document.querySelectorAll('input,select,textarea,button,.btn,.button,.legacy-button')]
+                    .filter(el => {
+                      const s = getComputedStyle(el);
+                      const r = el.getBoundingClientRect();
+                      return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+                    });
+                  const tooSmall = controls
+                    .filter(el => el.getBoundingClientRect().height < 40)
+                    .slice(0, 6)
+                    .map(el => ({
+                      tag: el.tagName,
+                      cls: el.className || '',
+                      h: Math.round(el.getBoundingClientRect().height)
+                    }));
+
+                  return { overflow, offenders, tooSmall };
+                });
+
+                if (layout.overflow > 1) {
+                  throw new Error((path || 'index.html') + ' overflows by ' + layout.overflow + 'px at ' + width + 'px: ' + JSON.stringify(layout.offenders));
+                }
+                if (layout.tooSmall.length) {
+                  throw new Error((path || 'index.html') + ' has undersized mobile controls at ' + width + 'px: ' + JSON.stringify(layout.tooSmall));
+                }
+
+                if (path === '') {
+                  const menu = page.locator('.reference-menu-button');
+                  if (await menu.count()) {
+                    await menu.click();
+                    const open = await page.locator('.legacy-mobile-menu.open').count();
+                    if (!open) throw new Error('Homepage mobile menu did not open');
+                  }
+                } else {
+                  const menu = page.locator('.mobile-nav-toggle');
+                  if (await menu.count()) {
+                    await menu.click();
+                    const open = await page.locator('.mobile-menu.open').count();
+                    if (!open) throw new Error(path + ' mobile menu did not open');
+                  }
+                }
+
+                await page.close();
+              }
+            }
+
+            await browser.close();
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          EOF
+
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
