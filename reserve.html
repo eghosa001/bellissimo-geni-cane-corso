@@ -84,5 +84,6 @@ else{setTimeout(function(){postWebhook(null);},500);}
 Promise.all([BG.loadAdminJSON('puppies','data/puppies.json'),BG.loadAdminJSON('dogs','data/dogs.json')]).then(function(rows){var allPuppies=rows[0].puppies||rows[0].data||[],dogs=rows[1].data||rows[1].dogs||[];family=BG.familyIndex([{kind:'dog',records:dogs},{kind:'puppy',records:allPuppies}]);PUPPS=allPuppies.filter(function(p){return p.status==='AVAILABLE';});fill();}).catch(function(){PUPPS=[];fill();});
 })();
 </script>
+<script defer src="assets/site-analytics.js"></script>
 </body>
 </html>

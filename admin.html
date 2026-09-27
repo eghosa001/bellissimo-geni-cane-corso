@@ -449,6 +449,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section">Overview</div>
       <div class="nav-item active" data-page="dashboard">Dashboard</div>
+      <div class="nav-item" data-page="visits">Visits</div>
       <div class="nav-section">Dogs</div>
       <div class="nav-item" data-page="dogs">All Dogs<span class="count" id="dogCount">0</span></div>
       <div class="nav-item" data-page="dog-photos">Dog Photos</div>
@@ -495,6 +496,8 @@
 <!-- ══════════════ TOAST ══════════════ -->
 <div class="toast" id="toast"></div>
 
+<link rel="stylesheet" href="assets/admin-visits.css">
+<script src="assets/admin-visits.js"></script>
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
 function normalizeApiBase(value) {
@@ -843,6 +846,7 @@ async function renderPage(page) {
   try {
     switch(page) {
       case 'dashboard':   area.innerHTML = await renderDashboard(); break;
+      case 'visits':      area.innerHTML = await renderVisits(); break;
       case 'dogs':        area.innerHTML = await renderDogsList(); break;
       case 'dog-photos':  area.innerHTML = await renderDogPhotos(); break;
       case 'add-dog':     area.innerHTML = await renderDogForm(null); break;

@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "webhook/**"
+      - "assets/admin-visits.*"
+      - "assets/site-analytics.js"
       - "wrangler.toml"
       - "package.json"
       - ".github/workflows/worker-test.yml"
@@ -12,6 +14,8 @@ on:
       - main
     paths:
       - "webhook/**"
+      - "assets/admin-visits.*"
+      - "assets/site-analytics.js"
       - "wrangler.toml"
       - "package.json"
       - ".github/workflows/worker-test.yml"

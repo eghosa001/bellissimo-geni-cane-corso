@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node --test test.js",
+    "test": "node --test test.js analytics.test.js visits-ui.test.js",
     "check": "node --check handler.js"
   },
   "devDependencies": {

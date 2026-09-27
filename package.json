@@ -6,7 +6,7 @@
   "scripts": {
     "deploy": "wrangler deploy",
     "check": "node --check webhook/handler.js",
-    "test": "node --test webhook/test.js",
+    "test": "node --test webhook/test.js webhook/analytics.test.js webhook/visits-ui.test.js",
     "build:site": "bash scripts/build-static-site.sh dist"
   },
   "devDependencies": {

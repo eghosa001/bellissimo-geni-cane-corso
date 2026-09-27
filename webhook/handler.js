@@ -1470,6 +1470,58 @@ async function handleAdminPublishToggle(req, env) {
   return json(200, { ok: true, data: updated });
 }
 
+// Cloudflare credentials stay in a Worker secret, never in public site config.
+async function handleAdminAnalytics(request, env) {
+  const auth = await adminAuth(request, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  if (request.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
+  const days = Number(new URL(request.url).searchParams.get('days') || 7);
+  if (![7, 30].includes(days)) return json(400, { ok: false, error: 'invalid_range' });
+  if (!env.CLOUDFLARE_ANALYTICS_TOKEN) return json(503, { ok: false, error: 'analytics_not_configured' });
+  const end = new Date();
+  const start = new Date(end);
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - days + 1);
+  const query = `query Visits($account: string, $filter: AccountRumPageloadEventsAdaptiveGroupsFilter_InputObject) {
+    viewer { accounts(filter: {accountTag: $account}) {
+      totals: rumPageloadEventsAdaptiveGroups(limit: 1, filter: $filter) { count sum { visits } }
+      daily: rumPageloadEventsAdaptiveGroups(limit: 31, filter: $filter, orderBy: [date_ASC]) { count sum { visits } dimensions { date } }
+      pages: rumPageloadEventsAdaptiveGroups(limit: 10, filter: $filter, orderBy: [count_DESC]) { count dimensions { requestPath } }
+      countries: rumPageloadEventsAdaptiveGroups(limit: 10, filter: $filter, orderBy: [count_DESC]) { count dimensions { countryName } }
+    } }
+  }`;
+  try {
+    const response = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + env.CLOUDFLARE_ANALYTICS_TOKEN, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(10000),
+      body: JSON.stringify({ query, variables: {
+        account: '19a03bec57c0277e01e1e70e241576af',
+        filter: { datetime_geq: start.toISOString(), datetime_lt: end.toISOString(),
+          siteTag: '8fdbc4be233b49ce8f1e0b40687c2b45', requestHost: 'bellissimogeni.com',
+          requestPath_notlike: '/admin%', bot: 0 }
+      } })
+    });
+    if (!response.ok) throw new Error('upstream');
+    const payload = await response.json();
+    const report = payload.data?.viewer?.accounts?.[0];
+    if (payload.errors?.length || !report || !['totals', 'daily', 'pages', 'countries'].every(key => Array.isArray(report[key]))) throw new Error('upstream');
+    const number = value => Math.max(0, Math.round(Number(value) || 0));
+    const daily = Array.from({ length: days }, (_, i) => {
+      const date = new Date(start.getTime() + i * 86400000).toISOString().slice(0, 10);
+      const row = report.daily.find(item => item.dimensions?.date === date);
+      return { date, pageViews: number(row?.count), visits: number(row?.sum?.visits) };
+    });
+    return json(200, { ok: true, days, from: start.toISOString(), to: end.toISOString(),
+      totals: { pageViews: number(report.totals[0]?.count), visits: number(report.totals[0]?.sum?.visits) }, daily,
+      pages: report.pages.map(row => ({ path: String(row.dimensions?.requestPath || '/'), pageViews: number(row.count) })),
+      countries: report.countries.map(row => ({ country: String(row.dimensions?.countryName || 'Unknown'), pageViews: number(row.count) }))
+    });
+  } catch (_) {
+    return json(502, { ok: false, error: 'analytics_unavailable' });
+  }
+}
+
 // ─── Main fetch ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -1526,6 +1578,7 @@ export default {
         case 'gallery':      return handleAdminGallery(request, env);
         case 'settings':     return handleAdminSettings(request, env);
         case 'stats':        return handleAdminStats(request, env);
+        case 'analytics':    return handleAdminAnalytics(request, env);
         case 'upload':       return handleAdminUpload(request, env);
         case 'media-delete': return handleAdminMediaDelete(request, env);
         case 'content':      return handleAdminContent(request, env);
