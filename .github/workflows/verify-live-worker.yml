@@ -1,5 +1,5 @@
 name: Verify Live Bellissimo Worker
-# manual-live-check-2026-09-27-bulk-diagnostic
+# live-worker-check
 
 on:
   workflow_dispatch:
@@ -21,15 +21,6 @@ jobs:
         run: |
           set +e
           curl --silent --show-error --location --max-time 20 "https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/webhook/version"
-          echo
-
-      - name: Check KV bulk diagnostic
-        run: |
-          set +e
-          url="https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/webhook/kv-diagnostic"
-          status="$(curl --silent --show-error --output /tmp/kv-diagnostic.json --write-out "%{http_code}" --location --max-time 20 "$url")"
-          echo "status=$status"
-          cat /tmp/kv-diagnostic.json || true
           echo
 
       - name: Check Worker health
