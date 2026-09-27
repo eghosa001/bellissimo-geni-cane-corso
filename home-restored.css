@@ -2057,3 +2057,131 @@ button{font:inherit}
   .reference-credibility .credibility-icon,.credibility-strip .credibility-icon{font-size:15px!important}
   .featured-dogs,.knowledge-grid,.legacy-family,.contact-band{padding-left:14px!important;padding-right:14px!important}
 }
+
+
+/* ===== Restore original mobile hero composition — 2026-09-27 ===== */
+@media(max-width:560px){
+  .legacy-hero{
+    position:relative!important;
+    display:block!important;
+    flex-direction:initial!important;
+    min-height:500px!important;
+    height:clamp(500px,62dvh,560px)!important;
+    overflow:hidden!important;
+    background:#0c0d0b!important;
+  }
+  .legacy-hero-photo{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    aspect-ratio:auto!important;
+    overflow:hidden!important;
+    background:#0c0d0b!important;
+  }
+  .legacy-hero-photo>img{
+    position:absolute!important;
+    top:auto!important;
+    right:0!important;
+    bottom:0!important;
+    left:auto!important;
+    width:auto!important;
+    height:85%!important;
+    max-width:none!important;
+    transform:translateX(12%)!important;
+    object-fit:contain!important;
+    object-position:right center!important;
+    z-index:1!important;
+    filter:none!important;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.45) 1.5%,#000 4%,#000 100%)!important;
+    mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.45) 1.5%,#000 4%,#000 100%)!important;
+    background:transparent!important;
+  }
+  .legacy-hero-photo::before{
+    content:''!important;
+    position:absolute!important;
+    inset:0!important;
+    z-index:2!important;
+    pointer-events:none!important;
+    background:
+      linear-gradient(90deg,rgba(8,9,7,.99) 0%,rgba(8,9,7,.96) 25%,rgba(8,9,7,.72) 38%,rgba(8,9,7,.20) 50%,rgba(8,9,7,.03) 60%,rgba(8,9,7,0) 70%),
+      linear-gradient(180deg,rgba(0,0,0,.09) 0%,rgba(0,0,0,.02) 62%,rgba(0,0,0,.14) 100%)!important;
+  }
+  .legacy-hero-photo::after{
+    display:block!important;
+    content:''!important;
+    position:absolute!important;
+    top:0!important;
+    left:0!important;
+    right:0!important;
+    height:24%!important;
+    z-index:0!important;
+    background:url('assets/dogs/bellissimo-dog-01-hd.webp') center top/cover no-repeat!important;
+    -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 68%,rgba(0,0,0,.45) 82%,transparent 100%)!important;
+    mask-image:linear-gradient(to bottom,#000 0%,#000 68%,rgba(0,0,0,.45) 82%,transparent 100%)!important;
+  }
+  .legacy-hero-copy{
+    position:relative!important;
+    z-index:3!important;
+    width:52%!important;
+    max-width:none!important;
+    min-height:100%!important;
+    height:100%!important;
+    padding:clamp(72px,9.5dvh,88px) 0 24px 5.7vw!important;
+    justify-content:flex-start!important;
+  }
+  .legacy-eyebrow{
+    margin:0 0 14px!important;
+    color:#d7ab5b!important;
+    font-size:6.2px!important;
+    line-height:1.35!important;
+    letter-spacing:.16em!important;
+    white-space:nowrap!important;
+  }
+  .legacy-hero h1{
+    max-width:100%!important;
+    margin:0!important;
+    color:#f6f0e7!important;
+    font-size:clamp(49px,12.8vw,58px)!important;
+    line-height:.80!important;
+    letter-spacing:-.04em!important;
+    overflow-wrap:normal!important;
+  }
+  .legacy-lead{
+    max-width:190px!important;
+    margin:20px 0 18px!important;
+    color:#f1ece3!important;
+    font-size:8px!important;
+    line-height:1.55!important;
+  }
+  .legacy-actions{
+    position:static!important;
+    width:clamp(145px,36vw,174px)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:5px!important;
+  }
+  .legacy-button{
+    width:100%!important;
+    min-width:0!important;
+    min-height:35px!important;
+    padding:0 12px!important;
+    gap:8px!important;
+    font-size:6.5px!important;
+    line-height:1.15!important;
+    letter-spacing:.05em!important;
+    white-space:nowrap!important;
+  }
+  .legacy-button-outline{
+    background:rgba(8,8,8,.20)!important;
+    border-color:rgba(255,255,255,.72)!important;
+  }
+}
+@media(max-width:380px){
+  .legacy-hero h1{font-size:clamp(41px,12vw,46px)!important}
+  .legacy-lead{max-width:158px!important;font-size:9.7px!important}
+  .legacy-actions{width:clamp(145px,40vw,160px)!important}
+  .legacy-button{font-size:6.5px!important;padding:0 8px!important}
+}
