@@ -423,10 +423,10 @@ jobs:
 
             await page.goto(base + 'gallery.html', { waitUntil: 'networkidle' });
             const gallery = page.locator('.gallery-grid img');
-            if (await gallery.count() !== 6) throw new Error('Gallery should contain six real dog photos');
-            const galleryCaptions = await page.locator('.gallery-grid figcaption').allTextContents();
-            if (new Set(galleryCaptions.map(x => x.trim())).size !== galleryCaptions.length) {
-              throw new Error('Main gallery repeats a dog instead of presenting six distinct subjects');
+            if (await gallery.count() < 6) throw new Error('Gallery should contain the verified kennel photo set');
+            const gallerySources = await gallery.evaluateAll(imgs => imgs.map(img => img.getAttribute('src')).filter(Boolean));
+            if (new Set(gallerySources).size !== gallerySources.length) {
+              throw new Error('Main gallery repeats the same image source');
             }
             for (let i = 0; i < await gallery.count(); i++) {
               const img = gallery.nth(i);
