@@ -229,6 +229,178 @@
   .tree-node{min-width:90px;padding:8px 10px}
   .tree-node .tname{font-size:13px}
 }
+
+/* ── Canonical admin phone layout ─────────────────────────────────────────── */
+@media(max-width:700px){
+  html,body{width:100%;max-width:100%;overflow:hidden}
+  .admin-wrap,.main-area{width:100%;max-width:100%;min-width:0}
+  .content-scroll{
+    width:100%;max-width:100%;min-width:0;
+    padding:14px 12px 28px;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+  .panel{width:100%;max-width:100%;min-width:0;margin-bottom:16px}
+  .panel-header{
+    padding:14px;
+    gap:10px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .panel-header h3{font-size:17px;overflow-wrap:anywhere}
+  .panel-body{padding:14px;min-width:0;max-width:100%}
+
+  .stats-row{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .stat-card{padding:14px;min-width:0}
+  .stat-card .num{font-size:30px}
+
+  .toolbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%;max-width:100%;gap:9px;margin-bottom:16px
+  }
+  .toolbar input,.toolbar select,.toolbar button,.toolbar .btn{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:46px;font-size:16px
+  }
+  .btn,.btn-sm{
+    min-height:44px;
+    justify-content:center;
+    white-space:normal;
+    text-align:center;
+    padding:10px 12px;
+  }
+  .btn-group{
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+    gap:7px;
+  }
+  .btn-group .btn{width:100%}
+
+  /* Tables become phone-friendly record cards instead of overflowing sideways. */
+  .datatable{display:block;width:100%;max-width:100%;font-size:13px}
+  .datatable thead{display:none}
+  .datatable tbody{display:grid;gap:12px;width:100%}
+  .datatable tr{
+    display:block;
+    width:100%;
+    border:1px solid var(--line);
+    background:#fff;
+  }
+  .datatable td{
+    display:grid;
+    grid-template-columns:minmax(92px,34%) minmax(0,1fr);
+    gap:10px;
+    width:100%;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    min-width:0;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  .datatable td::before{
+    content:attr(data-label);
+    font-size:9px;
+    line-height:1.35;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:800;
+  }
+  .datatable td:last-child{border-bottom:0}
+  .datatable td:last-child .btn-group{grid-column:1/-1}
+  .datatable .name{font-size:16px}
+  .datatable .muted{font-size:12px}
+  .datatable td[colspan]{display:block;text-align:center!important}
+  .datatable td[colspan]::before{display:none}
+
+  .form-grid{grid-template-columns:minmax(0,1fr)!important;gap:13px}
+  .form-grid .full{grid-column:1}
+  .field{min-width:0}
+  .field input,.field select,.field textarea{
+    width:100%;max-width:100%;min-width:0;
+    font-size:16px;
+    padding:12px;
+  }
+  .field textarea{min-height:110px}
+
+  .modal-overlay{
+    padding:0;
+    align-items:end;
+  }
+  .modal{
+    width:100vw;max-width:100vw;
+    max-height:92dvh;
+    border-left:0;border-right:0;border-bottom:0;
+  }
+  .modal-head{padding:14px 16px;position:sticky;top:0;background:var(--paper);z-index:2}
+  .modal-head h3{font-size:20px}
+  .modal-close{min-width:44px;min-height:44px}
+  .modal-body{padding:14px}
+  .modal-foot{
+    position:sticky;bottom:0;
+    padding:12px 14px max(12px,env(safe-area-inset-bottom));
+    display:grid;grid-template-columns:1fr;
+  }
+  .modal-foot .btn{width:100%}
+
+  .upload-zone{padding:18px 12px;min-height:118px}
+  .upload-preview{max-width:100%;height:auto}
+
+  .content-tabs{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  .content-tab{flex:0 0 auto;padding:11px 14px}
+  .content-editor textarea{min-height:240px;font-size:14px}
+
+  .pedigree-selector{
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+  }
+  .pedigree-selector select,.pedigree-selector .btn{
+    width:100%;min-width:0!important;min-height:46px;font-size:16px
+  }
+  .tree-gen{gap:10px;width:100%}
+  .tree-node{min-width:0;max-width:100%;overflow-wrap:anywhere}
+
+  .audit-row{display:grid;grid-template-columns:1fr;gap:6px;padding:12px}
+  .audit-row .meta{min-width:0}
+  .pay-deets{grid-template-columns:1fr;gap:9px}
+
+  .toast{
+    left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));
+    width:auto;max-width:none;
+  }
+
+  .dog-photo-grid{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;
+  }
+  .dog-photo-card .panel-body{padding:12px}
+  .dog-photo-card img{max-height:60vh}
+  .dog-photo-upload-actions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .dog-photo-upload-actions .btn{width:100%}
+}
+
+@media(max-width:390px){
+  .content-scroll{padding-inline:10px}
+  .stats-row{grid-template-columns:1fr}
+  .datatable td{grid-template-columns:82px minmax(0,1fr);padding:9px 10px}
+  .topbar{padding-inline:10px}
+  .mobile-toggle{min-width:80px;padding-inline:10px}
+  .topbar h2{font-size:16px}
+}
+
 </style>
 </head>
 <body>
@@ -543,6 +715,19 @@ async function loadAllData(options = {}) {
 }
 
 // ── Page router ─────────────────────────────────────────────────────────────
+function enhanceAdminTables(root) {
+  const scope = root || document;
+  scope.querySelectorAll('.datatable').forEach(table => {
+    const labels = [...table.querySelectorAll('thead th')].map(th => (th.textContent || '').trim());
+    table.querySelectorAll('tbody tr').forEach(row => {
+      [...row.children].forEach((cell, index) => {
+        if(cell.tagName !== 'TD' || cell.hasAttribute('colspan')) return;
+        if(!cell.dataset.label) cell.dataset.label = labels[index] || '';
+      });
+    });
+  });
+}
+
 async function renderPage(page) {
   const area = document.getElementById('contentArea');
   area.innerHTML = '<p class="muted" style="padding:40px;text-align:center">Loading…</p>';
@@ -570,6 +755,8 @@ async function renderPage(page) {
   } catch (e) {
     area.innerHTML = '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>Could not load this page</h3><p class="muted">' + esc(e.message || 'Connection failed') + '</p><button class="btn btn-gold" onclick="renderPage(\'' + page + '\')">Retry</button></div></div>';
   }
+  enhanceAdminTables(area);
+  requestAnimationFrame(() => enhanceAdminTables(area));
 }
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
@@ -795,7 +982,7 @@ let selectedPhotoDogId = '';
 function photoCard(url, label, actions) {
   const managed = /\/uploads\/media\//.test(String(url||'')) || String(url||'').startsWith('media/');
   return `
-    <div class="panel" style="margin:0;overflow:hidden">
+    <div class="panel dog-photo-card" style="margin:0;overflow:hidden">
       <div style="aspect-ratio:4/3;background:#151515;display:flex;align-items:center;justify-content:center">
         <img src="${esc(url)}" alt="${esc(label)}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">
       </div>
@@ -844,16 +1031,79 @@ async function renderDogPhotos() {
     </div>
     <div class="panel">
       <div class="panel-header"><h3>${esc(dog.name||dog.id)} · Photo Library</h3></div>
-      <div class="panel-body"><p class="muted">Every photo currently associated with this dog is shown here. Replaced main photos are kept under Formerly Used until you remove them. <strong>Remove</strong> only detaches a photo from the dog. <strong>Permanent Delete</strong> also deletes Cloudflare-uploaded files when they are not used anywhere else.</p></div>
+      <div class="panel-body">
+        <p class="muted">Every photo currently associated with this dog is shown here. Replaced main photos are kept under Formerly Used until you remove them. <strong>Remove</strong> only detaches a photo from the dog. <strong>Permanent Delete</strong> also deletes Cloudflare-uploaded files when they are not used anywhere else.</p>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+          <div class="name" style="margin-bottom:8px">Add photo to ${esc(dog.name||dog.id)}</div>
+          <p class="muted" style="font-size:11px;margin-bottom:12px">Choose a photo from your phone, then decide whether it becomes this dog's main photo or an additional gallery photo.</p>
+          <div class="dog-photo-upload-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-gold" type="button" onclick="document.getElementById('dogLibraryMainUpload').click()">+ Upload as Main</button>
+            <button class="btn btn-ghost" type="button" onclick="document.getElementById('dogLibraryAdditionalUpload').click()">+ Upload as Additional</button>
+          </div>
+          <input type="file" id="dogLibraryMainUpload" accept="image/*" style="display:none" onchange="uploadDogLibraryPhoto(this,'main','${dog.id}')">
+          <input type="file" id="dogLibraryAdditionalUpload" accept="image/*" style="display:none" onchange="uploadDogLibraryPhoto(this,'additional','${dog.id}')">
+          <div id="dogLibraryUploadStatus" class="muted" style="font-size:11px;margin-top:10px"></div>
+        </div>
+      </div>
     </div>
     <h3 style="margin:22px 0 10px">Current Main</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${currentMain}</div>
+    <div class="dog-photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${currentMain}</div>
     <h3 style="margin:22px 0 10px">Additional Photos</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${additional}</div>
+    <div class="dog-photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${additional}</div>
     <h3 style="margin:22px 0 10px">Formerly Used</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${history}</div>
+    <div class="dog-photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${history}</div>
   `;
 }
+
+window.uploadDogLibraryPhoto = async function(input, mode, dogId) {
+  const file = input && input.files && input.files[0];
+  const dog = currentDogs.find(d=>d.id===dogId);
+  if(!file || !dog) return;
+
+  const status = document.getElementById('dogLibraryUploadStatus');
+  if(status) status.textContent = 'Uploading ' + file.name + '…';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const r = await fetch(API_BASE + '/admin/api/upload', {
+      method:'POST',
+      body:formData,
+      headers:{ 'Authorization':'Bearer ' + adminToken }
+    });
+    const uploaded = await r.json();
+    if(!r.ok || !uploaded.ok) throw new Error(uploaded.error || 'upload_failed');
+
+    const url = uploaded.publicUrl || uploaded.url;
+    if(!url) throw new Error('upload_url_missing');
+
+    let body;
+    if(mode === 'main') {
+      body = { photo:url };
+    } else {
+      const gallery = Array.isArray(dog.gallery) ? dog.gallery.slice() : [];
+      if(!gallery.includes(url)) gallery.push(url);
+      body = { gallery };
+    }
+
+    const saved = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId), {
+      method:'POST',
+      body:JSON.stringify(body)
+    });
+    if(!saved.ok) throw new Error(saved.error || 'dog_update_failed');
+
+    if(status) status.textContent = mode === 'main' ? 'Main photo updated.' : 'Additional photo added.';
+    toast(mode === 'main' ? 'Main photo added' : 'Additional photo added');
+    input.value = '';
+    await loadAllData({skipSeed:true});
+    selectedPhotoDogId = dogId;
+    renderPage('dog-photos');
+  } catch(e) {
+    if(status) status.textContent = 'Upload failed: ' + (e.message || 'Unknown error');
+    toast('Upload failed: ' + (e.message || 'Unknown error'), 'err');
+    input.value = '';
+  }
+};
 
 window.removeDogPhoto = async function(dogId, bucket, index) {
   const dog = currentDogs.find(d=>d.id===dogId);
