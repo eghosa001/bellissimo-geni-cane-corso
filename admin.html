@@ -133,13 +133,40 @@
   .form-grid{grid-template-columns:1fr}
 }
 @media(max-width:700px){
-  .sidebar{position:fixed;left:-260px;z-index:90;transition:left .25s}
-  .sidebar.open{left:0}
-  .content-scroll{padding:20px}
+  .sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    width:min(86vw,320px);
+    min-width:0;
+    z-index:90;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:10px 0 30px rgba(0,0,0,.18);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .content-scroll{padding:16px}
   .stats-row{grid-template-columns:1fr 1fr}
-  .mobile-toggle{display:inline-flex !important}
+  .mobile-toggle{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    min-width:88px;
+    min-height:44px;
+    padding:10px 14px;
+    font-size:13px;
+    position:relative;
+    z-index:2;
+  }
+  .topbar{height:64px;padding:0 14px}
+  .topbar h2{font-size:17px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .topbar>div:first-child{min-width:0;flex:1}
+  .topbar-date{display:none}
+  .overlay-bg{z-index:80}
+  .nav-item{min-height:44px;padding:12px 20px}
+  .sidebar-footer{padding-bottom:max(16px,env(safe-area-inset-bottom))}
 }
-.mobile-toggle{display:none !important;border:1px solid var(--line);background:#fff;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer}
+.mobile-toggle{display:none;border:1px solid var(--line);background:#fff;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer}
 .overlay-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:80}
 .overlay-bg.open{display:block}
 
@@ -263,7 +290,7 @@
   <div class="main-area">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px">
-        <button class="mobile-toggle" id="mobileToggle">☰ Menu</button>
+        <button class="mobile-toggle" id="mobileToggle" type="button" aria-controls="sidebar" aria-expanded="false">☰ Menu</button>
         <h2 id="pageTitle">Dashboard</h2>
       </div>
       <div class="topbar-right">
@@ -425,9 +452,18 @@ navItems.forEach(item => {
 const mobileToggle = document.getElementById('mobileToggle');
 const sidebar = document.getElementById('sidebar');
 const overlayBg = document.getElementById('overlayBg');
-mobileToggle.addEventListener('click', () => { sidebar.classList.toggle('open'); overlayBg.classList.toggle('open'); });
+mobileToggle.addEventListener('click', () => {
+  const open = !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', open);
+  overlayBg.classList.toggle('open', open);
+  mobileToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
 overlayBg.addEventListener('click', closeMobile);
-function closeMobile() { sidebar.classList.remove('open'); overlayBg.classList.remove('open'); }
+function closeMobile() {
+  sidebar.classList.remove('open');
+  overlayBg.classList.remove('open');
+  mobileToggle.setAttribute('aria-expanded', 'false');
+}
 
 // ── HTTP helpers ────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
