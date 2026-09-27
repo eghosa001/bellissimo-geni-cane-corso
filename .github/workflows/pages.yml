@@ -32,53 +32,7 @@ jobs:
           curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/$GITHUB_REPO/pages || true
 
       - name: Prepare publish directory
-        run: |
-          set -e
-          test -f assets/dogs/bellissimo-dog-02-hd.webp
-          file assets/dogs/bellissimo-dog-02-hd.webp
-
-          # Reconstruct the two uploaded family photos from text-safe chunks.
-          cat .github/assets/family-dog1.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-01.webp
-          cat .github/assets/family-dog2.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-family-dog-02.webp
-          test -s assets/dogs/bellissimo-family-dog-01.webp
-          test -s assets/dogs/bellissimo-family-dog-02.webp
-          file assets/dogs/bellissimo-family-dog-01.webp
-          file assets/dogs/bellissimo-family-dog-02.webp
-
-          # Reconstruct the newly uploaded featured black Corso photo.
-          cat .github/assets/featured-black-corso.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-featured-black-corso.webp
-          test -s assets/dogs/bellissimo-featured-black-corso.webp
-          file assets/dogs/bellissimo-featured-black-corso.webp
-
-          # Reconstruct the uploaded puppy photo used in the Puppies card.
-          cat .github/assets/puppy-section.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/bellissimo-puppy-section.webp
-          test -s assets/dogs/bellissimo-puppy-section.webp
-          file assets/dogs/bellissimo-puppy-section.webp
-
-          # These encoded photographs belong to Himera Custodi Nos.
-          # The former Diesel/Rocco filenames were a provenance error.
-          cat .github/assets/rocco-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/himera-custodi-nos-main.avif
-          cat .github/assets/diesel-bellissimo-geni-avif.b64.part* | tr -d '\n\r' | base64 --decode > assets/dogs/himera-custodi-nos-02.avif
-          test -s assets/dogs/himera-custodi-nos-main.avif
-          test -s assets/dogs/himera-custodi-nos-02.avif
-          file assets/dogs/himera-custodi-nos-main.avif
-          file assets/dogs/himera-custodi-nos-02.avif
-
-          # X Bellissimo Geni photos are committed directly under assets/puppies.
-          test -s assets/puppies/x-bellissimo-geni-main.avif
-          test -s assets/puppies/x-bellissimo-geni-standing.avif
-          file assets/puppies/x-bellissimo-geni-main.avif
-          file assets/puppies/x-bellissimo-geni-standing.avif
-
-          rm -rf build
-          mkdir -p build
-          tar -C . \
-            --exclude='./build' \
-            --exclude='./.git' \
-            --exclude='./.github' \
-            --exclude='./webhook' \
-            -cf - . | tar -C build -xf -
-          echo "Publishing $(ls build | wc -l) top-level entries (excludes .git/.github/webhook)"
+        run: bash scripts/build-static-site.sh build
 
       - name: Determine publish directory
         id: find_dir
