@@ -1,5 +1,5 @@
 name: Verify Live Bellissimo Worker
-# manual-live-check-2026-09-27
+# manual-live-check-2026-09-27-2
 
 on:
   workflow_dispatch:
