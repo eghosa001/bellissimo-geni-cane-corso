@@ -532,6 +532,11 @@ const apiConfigReady = fetch('site-config.json', { cache: 'no-store' })
 let adminToken = null;
 let currentPuppyCatalog = [];
 let currentDogs = [];
+let storageFallbackMode = false;
+let fallbackLitters = [];
+let fallbackGallery = [];
+let fallbackReservations = [];
+let fallbackTestimonials = [];
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 document.getElementById('loginBtn').addEventListener('click', doLogin);
@@ -653,6 +658,60 @@ function closeMobile() {
 
 // ── HTTP helpers ────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
+  const method = String(opts.method || 'GET').toUpperCase();
+
+  if (storageFallbackMode) {
+    if (method !== 'GET') {
+      const message = 'Cloudflare storage is temporarily in read-only backup mode. No changes were sent.';
+      toast(message, 'err');
+      throw new Error(message);
+    }
+
+    const parsed = new URL(path, window.location.origin);
+    const id = parsed.searchParams.get('id');
+    if (parsed.pathname.endsWith('/admin/api/dogs')) {
+      if (id) {
+        const dog = (currentDogs || []).find(d => d.id === id);
+        return dog ? { ok:true, data:dog } : { ok:false, error:'not_found' };
+      }
+      return { ok:true, data:currentDogs || [] };
+    }
+    if (parsed.pathname.endsWith('/admin/api/puppies')) {
+      if (id) {
+        const puppy = (currentPups || []).find(p => p.id === id);
+        return puppy ? { ok:true, data:puppy } : { ok:false, error:'not_found' };
+      }
+      return { ok:true, data:currentPups || [], litters:fallbackLitters, dogs:currentDogs || [] };
+    }
+    if (parsed.pathname.endsWith('/admin/api/litters')) return { ok:true, data:fallbackLitters };
+    if (parsed.pathname.endsWith('/admin/api/reservations')) return { ok:true, data:fallbackReservations };
+    if (parsed.pathname.endsWith('/admin/api/testimonials')) return { ok:true, data:fallbackTestimonials };
+    if (parsed.pathname.endsWith('/admin/api/gallery')) return { ok:true, data:fallbackGallery };
+    if (parsed.pathname.endsWith('/admin/api/audit')) return { ok:true, logs:[] };
+    if (parsed.pathname.endsWith('/admin/api/settings')) return { ok:true, data:{} };
+    if (parsed.pathname.endsWith('/admin/api/content')) return { ok:true, data:{ html:'', publishStatus:'published' } };
+    if (parsed.pathname.endsWith('/admin/api/stats')) {
+      const puppyStatuses = {};
+      for (const p of (currentPups || [])) {
+        const key = p.status || 'UNKNOWN';
+        puppyStatuses[key] = (puppyStatuses[key] || 0) + 1;
+      }
+      return {
+        ok:true,
+        stats:{
+          totalDogs:(currentDogs || []).length,
+          totalPuppies:(currentPups || []).length,
+          totalLitters:fallbackLitters.length,
+          totalReservations:fallbackReservations.length,
+          totalTestimonials:fallbackTestimonials.length,
+          totalGallery:fallbackGallery.length,
+          puppyStatuses,
+          recentReservations:[]
+        }
+      };
+    }
+  }
+
   const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
   if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
   const controller = new AbortController();
@@ -678,6 +737,36 @@ async function apiFetch(path, opts = {}) {
 }
 
 let baselineSeedAttempted = false;
+
+async function loadRepositoryFallback() {
+  const [dogsFile, puppiesFile, galleryFile] = await Promise.all([
+    fetch('data/dogs.json', { cache:'no-store' }).then(r => {
+      if (!r.ok) throw new Error('Could not load repository dog backup.');
+      return r.json();
+    }),
+    fetch('data/puppies.json', { cache:'no-store' }).then(r => {
+      if (!r.ok) throw new Error('Could not load repository puppy backup.');
+      return r.json();
+    }),
+    fetch('data/gallery.json', { cache:'no-store' }).then(r => r.ok ? r.json() : {})
+  ]);
+
+  currentDogs = Array.isArray(dogsFile.dogs) ? dogsFile.dogs : [];
+  currentPups = Array.isArray(puppiesFile.puppies) ? puppiesFile.puppies : [];
+  currentPuppyCatalog = currentPups.map(p => p.id);
+  fallbackLitters = Array.isArray(puppiesFile.litters) ? puppiesFile.litters : [];
+  fallbackGallery = Array.isArray(galleryFile.gallery)
+    ? galleryFile.gallery
+    : (Array.isArray(puppiesFile.gallery) ? puppiesFile.gallery : []);
+  fallbackReservations = [];
+  fallbackTestimonials = [];
+  storageFallbackMode = true;
+
+  document.getElementById('dogCount').textContent = currentDogs.length;
+  document.getElementById('pupCount').textContent = currentPups.length;
+  document.getElementById('resCount').textContent = '—';
+}
+
 async function loadAllData(options = {}) {
   const area = document.getElementById('contentArea');
   try {
@@ -721,10 +810,16 @@ async function loadAllData(options = {}) {
         .catch(() => toast('Catalogue sync failed. You can still use the admin panel.', 'err'));
     }
   } catch (e) {
-    if (area) {
-      area.innerHTML = '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>Could not load admin data</h3><p class="muted">' + esc(e.message || 'Connection failed') + '</p><button class="btn btn-gold" onclick="loadAllData()">Retry</button></div></div>';
+    try {
+      await loadRepositoryFallback();
+      await renderPage('dashboard');
+      toast('Cloudflare KV daily read limit reached. Showing repository backup in read-only mode.', 'err');
+    } catch (fallbackError) {
+      if (area) {
+        area.innerHTML = '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>Could not load admin data</h3><p class="muted">' + esc(fallbackError.message || e.message || 'Connection failed') + '</p><button class="btn btn-gold" onclick="loadAllData()">Retry</button></div></div>';
+      }
+      toast(fallbackError.message || e.message || 'Could not load admin data', 'err');
     }
-    toast(e.message || 'Could not load admin data', 'err');
   }
 }
 
@@ -768,6 +863,13 @@ async function renderPage(page) {
     }
   } catch (e) {
     area.innerHTML = '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>Could not load this page</h3><p class="muted">' + esc(e.message || 'Connection failed') + '</p><button class="btn btn-gold" onclick="renderPage(\'' + page + '\')">Retry</button></div></div>';
+  }
+  if (storageFallbackMode && area) {
+    area.insertAdjacentHTML('afterbegin',
+      '<div class="panel" style="border-color:#c7a35a;background:#fff7df;margin-bottom:16px">'+
+      '<div class="panel-body" style="padding:14px 16px"><strong>Read-only backup mode</strong>'+
+      '<div class="muted" style="margin-top:4px">Cloudflare KV has reached its daily read limit. Repository-backed dogs, pedigrees and photos are available to view, but edits are blocked so no CMS data can be lost.</div></div></div>'
+    );
   }
   enhanceAdminTables(area);
   requestAnimationFrame(() => enhanceAdminTables(area));
