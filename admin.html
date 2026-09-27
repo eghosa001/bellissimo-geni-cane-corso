@@ -757,6 +757,7 @@ async function saveDog(e, id) {
 let selectedPhotoDogId = '';
 
 function photoCard(url, label, actions) {
+  const managed = /\/uploads\/media\//.test(String(url||'')) || String(url||'').startsWith('media/');
   return `
     <div class="panel" style="margin:0;overflow:hidden">
       <div style="aspect-ratio:4/3;background:#151515;display:flex;align-items:center;justify-content:center">
@@ -764,6 +765,7 @@ function photoCard(url, label, actions) {
       </div>
       <div class="panel-body" style="padding:12px">
         <div class="name" style="margin-bottom:4px">${esc(label)}</div>
+        <div class="muted" style="font-size:10px;margin-bottom:5px">${managed?'Cloudflare upload · file can be physically deleted':'Legacy site asset · Admin can remove its usage'}</div>
         <div class="muted" style="font-size:10px;word-break:break-all;margin-bottom:10px">${esc(url)}</div>
         <div class="btn-group">${actions}</div>
       </div>
@@ -784,19 +786,19 @@ async function renderDogPhotos() {
   const currentMain = dog.photo ? photoCard(
     dog.photo,
     'Current Main',
-    `<button class="btn btn-sm btn-ghost" onclick="moveDogPhotoToHistory('${dog.id}')">Move to Formerly Used</button>`
+    `<button class="btn btn-sm btn-ghost" onclick="moveDogPhotoToHistory('${dog.id}')">Move to Formerly Used</button><button class="btn btn-sm btn-del" onclick="permanentDeleteDogPhoto('${dog.id}','main',0)">Permanent Delete</button>`
   ) : '<div class="notice">No current main photo.</div>';
 
   const additional = (dog.gallery||[]).map((url,idx)=>photoCard(
     url,
     'Additional Photo ' + (idx+1),
-    `<button class="btn btn-sm btn-ghost" onclick="makeDogPhotoMain('${dog.id}','additional',${idx})">Make Main</button><button class="btn btn-sm btn-del" onclick="removeDogPhoto('${dog.id}','additional',${idx})">Remove</button>`
+    `<button class="btn btn-sm btn-ghost" onclick="makeDogPhotoMain('${dog.id}','additional',${idx})">Make Main</button><button class="btn btn-sm btn-del" onclick="removeDogPhoto('${dog.id}','additional',${idx})">Remove</button><button class="btn btn-sm btn-del" onclick="permanentDeleteDogPhoto('${dog.id}','additional',${idx})">Permanent Delete</button>`
   )).join('') || '<div class="notice">No additional photos.</div>';
 
   const history = (dog.photoHistory||[]).map((url,idx)=>photoCard(
     url,
     'Formerly Used',
-    `<button class="btn btn-sm btn-ghost" onclick="makeDogPhotoMain('${dog.id}','history',${idx})">Make Main</button><button class="btn btn-sm btn-del" onclick="removeDogPhoto('${dog.id}','history',${idx})">Remove</button>`
+    `<button class="btn btn-sm btn-ghost" onclick="makeDogPhotoMain('${dog.id}','history',${idx})">Make Main</button><button class="btn btn-sm btn-del" onclick="removeDogPhoto('${dog.id}','history',${idx})">Remove</button><button class="btn btn-sm btn-del" onclick="permanentDeleteDogPhoto('${dog.id}','history',${idx})">Permanent Delete</button>`
   )).join('') || '<div class="notice">No formerly used photos.</div>';
 
   return `
@@ -806,7 +808,7 @@ async function renderDogPhotos() {
     </div>
     <div class="panel">
       <div class="panel-header"><h3>${esc(dog.name||dog.id)} · Photo Library</h3></div>
-      <div class="panel-body"><p class="muted">Every photo currently associated with this dog is shown here. Replaced main photos are kept under Formerly Used until you remove them.</p></div>
+      <div class="panel-body"><p class="muted">Every photo currently associated with this dog is shown here. Replaced main photos are kept under Formerly Used until you remove them. <strong>Remove</strong> only detaches a photo from the dog. <strong>Permanent Delete</strong> also deletes Cloudflare-uploaded files when they are not used anywhere else.</p></div>
     </div>
     <h3 style="margin:22px 0 10px">Current Main</h3>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${currentMain}</div>
@@ -829,6 +831,42 @@ window.removeDogPhoto = async function(dogId, bucket, index) {
   const j = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId),{method:'POST',body:JSON.stringify(body)});
   if(j.ok){ toast('Photo removed'); await loadAllData({skipSeed:true}); selectedPhotoDogId=dogId; renderPage('dog-photos'); }
   else toast(j.error||'Failed','err');
+};
+
+window.permanentDeleteDogPhoto = async function(dogId, bucket, index) {
+  const dog = currentDogs.find(d=>d.id===dogId);
+  if(!dog) return;
+  let url = '';
+  if(bucket === 'main') url = String(dog.photo || '');
+  else if(bucket === 'history') url = String((dog.photoHistory || [])[index] || '');
+  else url = String((dog.gallery || [])[index] || '');
+  if(!url) return;
+
+  const managed = /\/uploads\/media\//.test(url) || url.startsWith('media/');
+  const warning = managed
+    ? 'Permanently delete this photo file? This cannot be undone.'
+    : 'Remove this photo permanently from this dog? This is a legacy website asset, so Admin will remove every reference from this dog, but the original repository file itself cannot be erased by the CMS.';
+  if(!confirm(warning)) return;
+
+  const j = await apiFetch('/admin/api/media-delete', {
+    method:'DELETE',
+    body:JSON.stringify({ dogId, url })
+  });
+  if(!j.ok){ toast(j.error || 'Permanent delete failed','err'); return; }
+
+  if(j.deleted) {
+    toast('Photo file permanently deleted');
+  } else if(j.reason === 'still_in_use') {
+    const used = (j.references || []).map(r=>r.name || r.id).slice(0,3).join(', ');
+    toast('Removed from this dog. File kept because it is still used by ' + (used || 'another record') + '.');
+  } else if(j.reason === 'repository_asset') {
+    toast('Removed from this dog. Legacy repository file is no longer used here.');
+  } else {
+    toast('Photo removed from this dog; file could not be physically deleted.');
+  }
+  await loadAllData({skipSeed:true});
+  selectedPhotoDogId = dogId;
+  renderPage('dog-photos');
 };
 
 window.makeDogPhotoMain = async function(dogId, bucket, index) {
