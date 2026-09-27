@@ -587,7 +587,9 @@ async function handleAdminBootstrap(req, env) {
   const body = await readJson(req);
   if (!body) return json(400, { ok: false, error: 'bad_json' });
 
-  const bootstrapKey = 'admin:bootstrap:verified-baseline:v1';
+  // v2 migrates every verified repository record into the CMS exactly once,
+  // without overwriting records the owner has already edited.
+  const bootstrapKey = 'admin:bootstrap:verified-baseline:v2';
   const alreadySeeded = await kvGet(env, bootstrapKey);
   if (alreadySeeded) return json(200, { ok: true, alreadySeeded: true, seeded: {} });
 
@@ -599,22 +601,20 @@ async function handleAdminBootstrap(req, env) {
   ];
   const seeded = {};
   for (const group of groups) {
-    const existing = await kvList(env, group.key + ':');
-    if (existing.length) {
-      seeded[group.key] = 0;
-      continue;
-    }
     let count = 0;
     for (const input of group.records) {
       if (!input || !input.id) continue;
+      const key = group.key + ':' + input.id;
+      const existing = await kvGet(env, key);
+      if (existing) continue;
       const record = { publishStatus: 'published', ...input };
-      await kvPut(env, group.key + ':' + record.id, record);
+      await kvPut(env, key, record);
       count++;
     }
     seeded[group.key] = count;
   }
   await kvPut(env, bootstrapKey, { completedAt: new Date().toISOString(), seeded });
-  await auditLog(env, 'bootstrap', 'site', 'verified-baseline', seeded);
+  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v2', seeded);
   return json(200, { ok: true, alreadySeeded: false, seeded });
 }
 
