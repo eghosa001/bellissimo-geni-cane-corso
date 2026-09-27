@@ -238,6 +238,7 @@
       <div class="nav-item active" data-page="dashboard">Dashboard</div>
       <div class="nav-section">Dogs</div>
       <div class="nav-item" data-page="dogs">All Dogs<span class="count" id="dogCount">0</span></div>
+      <div class="nav-item" data-page="dog-photos">Dog Photos</div>
       <div class="nav-item" data-page="add-dog">Add Dog</div>
       <div class="nav-section">Puppies</div>
       <div class="nav-item" data-page="puppies">All Puppies<span class="count" id="pupCount">0</span></div>
@@ -513,6 +514,7 @@ async function renderPage(page) {
     switch(page) {
       case 'dashboard':   area.innerHTML = await renderDashboard(); break;
       case 'dogs':        area.innerHTML = await renderDogsList(); break;
+      case 'dog-photos':  area.innerHTML = await renderDogPhotos(); break;
       case 'add-dog':     area.innerHTML = await renderDogForm(null); break;
       case 'puppies':
         area.innerHTML = renderPuppiesList();
@@ -671,6 +673,7 @@ function renderDogForm(dog) {
               <input name="photo" id="dogPhotoUrl" value="${esc(dog?.photo||'')}" placeholder="Or paste image URL here" style="margin-top:6px">
             </div>
             <div class="field full"><label>Additional Photos</label><textarea name="galleryText" rows="4" placeholder="One image URL per line">${esc((dog?.gallery||[]).join('\n'))}</textarea><span class="hint">Remove a line to remove that extra photo from this dog's public profile.</span></div>
+            <div class="field full"><label>Formerly Used Photos</label><textarea name="photoHistoryText" rows="4" placeholder="Managed automatically when you replace the main photo">${esc((dog?.photoHistory||[]).join('\n'))}</textarea><span class="hint">You can also manage these visually from Dogs → Dog Photos.</span></div>
             <div class="field full"><label>Bio</label><textarea name="bio" rows="3">${esc(dog?.bio||'')}</textarea></div>
             <div class="field full"><label>Health Notes</label><textarea name="health" rows="2">${esc(dog?.health||'')}</textarea></div>
             <div class="field full"><label>Achievements</label><input name="achievements" value="${esc(dog?.achievements||'')}"></div>
@@ -743,11 +746,112 @@ async function saveDog(e, id) {
   if(!body.publishStatus) body.publishStatus = 'published';
   if(!body.group) body.group = 'current';
   body.gallery = String(f.galleryText?.value || '').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+  body.photoHistory = String(f.photoHistoryText?.value || '').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
   const url = id ? '/admin/api/dogs?id='+encodeURIComponent(id) : '/admin/api/dogs';
   const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
   if(j.ok) { toast(id?'Dog updated':'Dog created'); closeModal(); loadAllData(); }
   else toast(j.error||'Failed','err');
 }
+
+// ── Dog Photos ───────────────────────────────────────────────────────────────
+let selectedPhotoDogId = '';
+
+function photoCard(url, label, actions) {
+  return `
+    <div class="panel" style="margin:0;overflow:hidden">
+      <div style="aspect-ratio:4/3;background:#151515;display:flex;align-items:center;justify-content:center">
+        <img src="${esc(url)}" alt="${esc(label)}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">
+      </div>
+      <div class="panel-body" style="padding:12px">
+        <div class="name" style="margin-bottom:4px">${esc(label)}</div>
+        <div class="muted" style="font-size:10px;word-break:break-all;margin-bottom:10px">${esc(url)}</div>
+        <div class="btn-group">${actions}</div>
+      </div>
+    </div>`;
+}
+
+async function renderDogPhotos() {
+  if (!currentDogs.length) {
+    return '<div class="panel"><div class="panel-body" style="padding:32px;text-align:center"><h3>No dogs available</h3><p class="muted">Add or sync dogs first.</p></div></div>';
+  }
+  if (!selectedPhotoDogId || !currentDogs.some(d=>d.id===selectedPhotoDogId)) {
+    const preferred = currentDogs.find(d=>d.group==='current') || currentDogs[0];
+    selectedPhotoDogId = preferred.id;
+  }
+  const dog = currentDogs.find(d=>d.id===selectedPhotoDogId);
+  const options = currentDogs.map(d=>`<option value="${esc(d.id)}" ${d.id===selectedPhotoDogId?'selected':''}>${esc(d.name||d.id)}</option>`).join('');
+
+  const currentMain = dog.photo ? photoCard(
+    dog.photo,
+    'Current Main',
+    `<button class="btn btn-sm btn-ghost" onclick="moveDogPhotoToHistory('${dog.id}')">Move to Formerly Used</button>`
+  ) : '<div class="notice">No current main photo.</div>';
+
+  const additional = (dog.gallery||[]).map((url,idx)=>photoCard(
+    url,
+    'Additional Photo ' + (idx+1),
+    `<button class="btn btn-sm btn-ghost" onclick="makeDogPhotoMain('${dog.id}','additional',${idx})">Make Main</button><button class="btn btn-sm btn-del" onclick="removeDogPhoto('${dog.id}','additional',${idx})">Remove</button>`
+  )).join('') || '<div class="notice">No additional photos.</div>';
+
+  const history = (dog.photoHistory||[]).map((url,idx)=>photoCard(
+    url,
+    'Formerly Used',
+    `<button class="btn btn-sm btn-ghost" onclick="makeDogPhotoMain('${dog.id}','history',${idx})">Make Main</button><button class="btn btn-sm btn-del" onclick="removeDogPhoto('${dog.id}','history',${idx})">Remove</button>`
+  )).join('') || '<div class="notice">No formerly used photos.</div>';
+
+  return `
+    <div class="toolbar">
+      <select onchange="selectedPhotoDogId=this.value;renderPage('dog-photos')" style="min-width:260px">${options}</select>
+      <button class="btn btn-ghost" onclick="editDog('${dog.id}')">Edit Dog Details</button>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h3>${esc(dog.name||dog.id)} · Photo Library</h3></div>
+      <div class="panel-body"><p class="muted">Every photo currently associated with this dog is shown here. Replaced main photos are kept under Formerly Used until you remove them.</p></div>
+    </div>
+    <h3 style="margin:22px 0 10px">Current Main</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${currentMain}</div>
+    <h3 style="margin:22px 0 10px">Additional Photos</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${additional}</div>
+    <h3 style="margin:22px 0 10px">Formerly Used</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${history}</div>
+  `;
+}
+
+window.removeDogPhoto = async function(dogId, bucket, index) {
+  const dog = currentDogs.find(d=>d.id===dogId);
+  if(!dog) return;
+  const key = bucket === 'history' ? 'photoHistory' : 'gallery';
+  const list = Array.isArray(dog[key]) ? dog[key].slice() : [];
+  const url = list[index];
+  if(!url || !confirm('Remove this photo from '+dog.name+'?')) return;
+  list.splice(index,1);
+  const body = {}; body[key] = list;
+  const j = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId),{method:'POST',body:JSON.stringify(body)});
+  if(j.ok){ toast('Photo removed'); await loadAllData({skipSeed:true}); selectedPhotoDogId=dogId; renderPage('dog-photos'); }
+  else toast(j.error||'Failed','err');
+};
+
+window.makeDogPhotoMain = async function(dogId, bucket, index) {
+  const dog = currentDogs.find(d=>d.id===dogId);
+  if(!dog) return;
+  const key = bucket === 'history' ? 'photoHistory' : 'gallery';
+  const list = Array.isArray(dog[key]) ? dog[key].slice() : [];
+  const url = list[index];
+  if(!url) return;
+  list.splice(index,1);
+  const body = { photo:url }; body[key] = list;
+  const j = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId),{method:'POST',body:JSON.stringify(body)});
+  if(j.ok){ toast('Main photo updated'); await loadAllData({skipSeed:true}); selectedPhotoDogId=dogId; renderPage('dog-photos'); }
+  else toast(j.error||'Failed','err');
+};
+
+window.moveDogPhotoToHistory = async function(dogId) {
+  const dog = currentDogs.find(d=>d.id===dogId);
+  if(!dog || !dog.photo) return;
+  const j = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId),{method:'POST',body:JSON.stringify({photo:''})});
+  if(j.ok){ toast('Photo moved to Formerly Used'); await loadAllData({skipSeed:true}); selectedPhotoDogId=dogId; renderPage('dog-photos'); }
+  else toast(j.error||'Failed','err');
+};
 
 // ── Puppies List ────────────────────────────────────────────────────────────
 function renderPuppiesList() {
