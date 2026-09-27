@@ -225,7 +225,6 @@
     return Promise.all([resolveApiBase(), fallbackPromise]).then(function(parts) {
       var apiBase = parts[0];
       var fallback = parts[1];
-
       if (!apiBase) return fallback;
 
       return fetch(apiBase + '/api/' + path, {
@@ -235,11 +234,6 @@
         .then(function(r) {
           if (!r.ok) throw new Error('public_fail');
           return r.json();
-        })
-        .then(function(live) {
-          // Preserve the verified repository baseline and layer CMS records over it.
-          // This prevents an empty/fresh KV namespace from hiding the existing catalogue.
-          return mergeManagedPayload(path, fallback, live);
         })
         .catch(function() {
           var token = window._bgAdminToken || '';
@@ -255,7 +249,6 @@
               if (!r.ok) throw new Error('admin_fail');
               return r.json();
             })
-            .then(function(live) { return mergeManagedPayload(path, fallback, live); })
             .catch(function() { return fallback; });
         });
     });
