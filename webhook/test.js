@@ -297,6 +297,32 @@ test('admin login throttles failures and logout revokes the session', async () =
   assert.equal(store.has('admin:session:' + token), false);
 });
 
+test('KV collections use bulk reads in chunks of at most 100 keys', async () => {
+  const ids = Array.from({ length: 101 }, (_, i) => 'dog-' + i);
+  const store = new Map([
+    ['admin:index:admin:dogs', JSON.stringify(ids)],
+    ...ids.map(id => ['admin:dogs:' + id, JSON.stringify({ id, name: id, publishStatus: 'published' })])
+  ]);
+  const bulkCalls = [];
+  const env = {
+    ADMIN: {
+      async get(key) {
+        if (Array.isArray(key)) {
+          bulkCalls.push(key.slice());
+          return new Map(key.map(k => [k, store.get(k) || null]));
+        }
+        return store.get(key) || null;
+      }
+    }
+  };
+
+  const res = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.dogs.length, 101);
+  assert.deepEqual(bulkCalls.map(keys => keys.length), [100, 1]);
+});
+
 test('owner admin sees drafts while public APIs keep them hidden', async () => {
   const store = new Map([
     ['admin:dogs:draft-dog', JSON.stringify({ id: 'draft-dog', name: 'Draft Dog', publishStatus: 'draft' })],
