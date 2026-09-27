@@ -229,12 +229,42 @@ async function kvDelete(env, key) {
 async function kvList(env, prefix) {
   const ids = await kvIndexIds(env, prefix);
   if (!ids.length) return [];
-  const raws = await Promise.all(ids.map(id => env.ADMIN.get(prefix + id)));
+
   const results = [];
-  for (const raw of raws) {
-    if (!raw) continue;
-    try { results.push(JSON.parse(raw)); } catch (_) {}
+  const chunkSize = 100;
+
+  for (let offset = 0; offset < ids.length; offset += chunkSize) {
+    const chunkIds = ids.slice(offset, offset + chunkSize);
+    const keys = chunkIds.map(id => prefix + id);
+
+    // Cloudflare KV supports bulk reads of up to 100 keys. This avoids one
+    // concurrent KV subrequest per dog, which became fragile once pedigree
+    // imports pushed the dog collection above 100 records.
+    let bulk = null;
+    try {
+      bulk = await env.ADMIN.get(keys, 'text');
+    } catch (_) {
+      bulk = null;
+    }
+
+    if (bulk instanceof Map) {
+      for (const key of keys) {
+        const raw = bulk.get(key);
+        if (!raw) continue;
+        try { results.push(JSON.parse(raw)); } catch (_) {}
+      }
+      continue;
+    }
+
+    // Compatibility fallback for local/test KV shims that only implement
+    // single-key get(). Real Cloudflare production bindings use the bulk path.
+    const raws = await Promise.all(keys.map(key => env.ADMIN.get(key)));
+    for (const raw of raws) {
+      if (!raw) continue;
+      try { results.push(JSON.parse(raw)); } catch (_) {}
+    }
   }
+
   return results;
 }
 
