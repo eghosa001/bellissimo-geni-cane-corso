@@ -20,7 +20,10 @@
       "health": "",
       "achievements": "",
       "bio": "Branco Custodi Nos is part of the Bellissimo Geni Cane Corso family. His verified pedigree connects through Dragoslav Custodi Nos and Himera Custodi Nos.",
-      "owner": "Kelvin Omigie/BELLISSIMO GENI"
+      "owner": "Kelvin Omigie/BELLISSIMO GENI",
+      "photoHistory": [
+        "assets/dogs/branco-01.webp"
+      ]
     },
     {
       "id": "karma-custodi-nos",
@@ -41,7 +44,8 @@
       "health": "",
       "achievements": "",
       "bio": "Karma Custodi Nos is a Formentino Cane Corso in the Bellissimo Geni family. Additional verified profile details will be published as supplied by the kennel.",
-      "owner": "Kelvin Omigie/BELLISSIMO GENI"
+      "owner": "Kelvin Omigie/BELLISSIMO GENI",
+      "photoHistory": []
     },
     {
       "id": "anthie-custodi-nos",
@@ -63,7 +67,8 @@
       "health": "",
       "achievements": "",
       "bio": "Anthie Custodi Nos is a verified Bellissimo Geni female. Her supplied primary photograph is shown first, with the additional supplied photographs preserved in her gallery.",
-      "owner": "Kelvin Omigie/BELLISSIMO GENI"
+      "owner": "Kelvin Omigie/BELLISSIMO GENI",
+      "photoHistory": []
     },
     {
       "id": "tessa-sangue-magnifica",
@@ -82,7 +87,8 @@
       "health": "",
       "achievements": "",
       "bio": "Tessa Sangue Magnifica is a beautiful black female, out of ZZ Top Sangue Magnifica and Birba Sangue Magnifica.",
-      "owner": "Kelvin Omigie/BELLISSIMO GENI"
+      "owner": "Kelvin Omigie/BELLISSIMO GENI",
+      "photoHistory": []
     },
     {
       "id": "daisy-bellissimo-geni",
@@ -100,7 +106,8 @@
       "bloodline": "Bellissimo Geni",
       "health": "",
       "achievements": "",
-      "bio": "Daisy Bellissimo Geni is a Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica."
+      "bio": "Daisy Bellissimo Geni is a Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica.",
+      "photoHistory": []
     },
     {
       "id": "twice-as-tall-eden-bellissimo-geni",
@@ -118,7 +125,8 @@
       "bloodline": "Bellissimo Geni · Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Twice As Tall Eden Bellissimo Geni is a Bellissimo Geni past production and sister to Gyda Bellissimo Geni. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
+      "bio": "Twice As Tall Eden Bellissimo Geni is a Bellissimo Geni past production and sister to Gyda Bellissimo Geni. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam.",
+      "photoHistory": []
     },
     {
       "id": "gyda-bellissimo-geni",
@@ -136,7 +144,8 @@
       "bloodline": "Bellissimo Geni · Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Gyda Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
+      "bio": "Gyda Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam.",
+      "photoHistory": []
     },
     {
       "id": "yasmin-bellissimo-geni",
@@ -154,7 +163,8 @@
       "bloodline": "Bellissimo Geni · Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Yasmin Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam."
+      "bio": "Yasmin Bellissimo Geni is a verified Bellissimo Geni past production. Her supplied details record Branco Custodi Nos as sire and Anthie Custodi Nos as dam.",
+      "photoHistory": []
     },
     {
       "id": "diesel-bellissimo-geni",
@@ -172,7 +182,8 @@
       "bloodline": "Bellissimo Geni · Custodi Nos · Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Diesel Bellissimo Geni is a verified Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica."
+      "bio": "Diesel Bellissimo Geni is a verified Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica.",
+      "photoHistory": []
     },
     {
       "id": "rocco-bellissimo-geni",
@@ -190,7 +201,8 @@
       "bloodline": "Bellissimo Geni · Custodi Nos · Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Rocco Bellissimo Geni is a verified Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica."
+      "bio": "Rocco Bellissimo Geni is a verified Bellissimo Geni past production from Branco Custodi Nos × Tessa Sangue Magnifica.",
+      "photoHistory": []
     },
     {
       "id": "dragoslav-custodi-nos",
@@ -208,7 +220,8 @@
       "bloodline": "Custodi Nos",
       "health": "HD A (as recorded on the supplied pedigree)",
       "achievements": "",
-      "bio": "Dragoslav Custodi Nos is the verified sire of Branco Custodi Nos in Branco’s supplied pedigree."
+      "bio": "Dragoslav Custodi Nos is the verified sire of Branco Custodi Nos in Branco’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "himera-custodi-nos",
@@ -228,7 +241,8 @@
       "bloodline": "Custodi Nos",
       "health": "Official HD A · ED 0 · OCD free",
       "achievements": "",
-      "bio": "Himera Custodi Nos is a verified pedigree ancestor, by Igon del Dyrium out of Bisera Custodi Nos. Her supplied main and secondary photographs are published with her record. Her supplied health status is Official HD A, ED 0, OCD free."
+      "bio": "Himera Custodi Nos is a verified pedigree ancestor, by Igon del Dyrium out of Bisera Custodi Nos. Her supplied main and secondary photographs are published with her record. Her supplied health status is Official HD A, ED 0, OCD free.",
+      "photoHistory": []
     },
     {
       "id": "roman-custodi-nos",
@@ -248,7 +262,8 @@
       "bloodline": "Custodi Nos",
       "health": "HD A (as recorded on the supplied pedigree)",
       "achievements": "",
-      "bio": "Roman Custodi Nos is the verified sire of Anthie Custodi Nos. Through Anthie, he is also part of Safeera Bellissimo Geni’s maternal pedigree."
+      "bio": "Roman Custodi Nos is the verified sire of Anthie Custodi Nos. Through Anthie, he is also part of Safeera Bellissimo Geni’s maternal pedigree.",
+      "photoHistory": []
     },
     {
       "id": "nefertiti-custodi-nos",
@@ -266,7 +281,8 @@
       "bloodline": "Custodi Nos",
       "health": "HD A · ED 0",
       "achievements": "",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "badr-hari-en-una-palabra",
@@ -284,7 +300,8 @@
       "bloodline": "",
       "health": "HD A (as recorded on the supplied pedigree)",
       "achievements": "",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "branella-custodi-nos",
@@ -302,7 +319,8 @@
       "bloodline": "Custodi Nos",
       "health": "HD A (as recorded on the supplied pedigree)",
       "achievements": "",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "igon-del-dyrium",
@@ -320,7 +338,8 @@
       "bloodline": "",
       "health": "HD C (as recorded on the supplied pedigree)",
       "achievements": "J.EuW'15",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "bisera-custodi-nos",
@@ -338,7 +357,8 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "CH.SRB · GrCh.SRB",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "uno-de-nobil-rose-cor-a",
@@ -356,7 +376,8 @@
       "bloodline": "",
       "health": "HD B (as recorded on the supplied pedigree)",
       "achievements": "Ch.RO",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "medina-custodi-nos",
@@ -374,7 +395,8 @@
       "bloodline": "Custodi Nos",
       "health": "HD A (as recorded on the supplied pedigree)",
       "achievements": "",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "limoncello-sangue-magnifica-custodi-nos",
@@ -392,7 +414,8 @@
       "bloodline": "Sangue Magnifica · Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": "Limoncello Sangue Magnifica Custodi Nos is the verified sire of Nefertiti Custodi Nos, placing him in Anthie Custodi Nos’s maternal pedigree."
+      "bio": "Limoncello Sangue Magnifica Custodi Nos is the verified sire of Nefertiti Custodi Nos, placing him in Anthie Custodi Nos’s maternal pedigree.",
+      "photoHistory": []
     },
     {
       "id": "explosion-custodi-nos",
@@ -410,7 +433,8 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "bluestone-custodi-nos",
@@ -428,7 +452,8 @@
       "bloodline": "Custodi Nos",
       "health": "",
       "achievements": "",
-      "bio": ""
+      "bio": "",
+      "photoHistory": []
     },
     {
       "id": "zz-top-sangue-magnifica",
@@ -448,7 +473,8 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "ZZ Top Sangue Magnifica is the verified sire of Tessa Sangue Magnifica in Tessa’s supplied pedigree."
+      "bio": "ZZ Top Sangue Magnifica is the verified sire of Tessa Sangue Magnifica in Tessa’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "birba-sangue-magnifica",
@@ -469,7 +495,8 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Birba Sangue Magnifica is the verified dam of Tessa Sangue Magnifica in Tessa’s supplied pedigree."
+      "bio": "Birba Sangue Magnifica is the verified dam of Tessa Sangue Magnifica in Tessa’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "mockingjay-custodi-nos-sangue-magnifica",
@@ -487,7 +514,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "rothorm-jy-dream-pearl-jam",
@@ -505,7 +533,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "jaro-ivoni-imperial",
@@ -523,7 +552,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "asi-sangue-magnifica",
@@ -541,7 +571,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "sangue-magnifica-murano",
@@ -559,7 +590,8 @@
       "bloodline": "Sangue Magnifica",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "yahva-custodi-nos",
@@ -577,7 +609,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "castleguard-high-voltage",
@@ -595,7 +628,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "rothorm-jy-dream-loyal-to-none",
@@ -613,7 +647,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "calisto-from-gda-god-of-troy-team",
@@ -631,7 +666,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "darling-ivoni-imperial",
@@ -649,7 +685,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "django-unchained-sangue-magnifica",
@@ -667,7 +704,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "gloria-sangue-magnifica",
@@ -685,7 +723,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "gvido-sangue-magnifico",
@@ -703,7 +742,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "lucrezia-del-rosso-malpelo",
@@ -721,7 +761,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "genesiosteewe",
@@ -739,7 +780,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "zoe-del-rosso-malpelo",
@@ -757,7 +799,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "castleguard-midas",
@@ -775,7 +818,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "anticos-echo",
@@ -793,7 +837,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "rothorm-jy-dream-runaway",
@@ -811,7 +856,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "rothorm-illegal-de-about-time",
@@ -829,7 +875,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "rothorm-jy-dream-w-fire-in-my-body",
@@ -847,7 +894,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "guardiano-degli-angeli-nefer",
@@ -865,7 +913,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "xixao-bajerova-z-machova-kraje",
@@ -883,7 +932,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "chera-corso-di-bellezza",
@@ -901,7 +951,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "aragon",
@@ -919,7 +970,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "sushi-sangue-magnifica",
@@ -937,7 +989,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     },
     {
       "id": "hanna-sangue-magnifica",
@@ -955,7 +1008,8 @@
       "bloodline": "",
       "health": "",
       "achievements": "",
-      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree."
+      "bio": "Verified from Tessa Sangue Magnifica’s supplied pedigree.",
+      "photoHistory": []
     }
   ]
 }
