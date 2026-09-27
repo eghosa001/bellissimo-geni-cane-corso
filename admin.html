@@ -201,6 +201,15 @@
 .pedigree-selector select{border:1px solid var(--line);padding:10px 14px;background:#fff;min-width:200px;outline:none;font-size:14px}
 .pedigree-selector select:focus{border-color:var(--gold)}
 .no-pedigree-data{text-align:center;padding:60px;color:var(--muted)}
+.pedigree-generations{width:100%;display:grid;gap:16px;margin-top:16px}
+.pedigree-generation{width:100%;min-width:0}
+.pedigree-generation-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:0 0 8px}
+.pedigree-generation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.pedigree-generation-grid .tree-node{min-width:0;width:100%;padding:10px 12px;text-align:left}
+.pedigree-generation-grid .tree-node.missing{opacity:.6;cursor:default}
+.pedigree-generation-grid .tree-node .tname{overflow-wrap:anywhere}
+.pedigree-summary{width:100%;background:#faf8f4;border:1px solid var(--line);padding:14px;margin-top:12px}
+
 
 /* ── Content editor ──────────────────────────────────────────────────────── */
 .content-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:20px}
@@ -367,6 +376,9 @@
   }
   .tree-gen{gap:10px;width:100%}
   .tree-node{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .pedigree-generation-grid{grid-template-columns:1fr 1fr}
+  .pedigree-generation-grid .tree-node{padding:9px}
+
 
   .audit-row{display:grid;grid-template-columns:1fr;gap:6px;padding:12px}
   .audit-row .meta{min-width:0}
@@ -399,6 +411,8 @@
   .topbar{padding-inline:10px}
   .mobile-toggle{min-width:80px;padding-inline:10px}
   .topbar h2{font-size:16px}
+  .pedigree-generation-grid{grid-template-columns:1fr}
+
 }
 
 </style>
@@ -1763,23 +1777,62 @@ async function renderPedigreeEditor() {
   return '<div class="panel"><div class="panel-header"><h3>Pedigree Tree Builder</h3><span class="muted" style="font-size:11px">Select a dog to view and edit its ancestry</span></div><div class="panel-body"><div class="pedigree-selector"><select id="pedDogSelect" onchange="renderPedigreeTree(this.value)"><option value="">-- Select a dog --</option>'+opts+'</select></div><div id="pedigreeTreeArea" class="pedigree-tree"><div class="no-pedigree-data"><p style="font-size:32px;margin-bottom:12px">G</p><p>Select a dog above to build and preview its family tree</p></div></div></div></div>';
 }
 window.renderPedigreeTree = async function(dogId) {
-  if(!dogId) { document.getElementById('pedigreeTreeArea').innerHTML='<div class="no-pedigree-data"><p style="font-size:32px;margin-bottom:12px">G</p><p>Select a dog above</p></div>'; return; }
+  if(!dogId) {
+    document.getElementById('pedigreeTreeArea').innerHTML='<div class="no-pedigree-data"><p style="font-size:32px;margin-bottom:12px">G</p><p>Select a dog above</p></div>';
+    return;
+  }
   const dj = await apiFetch('/admin/api/dogs?id='+encodeURIComponent(dogId));
   if(!dj.ok) return;
   const dog = dj.data;
   const j = await apiFetch('/admin/api/dogs');
   const dogs = j.data || [];
+  const byId = new Map(dogs.map(d=>[d.id,d]));
   const dogOpts = dogs.map(d => '<option value="'+d.id+'" '+(dog.sireId===d.id?'selected':'')+'> '+esc(d.name)+'</option>').join('');
   const damOpts = dogs.map(d => '<option value="'+d.id+'" '+(dog.damId===d.id?'selected':'')+'> '+esc(d.name)+'</option>').join('');
-  function buildNode(id, gen) {
-    if(!id||gen>3) return '<div class="tree-node"><div class="trole">?</div><div class="tname">Not recorded</div></div>';
-    const d = dogs.find(x=>x.id===id);
-    if(!d) return '<div class="tree-node"><div class="trole">?</div><div class="tname">Unknown</div></div>';
-    return '<div class="tree-gen"><div class="tree-node'+(id===dogId?' selected':'')+'"><div class="trole">GEN '+gen+'</div><div class="tname">'+esc(d.name)+'</div><div class="tcolour">'+esc(d.colour||'')+'</div></div></div>';
+
+  let slots = [
+    { id:dog.sireId, role:'Sire' },
+    { id:dog.damId, role:'Dam' }
+  ];
+  const generations = [];
+  let knownCount = 0;
+
+  for(let gen=1; gen<=4; gen++) {
+    const cards = slots.map(slot => {
+      const d = slot.id ? byId.get(slot.id) : null;
+      if(!d) {
+        return '<div class="tree-node missing"><div class="trole">'+esc(slot.role)+' · GEN '+gen+'</div><div class="tname">Not recorded</div></div>';
+      }
+      knownCount++;
+      return '<div class="tree-node" role="button" tabindex="0" onclick="document.getElementById(\'pedDogSelect\').value='+JSON.stringify(d.id)+';renderPedigreeTree('+JSON.stringify(d.id)+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}"><div class="trole">'+esc(slot.role)+' · GEN '+gen+'</div><div class="tname">'+esc(d.name)+'</div><div class="tcolour">'+esc([d.registration,d.colour].filter(Boolean).join(' · '))+'</div></div>';
+    }).join('');
+
+    generations.push(
+      '<section class="pedigree-generation"><div class="pedigree-generation-title">Generation '+gen+' · '+slots.length+' position'+(slots.length===1?'':'s')+'</div><div class="pedigree-generation-grid">'+cards+'</div></section>'
+    );
+
+    const next = [];
+    for(const slot of slots) {
+      const d = slot.id ? byId.get(slot.id) : null;
+      next.push({ id:d&&d.sireId ? d.sireId : null, role:'Sire' });
+      next.push({ id:d&&d.damId ? d.damId : null, role:'Dam' });
+    }
+    slots = next;
   }
-  const sirGen = buildNode(dog.sireId,1);
-  const damGen = buildNode(dog.damId,1);
-  const html = '<div style="margin-bottom:20px;padding:16px;background:#faf8f4;border-radius:6px"><strong style="font:600 20px var(--serif)">'+esc(dog.name)+'</strong><span class="muted" style="margin-left:12px">'+esc(dog.sex||'')+' | '+esc(dog.colour||'')+'</span><div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted" style="font-size:12px">Sire:</span><select id="pedSire" style="border:1px solid var(--line);padding:8px 12px;background:#fff"><option value="">None</option>'+dogOpts+'</select><span class="muted" style="font-size:12px">Dam:</span><select id="pedDam" style="border:1px solid var(--line);padding:8px 12px;background:#fff"><option value="">None</option>'+damOpts+'</select><button class="btn btn-sm btn-gold" onclick="savePedigree('+JSON.stringify(dog.id)+')">Save Parent Links</button></div></div>'+sirGen+damGen;
+
+  const html =
+    '<div style="width:100%;margin-bottom:8px;padding:16px;background:#faf8f4;border:1px solid var(--line)">'+
+      '<strong style="font:600 20px var(--serif)">'+esc(dog.name)+'</strong>'+
+      '<span class="muted" style="margin-left:12px">'+esc(dog.sex||'')+(dog.colour?' · '+esc(dog.colour):'')+'</span>'+
+      '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;align-items:end">'+
+        '<label class="field"><span>Sire</span><select id="pedSire"><option value="">None</option>'+dogOpts+'</select></label>'+
+        '<label class="field"><span>Dam</span><select id="pedDam"><option value="">None</option>'+damOpts+'</select></label>'+
+        '<button class="btn btn-sm btn-gold" style="min-height:44px" onclick="savePedigree('+JSON.stringify(dog.id)+')">Save Parent Links</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="pedigree-summary"><strong>'+knownCount+' recorded ancestor position'+(knownCount===1?'':'s')+'</strong><div class="muted" style="font-size:11px;margin-top:3px">Four generations are shown below. Repeated ancestors are shown in every pedigree position where they occur.</div></div>'+
+    '<div class="pedigree-generations">'+generations.join('')+'</div>';
+
   document.getElementById('pedigreeTreeArea').innerHTML = html;
 };
 async function savePedigree(dogId) {
