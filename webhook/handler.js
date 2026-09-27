@@ -295,8 +295,8 @@ async function adminAuth(request, env) {
 // ─── Public unauthenticated API — only published records, no auth required ──
 async function handlePublicDogs(req, env) {
   const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
-  const published = dogs.filter(d => d.publishStatus !== 'draft');
-  return json(200, { ok: true, dogs: published.sort((a, b) => a.name.localeCompare(b.name)) });
+  const published = dogs.filter(d => d && d.publishStatus !== 'draft');
+  return json(200, { ok: true, dogs: published.sort((a, b) => String(a && a.name || '').localeCompare(String(b && b.name || ''))) });
 }
 async function handlePublicPuppies(req, env) {
   const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
@@ -1410,6 +1410,10 @@ export default {
     // ── Public health endpoint ──
     if (request.method === 'GET' && url.pathname === '/webhook/health') {
       return json(200, { ok: true, ts: Date.now() });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/webhook/version') {
+      return json(200, { ok: true, version: '2026-09-27-safe-dog-sort-v1' });
     }
 
     // ── Public media uploaded by the owner ──
