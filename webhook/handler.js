@@ -178,6 +178,29 @@ function indexStorageKey(prefix) {
   return INDEX_KEY_PREFIX + prefix.replace(/:$/, '');
 }
 
+function snapshotStorageKey(prefix) {
+  return 'admin:snapshot:' + String(prefix || '').replace(/:$/, '').replace(/:/g, '-');
+}
+
+async function kvInvalidateSnapshot(env, prefix) {
+  try {
+    await env.ADMIN.delete(snapshotStorageKey(prefix));
+  } catch (e) {
+    console.error('[kv snapshot invalidate failed]', prefix, e && e.message || e);
+  }
+}
+
+async function kvReadSnapshot(env, prefix) {
+  const raw = await env.ADMIN.get(snapshotStorageKey(prefix));
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function kvIndexIds(env, prefix) {
   const raw = await env.ADMIN.get(indexStorageKey(prefix));
   if (!raw) return [];
@@ -194,7 +217,7 @@ async function kvWriteIndex(env, prefix, ids) {
   await env.ADMIN.put(indexStorageKey(prefix), JSON.stringify(clean));
 }
 
-async function kvPut(env, key, value) {
+async function kvPut(env, key, value, options = {}) {
   try {
     await env.ADMIN.put(key, JSON.stringify(value));
     const prefix = indexedCollectionPrefix(key);
@@ -207,6 +230,9 @@ async function kvPut(env, key, value) {
           await kvWriteIndex(env, prefix, ids);
         }
       }
+      if (options.invalidateSnapshot !== false) {
+        await kvInvalidateSnapshot(env, prefix);
+      }
     }
     return true;
   } catch (e) {
@@ -215,7 +241,7 @@ async function kvPut(env, key, value) {
   }
 }
 
-async function kvDelete(env, key) {
+async function kvDelete(env, key, options = {}) {
   await env.ADMIN.delete(key);
   const prefix = indexedCollectionPrefix(key);
   if (prefix) {
@@ -223,10 +249,16 @@ async function kvDelete(env, key) {
     const ids = await kvIndexIds(env, prefix);
     const next = ids.filter(item => item !== id);
     if (next.length !== ids.length) await kvWriteIndex(env, prefix, next);
+    if (options.invalidateSnapshot !== false) {
+      await kvInvalidateSnapshot(env, prefix);
+    }
   }
 }
 
 async function kvList(env, prefix) {
+  const snapshot = await kvReadSnapshot(env, prefix);
+  if (snapshot) return snapshot;
+
   const ids = await kvIndexIds(env, prefix);
   if (!ids.length) return [];
 
@@ -264,6 +296,16 @@ async function kvList(env, prefix) {
       if (!raw) continue;
       try { results.push(JSON.parse(raw)); } catch (_) {}
     }
+  }
+
+  try {
+    await env.ADMIN.put(
+      snapshotStorageKey(prefix),
+      JSON.stringify(results),
+      { expirationTtl: 60 * 60 }
+    );
+  } catch (e) {
+    console.error('[kv snapshot write failed]', prefix, e && e.message || e);
   }
 
   return results;
@@ -690,7 +732,7 @@ async function handleAdminBootstrap(req, env) {
     };
 
     if (!existing) {
-      await kvPut(env, key, { publishStatus: 'published', ...mapped });
+      await kvPut(env, key, { publishStatus: 'published', ...mapped }, { invalidateSnapshot: false });
       dogCount++;
       continue;
     }
@@ -731,10 +773,11 @@ async function handleAdminBootstrap(req, env) {
     if (!merged.publishStatus) { merged.publishStatus = 'published'; changed = true; }
 
     if (changed) {
-      await kvPut(env, key, merged);
+      await kvPut(env, key, merged, { invalidateSnapshot: false });
       dogCount++;
     }
   }
+  await kvInvalidateSnapshot(env, ADMIN_KEYS.dogs + ':');
   seeded[ADMIN_KEYS.dogs] = dogCount;
 
   const groups = [
@@ -755,7 +798,7 @@ async function handleAdminBootstrap(req, env) {
           if (seededHistory.length) {
             const mergedHistory = Array.from(new Set([...(Array.isArray(existing.photoHistory) ? existing.photoHistory : []), ...seededHistory]));
             if (mergedHistory.length !== (Array.isArray(existing.photoHistory) ? existing.photoHistory.length : 0)) {
-              await kvPut(env, key, { ...existing, photoHistory: mergedHistory });
+              await kvPut(env, key, { ...existing, photoHistory: mergedHistory }, { invalidateSnapshot: false });
               count++;
             }
           }
@@ -763,9 +806,10 @@ async function handleAdminBootstrap(req, env) {
         continue;
       }
       const record = { publishStatus: 'published', ...input };
-      await kvPut(env, key, record);
+      await kvPut(env, key, record, { invalidateSnapshot: false });
       count++;
     }
+    await kvInvalidateSnapshot(env, group.key + ':');
     seeded[group.key] = count;
   }
 
