@@ -10,7 +10,8 @@ import worker, {
   validateReservation,
   verifyRefTimestamp,
   nextStatus,
-  lockDecision
+  lockDecision,
+  r2MediaKeyFromUrl
 } from './handler.js';
 
 test('strip removes zero-width chars', () => {
@@ -322,4 +323,92 @@ test('owner admin sees drafts while public APIs keep them hidden', async () => {
   const publicRes = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
   assert.equal(publicRes.status, 200);
   assert.equal((await publicRes.json()).dogs.length, 0);
+});
+
+
+test('R2 media key parsing only accepts managed upload paths', () => {
+  assert.equal(r2MediaKeyFromUrl('https://worker.example/uploads/media/dog.webp'), 'media/dog.webp');
+  assert.equal(r2MediaKeyFromUrl('media/dog.webp'), 'media/dog.webp');
+  assert.equal(r2MediaKeyFromUrl('assets/dogs/legacy.webp'), '');
+  assert.equal(r2MediaKeyFromUrl('https://example.test/photo.webp'), '');
+});
+
+test('permanent dog photo delete removes unused Cloudflare upload from R2', async () => {
+  const store = new Map([
+    ['admin:dogs:dog-1', JSON.stringify({
+      id: 'dog-1',
+      name: 'Dog One',
+      photo: 'https://worker.example/uploads/media/old.webp',
+      gallery: ['https://worker.example/uploads/media/extra.webp'],
+      photoHistory: ['https://worker.example/uploads/media/old.webp']
+    })],
+    ['admin:index:admin:dogs', JSON.stringify(['dog-1'])],
+    ['admin:index:admin:puppies', JSON.stringify([])],
+    ['admin:index:admin:gallery', JSON.stringify([])]
+  ]);
+  let deletedKey = '';
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); }
+    },
+    UPLOADS: {
+      async delete(key) { deletedKey = key; }
+    }
+  };
+
+  const res = await worker.fetch(new Request('https://worker.example/admin/api/media-delete', {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer secret', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dogId: 'dog-1', url: 'https://worker.example/uploads/media/old.webp' })
+  }), env);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.deleted, true);
+  assert.equal(deletedKey, 'media/old.webp');
+
+  const dog = JSON.parse(store.get('admin:dogs:dog-1'));
+  assert.equal(dog.photo, '');
+  assert.deepEqual(dog.photoHistory, []);
+  assert.deepEqual(dog.gallery, ['https://worker.example/uploads/media/extra.webp']);
+});
+
+test('permanent delete detaches legacy dog photo without claiming repo deletion', async () => {
+  const store = new Map([
+    ['admin:dogs:dog-1', JSON.stringify({
+      id: 'dog-1',
+      name: 'Dog One',
+      photo: 'assets/dogs/legacy.webp',
+      gallery: [],
+      photoHistory: ['assets/dogs/legacy.webp']
+    })],
+    ['admin:index:admin:dogs', JSON.stringify(['dog-1'])],
+    ['admin:index:admin:puppies', JSON.stringify([])],
+    ['admin:index:admin:gallery', JSON.stringify([])]
+  ]);
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); }
+    }
+  };
+
+  const res = await worker.fetch(new Request('https://worker.example/admin/api/media-delete', {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer secret', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dogId: 'dog-1', url: 'assets/dogs/legacy.webp' })
+  }), env);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.deleted, false);
+  assert.equal(body.reason, 'repository_asset');
+  const dog = JSON.parse(store.get('admin:dogs:dog-1'));
+  assert.equal(dog.photo, '');
+  assert.deepEqual(dog.photoHistory, []);
 });
