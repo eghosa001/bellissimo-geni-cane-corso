@@ -589,7 +589,7 @@ async function handleAdminBootstrap(req, env) {
 
   // v2 migrates every verified repository record into the CMS exactly once,
   // without overwriting records the owner has already edited.
-  const bootstrapKey = 'admin:bootstrap:verified-baseline:v2';
+  const bootstrapKey = 'admin:bootstrap:verified-baseline:v3';
   const alreadySeeded = await kvGet(env, bootstrapKey);
   if (alreadySeeded) return json(200, { ok: true, alreadySeeded: true, seeded: {} });
 
@@ -606,7 +606,19 @@ async function handleAdminBootstrap(req, env) {
       if (!input || !input.id) continue;
       const key = group.key + ':' + input.id;
       const existing = await kvGet(env, key);
-      if (existing) continue;
+      if (existing) {
+        if (group.key === ADMIN_KEYS.dogs || group.key === ADMIN_KEYS.puppies) {
+          const seededHistory = Array.isArray(input.photoHistory) ? input.photoHistory : [];
+          if (seededHistory.length) {
+            const mergedHistory = Array.from(new Set([...(Array.isArray(existing.photoHistory) ? existing.photoHistory : []), ...seededHistory]));
+            if (mergedHistory.length !== (Array.isArray(existing.photoHistory) ? existing.photoHistory.length : 0)) {
+              await kvPut(env, key, { ...existing, photoHistory: mergedHistory });
+              count++;
+            }
+          }
+        }
+        continue;
+      }
       const record = { publishStatus: 'published', ...input };
       await kvPut(env, key, record);
       count++;
@@ -614,7 +626,7 @@ async function handleAdminBootstrap(req, env) {
     seeded[group.key] = count;
   }
   await kvPut(env, bootstrapKey, { completedAt: new Date().toISOString(), seeded });
-  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v2', seeded);
+  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v3', seeded);
   return json(200, { ok: true, alreadySeeded: false, seeded });
 }
 
@@ -646,10 +658,10 @@ async function handleAdminDogs(req, env) {
       const previousMain = String(previous.photo || '').trim();
       const incomingMain = Object.prototype.hasOwnProperty.call(body, 'photo') ? String(body.photo || '').trim() : previousMain;
       const priorHistory = Array.isArray(previous.photoHistory) ? previous.photoHistory.slice() : [];
-      if (previousMain && incomingMain !== previousMain && !priorHistory.includes(previousMain)) {
-        priorHistory.push(previousMain);
+      const requestedHistory = Array.isArray(body.photoHistory) ? body.photoHistory.slice() : priorHistory;
+      if (previousMain && incomingMain !== previousMain && !requestedHistory.includes(previousMain)) {
+        requestedHistory.push(previousMain);
       }
-      const requestedHistory = Array.isArray(body.photoHistory) ? body.photoHistory : priorHistory;
       const updated = {
         ...previous,
         ...body,
@@ -710,10 +722,10 @@ async function handleAdminPuppies(req, env) {
       const previousMain = String(previous.photo || '').trim();
       const incomingMain = Object.prototype.hasOwnProperty.call(body, 'photo') ? String(body.photo || '').trim() : previousMain;
       const priorHistory = Array.isArray(previous.photoHistory) ? previous.photoHistory.slice() : [];
-      if (previousMain && incomingMain !== previousMain && !priorHistory.includes(previousMain)) {
-        priorHistory.push(previousMain);
+      const requestedHistory = Array.isArray(body.photoHistory) ? body.photoHistory.slice() : priorHistory;
+      if (previousMain && incomingMain !== previousMain && !requestedHistory.includes(previousMain)) {
+        requestedHistory.push(previousMain);
       }
-      const requestedHistory = Array.isArray(body.photoHistory) ? body.photoHistory : priorHistory;
       const updated = {
         ...previous,
         ...body,
