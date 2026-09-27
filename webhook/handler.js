@@ -642,14 +642,27 @@ async function handleAdminDogs(req, env) {
     if (id) {
       const idx = dogs.findIndex(d => d.id === id);
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
-      const updated = { ...dogs[idx], ...body, id };
+      const previous = dogs[idx];
+      const previousMain = String(previous.photo || '').trim();
+      const incomingMain = Object.prototype.hasOwnProperty.call(body, 'photo') ? String(body.photo || '').trim() : previousMain;
+      const priorHistory = Array.isArray(previous.photoHistory) ? previous.photoHistory.slice() : [];
+      if (previousMain && incomingMain !== previousMain && !priorHistory.includes(previousMain)) {
+        priorHistory.push(previousMain);
+      }
+      const requestedHistory = Array.isArray(body.photoHistory) ? body.photoHistory : priorHistory;
+      const updated = {
+        ...previous,
+        ...body,
+        id,
+        photoHistory: Array.from(new Set((requestedHistory || []).map(String).map(v=>v.trim()).filter(Boolean)))
+      };
       ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.dogs + ':' + id, updated);
       await auditLog(env, 'update', 'dog', id, { name: updated.name, publishStatus: updated.publishStatus });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'dog-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-    const dog = { id: newId, sireId: body.sireId || null, damId: body.damId || null, group: body.group || 'current', ...body };
+    const dog = { id: newId, sireId: body.sireId || null, damId: body.damId || null, group: body.group || 'current', photoHistory: [], ...body };
     ensurePublishStatus(dog);
     await kvPut(env, ADMIN_KEYS.dogs + ':' + newId, dog);
     await auditLog(env, 'create', 'dog', newId, { name: dog.name, publishStatus: dog.publishStatus });
@@ -693,14 +706,27 @@ async function handleAdminPuppies(req, env) {
       const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
       const idx = pups.findIndex(p => p.id === id);
       if (idx === -1) return json(404, { ok: false, error: 'not_found' });
-      const updated = { ...pups[idx], ...body, id };
+      const previous = pups[idx];
+      const previousMain = String(previous.photo || '').trim();
+      const incomingMain = Object.prototype.hasOwnProperty.call(body, 'photo') ? String(body.photo || '').trim() : previousMain;
+      const priorHistory = Array.isArray(previous.photoHistory) ? previous.photoHistory.slice() : [];
+      if (previousMain && incomingMain !== previousMain && !priorHistory.includes(previousMain)) {
+        priorHistory.push(previousMain);
+      }
+      const requestedHistory = Array.isArray(body.photoHistory) ? body.photoHistory : priorHistory;
+      const updated = {
+        ...previous,
+        ...body,
+        id,
+        photoHistory: Array.from(new Set((requestedHistory || []).map(String).map(v=>v.trim()).filter(Boolean)))
+      };
       ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.puppies + ':' + id, updated);
       await auditLog(env, 'update', 'puppy', id, { name: updated.name, status: updated.status, publishStatus: updated.publishStatus });
       return json(200, { ok: true, data: updated });
     }
     const newId = 'puppy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-    const puppy = { id: newId, sireId: body.sireId || null, damId: body.damId || null, litterId: body.litterId || '', ...body };
+    const puppy = { id: newId, sireId: body.sireId || null, damId: body.damId || null, litterId: body.litterId || '', photoHistory: [], ...body };
     ensurePublishStatus(puppy);
     await kvPut(env, ADMIN_KEYS.puppies + ':' + newId, puppy);
     await auditLog(env, 'create', 'puppy', newId, { name: puppy.name, status: puppy.status });
