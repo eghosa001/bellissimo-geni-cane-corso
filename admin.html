@@ -670,6 +670,7 @@ function renderDogForm(dog) {
               <input type="file" id="dogFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'dogPhotoUrl')">
               <input name="photo" id="dogPhotoUrl" value="${esc(dog?.photo||'')}" placeholder="Or paste image URL here" style="margin-top:6px">
             </div>
+            <div class="field full"><label>Additional Photos</label><textarea name="galleryText" rows="4" placeholder="One image URL per line">${esc((dog?.gallery||[]).join('\n'))}</textarea><span class="hint">Remove a line to remove that extra photo from this dog's public profile.</span></div>
             <div class="field full"><label>Bio</label><textarea name="bio" rows="3">${esc(dog?.bio||'')}</textarea></div>
             <div class="field full"><label>Health Notes</label><textarea name="health" rows="2">${esc(dog?.health||'')}</textarea></div>
             <div class="field full"><label>Achievements</label><input name="achievements" value="${esc(dog?.achievements||'')}"></div>
@@ -741,6 +742,7 @@ async function saveDog(e, id) {
   });
   if(!body.publishStatus) body.publishStatus = 'published';
   if(!body.group) body.group = 'current';
+  body.gallery = String(f.galleryText?.value || '').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
   const url = id ? '/admin/api/dogs?id='+encodeURIComponent(id) : '/admin/api/dogs';
   const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
   if(j.ok) { toast(id?'Dog updated':'Dog created'); closeModal(); loadAllData(); }
@@ -861,6 +863,7 @@ function renderPuppyForm(pup) {
               <input type="file" id="pupFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'pupPhotoUrl')">
               <input name="photo" id="pupPhotoUrl" value="${esc(pup?.photo||'')}" placeholder="Or paste image URL" style="margin-top:6px">
             </div>
+            <div class="field full"><label>Additional Photos</label><textarea name="galleryText" rows="4" placeholder="One image URL per line">${esc((pup?.gallery||[]).join('\n'))}</textarea><span class="hint">Remove a line to remove that extra photo from this puppy's public profile.</span></div>
             <div class="field full"><label>Notes</label><textarea name="notes" rows="2">${esc(pup?.notes||'')}</textarea></div>
           </div>
           <div style="margin-top:20px"><button type="submit" class="btn btn-gold">${isEdit?'Save Changes':'Create Puppy'}</button></div>
@@ -876,6 +879,7 @@ async function savePuppy(e, id) {
     if(f[k]?.value !== undefined) body[k] = f[k].value.trim();
   });
   if(!body.publishStatus) body.publishStatus = 'published';
+  body.gallery = String(f.galleryText?.value || '').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
   if(body.priceNGN) body.priceNGN = Number(body.priceNGN) || null;
   const url = id ? '/admin/api/puppies?id='+encodeURIComponent(id) : '/admin/api/puppies';
   const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
@@ -1097,7 +1101,7 @@ async function renderGalleryList() {
   const items = j.data || [];
   const rows = items.map(g => `
     <tr>
-      <td><img src="${esc(g.url||'')}" style="width:60px;height:40px;object-fit:cover;border:1px solid var(--line)" onerror="this.style.display='none'"></td>
+      <td><img src="${esc(g.url||g.photo||'')}" style="width:60px;height:40px;object-fit:cover;border:1px solid var(--line)" onerror="this.style.display='none'"></td>
       <td class="name">${esc(g.caption||'—')}</td>
       <td class="muted">${esc(g.category||'general')}</td>
       <td class="muted">${g.order??'—'}</td>
@@ -1145,7 +1149,7 @@ window.editGalleryItem = async function(id) {
                 <img id="galUploadPreview" class="upload-preview" style="display:none">
               </div>
               <input type="file" id="galFileInput" accept="image/*" style="display:none" onchange="handleUploadFile(this,'galUrlInput')">
-              <input name="url" id="galUrlInput" value="${esc(g?.url||'')}" placeholder="Or paste image URL" style="margin-top:6px">
+              <input name="url" id="galUrlInput" value="${esc(g?.url||g?.photo||'')}" placeholder="Or paste image URL" style="margin-top:6px">
             </div>
             <div class="field"><label>Caption</label><input name="caption" value="${esc(g.caption||'')}"></div>
             <div class="field"><label>Alt Text</label><input name="alt" value="${esc(g.alt||'')}"></div>
