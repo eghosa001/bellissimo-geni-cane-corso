@@ -31,6 +31,25 @@ jobs:
           echo "Checking Pages configuration for $GITHUB_REPO"
           curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/$GITHUB_REPO/pages || true
 
+      - name: Configure custom domain
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          status="$(curl -sS -o /tmp/pages-domain.json -w "%{http_code}" -L -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "https://api.github.com/repos/$GITHUB_REPO/pages" \
+            -d '{"cname":"bellissimogeni.com","https_enforced":true,"build_type":"workflow"}')"
+          echo "GitHub Pages custom-domain status: $status"
+          cat /tmp/pages-domain.json || true
+          echo
+          if [ "$status" != "204" ]; then
+            echo "::warning::GitHub did not allow the workflow token to set the custom domain automatically."
+          fi
+
       - name: Prepare publish directory
         run: |
           set -e
