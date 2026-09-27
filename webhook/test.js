@@ -412,3 +412,86 @@ test('permanent delete detaches legacy dog photo without claiming repo deletion'
   assert.equal(dog.photo, '');
   assert.deepEqual(dog.photoHistory, []);
 });
+
+
+test('bootstrap reuses manually created pedigree ancestors by name', async () => {
+  const store = new Map([
+    ['admin:dogs:dog-manual-terror', JSON.stringify({
+      id: 'dog-manual-terror',
+      name: 'Terror Levan En Una Palabra',
+      sex: 'Male',
+      group: 'current',
+      status: 'Bellissimo Geni dog',
+      sireId: null,
+      damId: null
+    })],
+    ['admin:index:admin:dogs', JSON.stringify(['dog-manual-terror'])]
+  ]);
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); }
+    }
+  };
+
+  const payload = {
+    dogs: [
+      {
+        id: 'terror-levan-en-una-palabra',
+        name: 'Terror Levan En Una Palabra',
+        sex: 'Male',
+        registration: 'JR 700881 Cc',
+        group: 'ancestor',
+        status: 'Pedigree ancestor',
+        sireId: 'hermes',
+        damId: 'dafne'
+      },
+      {
+        id: 'hermes',
+        name: 'Hermes',
+        sex: 'Male',
+        group: 'ancestor',
+        status: 'Pedigree ancestor'
+      },
+      {
+        id: 'dafne',
+        name: 'Dafne',
+        sex: 'Female',
+        group: 'ancestor',
+        status: 'Pedigree ancestor'
+      },
+      {
+        id: 'explosion-custodi-nos',
+        name: 'Explosion Custodi Nos',
+        sex: 'Male',
+        group: 'ancestor',
+        status: 'Pedigree ancestor',
+        sireId: 'terror-levan-en-una-palabra',
+        damId: null
+      }
+    ],
+    puppies: [],
+    litters: [],
+    gallery: []
+  };
+
+  const boot = await worker.fetch(new Request('https://worker.example/admin/api/bootstrap', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer secret', 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }), env);
+  assert.equal(boot.status, 200);
+
+  assert.equal(store.has('admin:dogs:terror-levan-en-una-palabra'), false);
+  const terror = JSON.parse(store.get('admin:dogs:dog-manual-terror'));
+  assert.equal(terror.group, 'ancestor');
+  assert.equal(terror.status, 'Pedigree ancestor');
+  assert.equal(terror.registration, 'JR 700881 Cc');
+  assert.equal(terror.sireId, 'hermes');
+  assert.equal(terror.damId, 'dafne');
+
+  const explosion = JSON.parse(store.get('admin:dogs:explosion-custodi-nos'));
+  assert.equal(explosion.sireId, 'dog-manual-terror');
+});
