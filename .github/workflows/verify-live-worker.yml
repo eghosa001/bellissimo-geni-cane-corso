@@ -29,10 +29,7 @@ jobs:
         run: |
           set +e
           url="https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/admin/api/login"
-          status="$(curl --silent --show-error --output /tmp/admin-login-diagnostic.json --write-out "%{http_code}" --max-time 20 \\
-            -H "Content-Type: application/json" \\
-            --data '{"password":"__bellissimo_invalid_smoke_test__"}' \\
-            "$url")"
+          status="$(curl --silent --show-error --output /tmp/admin-login-diagnostic.json --write-out "%{http_code}" --max-time 20 -H "Content-Type: application/json" --data '{"password":"__bellissimo_invalid_smoke_test__"}' "$url")"
           echo "status=$status"
           cat /tmp/admin-login-diagnostic.json || true
           echo
