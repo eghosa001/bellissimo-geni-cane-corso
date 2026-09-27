@@ -22,17 +22,26 @@
 <nav class="mobile-menu" aria-label="Mobile"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="pedigree.html">Pedigree</a><a href="breeding.html">Breeding</a><a href="gallery.html">Gallery</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></nav>
 <main class="wrap">
 <div class="page-hero"><p class="eyebrow">GALLERY</p><h1>The dogs, <em>up close.</em></h1><p>A varied selection from our dogs, past productions and verified pedigree family. The homepage-featured Branco, Karma and Gyda photographs are intentionally not repeated here.</p></div>
-<div class="gallery-grid">
-<figure><img src="assets/dogs/anthie-custodi-nos-02.webp" alt="Anthie Custodi Nos" loading="eager" decoding="async"><figcaption>Anthie Custodi Nos.</figcaption></figure>
-<figure><img src="assets/dogs/tessa-sangue-magnifica.webp" alt="Tessa Sangue Magnifica" loading="eager" decoding="async"><figcaption>Tessa Sangue Magnifica.</figcaption></figure>
-<figure><img src="assets/dogs/daisy-bellissimo-geni.webp" alt="Daisy Bellissimo Geni" loading="eager" decoding="async"><figcaption>Daisy Bellissimo Geni.</figcaption></figure>
-<figure><img src="assets/dogs/eden-01.webp" alt="Twice As Tall Eden Bellissimo Geni" loading="eager" decoding="async"><figcaption>Twice As Tall Eden Bellissimo Geni.</figcaption></figure>
-<figure><img src="assets/dogs/himera-custodi-nos-main.avif" alt="Himera Custodi Nos" loading="eager" decoding="async"><figcaption>Himera Custodi Nos.</figcaption></figure>
-<figure><img src="assets/dogs/roman-custodi-nos.webp" alt="Roman Custodi Nos" loading="eager" decoding="async"><figcaption>Roman Custodi Nos.</figcaption></figure>
-</div>
+<div class="gallery-grid" id="managedGallery"><p class="notice">Loading gallery…</p></div>
 </main>
 <footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> Bellissimo Geni Cane Corso.</p></footer>
 <script src="site.js"></script>
-<script>window.BG_WEBHOOK_URL = '';</script>
+<script>
+window.BG_WEBHOOK_URL = '';
+(function(){
+  var grid=document.getElementById('managedGallery');
+  BG.loadAdminJSON('gallery','data/gallery.json').then(function(payload){
+    var items=payload.photos||payload.gallery||payload.data||[];
+    items=items.filter(function(x){return x&&x.publishStatus!=='draft';});
+    grid.innerHTML=items.length?items.map(function(x){
+      var src=x.url||x.photo||'';
+      if(!src)return '';
+      return '<figure><img src="'+BG.esc(src)+'" alt="'+BG.esc(x.alt||'Bellissimo Geni Cane Corso')+'" loading="lazy" decoding="async"><figcaption>'+BG.esc(x.caption||'Kennel-supplied photography.')+'</figcaption></figure>';
+    }).join(''):'<p class="notice">No gallery photos are published.</p>';
+  }).catch(function(){
+    grid.innerHTML='<p class="notice">Could not load the gallery.</p>';
+  });
+})();
+</script>
 </body>
 </html>
