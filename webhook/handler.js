@@ -310,7 +310,7 @@ async function handlePublicPuppies(req, env) {
 }
 async function handlePublicGallery(req, env) {
   const items = await kvList(env, ADMIN_KEYS.gallery + ':');
-  const published = items.filter(g => g.publishStatus !== 'draft');
+  const published = items.filter(g => g.publishStatus !== 'draft').sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
   return json(200, { ok: true, photos: published });
 }
 async function handlePublicTestimonials(req, env) {
@@ -866,7 +866,11 @@ async function handleAdminGallery(req, env) {
 
   if (req.method === 'GET') {
     const items = await kvList(env, ADMIN_KEYS.gallery + ':');
-    return json(200, { ok: true, data: items });
+    if (id) {
+      const item = items.find(g => g.id === id);
+      return json(item ? 200 : 404, item ? { ok: true, data: item } : { ok: false, error: 'not_found' });
+    }
+    return json(200, { ok: true, data: items.sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0)) });
   }
 
   if (req.method === 'POST') {
