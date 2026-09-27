@@ -1041,7 +1041,7 @@ async function renderDogPhotos() {
             <button class="btn btn-ghost" type="button" onclick="document.getElementById('dogLibraryAdditionalUpload').click()">+ Upload as Additional</button>
           </div>
           <input type="file" id="dogLibraryMainUpload" accept="image/*" style="display:none" onchange="uploadDogLibraryPhoto(this,'main','${dog.id}')">
-          <input type="file" id="dogLibraryAdditionalUpload" accept="image/*" style="display:none" onchange="uploadDogLibraryPhoto(this,'additional','${dog.id}')">
+          <input type="file" id="dogLibraryAdditionalUpload" accept="image/*" multiple style="display:none" onchange="uploadDogLibraryPhoto(this,'additional','${dog.id}')">
           <div id="dogLibraryUploadStatus" class="muted" style="font-size:11px;margin-top:10px"></div>
         </div>
       </div>
@@ -1056,33 +1056,38 @@ async function renderDogPhotos() {
 }
 
 window.uploadDogLibraryPhoto = async function(input, mode, dogId) {
-  const file = input && input.files && input.files[0];
+  const files = [...(input && input.files ? input.files : [])];
   const dog = currentDogs.find(d=>d.id===dogId);
-  if(!file || !dog) return;
+  if(!files.length || !dog) return;
 
+  const chosen = mode === 'main' ? files.slice(0,1) : files;
   const status = document.getElementById('dogLibraryUploadStatus');
-  if(status) status.textContent = 'Uploading ' + file.name + '…';
+  if(status) status.textContent = 'Uploading ' + chosen.length + ' photo' + (chosen.length===1?'':'s') + '…';
 
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    const r = await fetch(API_BASE + '/admin/api/upload', {
-      method:'POST',
-      body:formData,
-      headers:{ 'Authorization':'Bearer ' + adminToken }
-    });
-    const uploaded = await r.json();
-    if(!r.ok || !uploaded.ok) throw new Error(uploaded.error || 'upload_failed');
-
-    const url = uploaded.publicUrl || uploaded.url;
-    if(!url) throw new Error('upload_url_missing');
+    const urls = [];
+    for(let i=0;i<chosen.length;i++) {
+      if(status) status.textContent = 'Uploading photo ' + (i+1) + ' of ' + chosen.length + '…';
+      const formData = new FormData();
+      formData.append('file', chosen[i]);
+      const r = await fetch(API_BASE + '/admin/api/upload', {
+        method:'POST',
+        body:formData,
+        headers:{ 'Authorization':'Bearer ' + adminToken }
+      });
+      const uploaded = await r.json();
+      if(!r.ok || !uploaded.ok) throw new Error(uploaded.error || 'upload_failed');
+      const url = uploaded.publicUrl || uploaded.url;
+      if(!url) throw new Error('upload_url_missing');
+      urls.push(url);
+    }
 
     let body;
     if(mode === 'main') {
-      body = { photo:url };
+      body = { photo:urls[0] };
     } else {
       const gallery = Array.isArray(dog.gallery) ? dog.gallery.slice() : [];
-      if(!gallery.includes(url)) gallery.push(url);
+      for(const url of urls) if(!gallery.includes(url)) gallery.push(url);
       body = { gallery };
     }
 
@@ -1092,8 +1097,10 @@ window.uploadDogLibraryPhoto = async function(input, mode, dogId) {
     });
     if(!saved.ok) throw new Error(saved.error || 'dog_update_failed');
 
-    if(status) status.textContent = mode === 'main' ? 'Main photo updated.' : 'Additional photo added.';
-    toast(mode === 'main' ? 'Main photo added' : 'Additional photo added');
+    if(status) status.textContent = mode === 'main'
+      ? 'Main photo updated.'
+      : urls.length + ' additional photo' + (urls.length===1?'':'s') + ' added.';
+    toast(mode === 'main' ? 'Main photo added' : urls.length + ' additional photo' + (urls.length===1?'':'s') + ' added');
     input.value = '';
     await loadAllData({skipSeed:true});
     selectedPhotoDogId = dogId;
