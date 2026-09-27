@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "notes": "Legacy Bellissimo Geni gallery photographs migrated into the owner CMS so they can be edited or removed without code changes.",
+  "gallery": [
+    {
+      "id": "gallery-anthie-02",
+      "url": "assets/dogs/anthie-custodi-nos-02.webp",
+      "photo": "assets/dogs/anthie-custodi-nos-02.webp",
+      "alt": "Anthie Custodi Nos",
+      "caption": "Anthie Custodi Nos.",
+      "category": "dogs",
+      "order": 10,
+      "publishStatus": "published"
+    },
+    {
+      "id": "gallery-tessa-main",
+      "url": "assets/dogs/tessa-sangue-magnifica.webp",
+      "photo": "assets/dogs/tessa-sangue-magnifica.webp",
+      "alt": "Tessa Sangue Magnifica",
+      "caption": "Tessa Sangue Magnifica.",
+      "category": "dogs",
+      "order": 20,
+      "publishStatus": "published"
+    },
+    {
+      "id": "gallery-daisy-main",
+      "url": "assets/dogs/daisy-bellissimo-geni.webp",
+      "photo": "assets/dogs/daisy-bellissimo-geni.webp",
+      "alt": "Daisy Bellissimo Geni",
+      "caption": "Daisy Bellissimo Geni.",
+      "category": "dogs",
+      "order": 30,
+      "publishStatus": "published"
+    },
+    {
+      "id": "gallery-eden-main",
+      "url": "assets/dogs/eden-01.webp",
+      "photo": "assets/dogs/eden-01.webp",
+      "alt": "Twice As Tall Eden Bellissimo Geni",
+      "caption": "Twice As Tall Eden Bellissimo Geni.",
+      "category": "dogs",
+      "order": 40,
+      "publishStatus": "published"
+    },
+    {
+      "id": "gallery-himera-main",
+      "url": "assets/dogs/himera-custodi-nos-main.avif",
+      "photo": "assets/dogs/himera-custodi-nos-main.avif",
+      "alt": "Himera Custodi Nos",
+      "caption": "Himera Custodi Nos.",
+      "category": "dogs",
+      "order": 50,
+      "publishStatus": "published"
+    },
+    {
+      "id": "gallery-roman-main",
+      "url": "assets/dogs/roman-custodi-nos.webp",
+      "photo": "assets/dogs/roman-custodi-nos.webp",
+      "alt": "Roman Custodi Nos",
+      "caption": "Roman Custodi Nos.",
+      "category": "dogs",
+      "order": 60,
+      "publishStatus": "published"
+    },
+    {
+      "id": "sept24-01",
+      "url": "assets/puppies/bellissimo-puppy-01.webp",
+      "photo": "assets/puppies/bellissimo-puppy-01.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait",
+      "caption": "Kennel-supplied photography. Availability is confirmed separately.",
+      "category": "puppies",
+      "order": 110,
+      "publishStatus": "published"
+    },
+    {
+      "id": "sept24-02",
+      "url": "assets/puppies/bellissimo-puppy-02.webp",
+      "photo": "assets/puppies/bellissimo-puppy-02.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait",
+      "caption": "Kennel-supplied photography. Availability is confirmed separately.",
+      "category": "puppies",
+      "order": 120,
+      "publishStatus": "published"
+    },
+    {
+      "id": "sept24-03",
+      "url": "assets/puppies/bellissimo-puppy-03.webp",
+      "photo": "assets/puppies/bellissimo-puppy-03.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait",
+      "caption": "Kennel-supplied photography. Availability is confirmed separately.",
+      "category": "puppies",
+      "order": 130,
+      "publishStatus": "published"
+    },
+    {
+      "id": "sept24-04",
+      "url": "assets/puppies/bellissimo-puppy-04.webp",
+      "photo": "assets/puppies/bellissimo-puppy-04.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait",
+      "caption": "Kennel-supplied photography. Availability is confirmed separately.",
+      "category": "puppies",
+      "order": 140,
+      "publishStatus": "published"
+    },
+    {
+      "id": "sept24-05",
+      "url": "assets/puppies/bellissimo-young-corso-01.webp",
+      "photo": "assets/puppies/bellissimo-young-corso-01.webp",
+      "alt": "Young Bellissimo Geni Cane Corso with handler",
+      "caption": "Kennel-supplied young-dog photography. Availability is confirmed separately.",
+      "category": "puppies",
+      "order": 150,
+      "publishStatus": "published"
+    },
+    {
+      "id": "sept24-06",
+      "url": "assets/puppies/bellissimo-puppy-05.webp",
+      "photo": "assets/puppies/bellissimo-puppy-05.webp",
+      "alt": "Bellissimo Geni Cane Corso puppy portrait",
+      "caption": "Kennel-supplied photography. Availability is confirmed separately.",
+      "category": "puppies",
+      "order": 160,
+      "publishStatus": "published"
+    }
+  ]
+}
