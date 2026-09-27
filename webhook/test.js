@@ -495,3 +495,68 @@ test('bootstrap reuses manually created pedigree ancestors by name', async () =>
   const explosion = JSON.parse(store.get('admin:dogs:explosion-custodi-nos'));
   assert.equal(explosion.sireId, 'dog-manual-terror');
 });
+
+
+test('bootstrap reuses pedigree ancestors by registration despite name variation', async () => {
+  const store = new Map([
+    ['admin:dogs:manual-uno', JSON.stringify({
+      id: 'manual-uno',
+      name: 'UNO DE NOBIL ROSE COR A',
+      registration: 'CORA6336-18/343',
+      group: 'ancestor',
+      status: 'Pedigree ancestor',
+      sireId: null,
+      damId: null
+    })],
+    ['admin:index:admin:dogs', JSON.stringify(['manual-uno'])]
+  ]);
+  const env = {
+    ADMIN_PASSWORD: 'secret',
+    ADMIN: {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, String(value)); },
+      async delete(key) { store.delete(key); }
+    }
+  };
+
+  const payload = {
+    dogs: [
+      {
+        id: 'uno-de-nobil-rose-cor-a',
+        name: 'Uno De Nobil Rose',
+        registration: 'CORA 6336-18/343',
+        group: 'ancestor',
+        status: 'Pedigree ancestor',
+        sireId: 'gylan-rayla-di-cors',
+        damId: 'vincitore-nero-nyssa'
+      },
+      { id:'gylan-rayla-di-cors', name:'Gylan Rayla Di Cors', group:'ancestor', status:'Pedigree ancestor' },
+      { id:'vincitore-nero-nyssa', name:'Vincitore Nero Nyssa', group:'ancestor', status:'Pedigree ancestor' },
+      {
+        id: 'roman-custodi-nos',
+        name: 'Roman Custodi Nos',
+        registration: 'JR 708956 Cc',
+        group: 'ancestor',
+        status: 'Pedigree ancestor',
+        sireId: 'uno-de-nobil-rose-cor-a',
+        damId: null
+      }
+    ],
+    puppies: [], litters: [], gallery: []
+  };
+
+  const boot = await worker.fetch(new Request('https://worker.example/admin/api/bootstrap', {
+    method:'POST',
+    headers:{ Authorization:'Bearer secret', 'Content-Type':'application/json' },
+    body:JSON.stringify(payload)
+  }), env);
+  assert.equal(boot.status, 200);
+
+  assert.equal(store.has('admin:dogs:uno-de-nobil-rose-cor-a'), false);
+  const uno = JSON.parse(store.get('admin:dogs:manual-uno'));
+  assert.equal(uno.sireId, 'gylan-rayla-di-cors');
+  assert.equal(uno.damId, 'vincitore-nero-nyssa');
+
+  const roman = JSON.parse(store.get('admin:dogs:roman-custodi-nos'));
+  assert.equal(roman.sireId, 'manual-uno');
+});
