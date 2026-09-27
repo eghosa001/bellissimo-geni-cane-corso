@@ -587,19 +587,105 @@ async function handleAdminBootstrap(req, env) {
   const body = await readJson(req);
   if (!body) return json(400, { ok: false, error: 'bad_json' });
 
-  // v2 migrates every verified repository record into the CMS exactly once,
-  // without overwriting records the owner has already edited.
-  const bootstrapKey = 'admin:bootstrap:verified-baseline:v3';
+  // v4 imports verified repository records once and intelligently reuses manually
+  // created pedigree ancestors by name. This prevents duplicate ancestor records
+  // when the owner already entered part of a pedigree before the bulk import.
+  const bootstrapKey = 'admin:bootstrap:verified-baseline:v4';
   const alreadySeeded = await kvGet(env, bootstrapKey);
   if (alreadySeeded) return json(200, { ok: true, alreadySeeded: true, seeded: {} });
 
+  const seeded = {};
+  const dogInputs = Array.isArray(body.dogs) ? body.dogs.filter(d => d && d.id) : [];
+  const existingDogs = await kvList(env, ADMIN_KEYS.dogs + ':');
+
+  const normName = value => String(value || '')
+    .toLowerCase()
+    .replace(/[’‘'\".,]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const existingById = new Map(existingDogs.map(d => [d.id, d]));
+  const existingByName = new Map();
+  for (const dog of existingDogs) {
+    const key = normName(dog.name);
+    if (key && !existingByName.has(key)) existingByName.set(key, dog);
+  }
+
+  // Map canonical repository IDs to existing CMS IDs where the owner already
+  // created the same dog manually.
+  const idMap = {};
+  for (const input of dogInputs) {
+    const match = existingById.get(input.id) || existingByName.get(normName(input.name));
+    idMap[input.id] = match ? match.id : input.id;
+  }
+
+  let dogCount = 0;
+  for (const input of dogInputs) {
+    const targetId = idMap[input.id] || input.id;
+    const key = ADMIN_KEYS.dogs + ':' + targetId;
+    const existing = await kvGet(env, key);
+    const mapped = {
+      ...input,
+      id: targetId,
+      sireId: input.sireId ? (idMap[input.sireId] || input.sireId) : null,
+      damId: input.damId ? (idMap[input.damId] || input.damId) : null
+    };
+
+    if (!existing) {
+      await kvPut(env, key, { publishStatus: 'published', ...mapped });
+      dogCount++;
+      continue;
+    }
+
+    const merged = { ...existing };
+    let changed = false;
+    const fillIfBlank = [
+      'sex','dateOfBirth','colour','registration','bloodline','bio',
+      'sireId','damId','health','achievements','owner'
+    ];
+    for (const field of fillIfBlank) {
+      const before = merged[field];
+      const after = mapped[field];
+      const blank = before == null || String(before).trim() === '';
+      const useful = after != null && String(after).trim() !== '';
+      if (blank && useful) {
+        merged[field] = after;
+        changed = true;
+      }
+    }
+
+    const seededHistory = Array.isArray(mapped.photoHistory) ? mapped.photoHistory : [];
+    if (seededHistory.length) {
+      const prior = Array.isArray(merged.photoHistory) ? merged.photoHistory : [];
+      const combined = Array.from(new Set([...prior, ...seededHistory]));
+      if (combined.length !== prior.length) {
+        merged.photoHistory = combined;
+        changed = true;
+      }
+    }
+
+    // Pedigree-only records must remain in the ancestry group even if they were
+    // originally created through the generic Add Dog form (whose default is current).
+    if (mapped.group === 'ancestor') {
+      if (merged.group !== 'ancestor') { merged.group = 'ancestor'; changed = true; }
+      if (merged.status !== 'Pedigree ancestor') { merged.status = 'Pedigree ancestor'; changed = true; }
+    }
+    if (!merged.publishStatus) { merged.publishStatus = 'published'; changed = true; }
+
+    if (changed) {
+      await kvPut(env, key, merged);
+      dogCount++;
+    }
+  }
+  seeded[ADMIN_KEYS.dogs] = dogCount;
+
   const groups = [
-    { key: ADMIN_KEYS.dogs, records: Array.isArray(body.dogs) ? body.dogs : [] },
     { key: ADMIN_KEYS.puppies, records: Array.isArray(body.puppies) ? body.puppies : [] },
     { key: ADMIN_KEYS.litters, records: Array.isArray(body.litters) ? body.litters : [] },
     { key: ADMIN_KEYS.gallery, records: Array.isArray(body.gallery) ? body.gallery : [] }
   ];
-  const seeded = {};
+
   for (const group of groups) {
     let count = 0;
     for (const input of group.records) {
@@ -607,7 +693,7 @@ async function handleAdminBootstrap(req, env) {
       const key = group.key + ':' + input.id;
       const existing = await kvGet(env, key);
       if (existing) {
-        if (group.key === ADMIN_KEYS.dogs || group.key === ADMIN_KEYS.puppies) {
+        if (group.key === ADMIN_KEYS.puppies) {
           const seededHistory = Array.isArray(input.photoHistory) ? input.photoHistory : [];
           if (seededHistory.length) {
             const mergedHistory = Array.from(new Set([...(Array.isArray(existing.photoHistory) ? existing.photoHistory : []), ...seededHistory]));
@@ -625,8 +711,9 @@ async function handleAdminBootstrap(req, env) {
     }
     seeded[group.key] = count;
   }
+
   await kvPut(env, bootstrapKey, { completedAt: new Date().toISOString(), seeded });
-  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v3', seeded);
+  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v4', seeded);
   return json(200, { ok: true, alreadySeeded: false, seeded });
 }
 
