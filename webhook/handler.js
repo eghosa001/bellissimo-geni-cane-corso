@@ -1,4 +1,5 @@
 // Bellissimo Geni owner CMS Worker
+// Deployment marker: indexed KV collection reads avoid daily KV list quota.
 export const STATUS = Object.freeze({
   REQUESTED: 'REQUESTED',
   PAYMENT_PENDING: 'PAYMENT_PENDING',
