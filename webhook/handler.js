@@ -1443,7 +1443,39 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname === '/webhook/version') {
-      return json(200, { ok: true, version: '2026-09-27-safe-dog-sort-v1' });
+      return json(200, { ok: true, version: '2026-09-27-bulk-kv-v2' });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/webhook/kv-diagnostic') {
+      try {
+        const prefix = ADMIN_KEYS.dogs + ':';
+        const indexKey = indexStorageKey(prefix);
+        const indexRaw = await env.ADMIN.get(indexKey);
+        const ids = indexRaw ? JSON.parse(indexRaw) : [];
+        const keys = Array.isArray(ids) ? ids.slice(0, 100).map(id => prefix + id) : [];
+        let bulkType = 'none';
+        let returned = 0;
+        if (keys.length) {
+          const bulk = await env.ADMIN.get(keys, 'text');
+          bulkType = bulk && bulk.constructor ? bulk.constructor.name : typeof bulk;
+          if (bulk && typeof bulk.get === 'function') {
+            returned = keys.reduce((n, key) => n + (bulk.get(key) ? 1 : 0), 0);
+          }
+        }
+        return json(200, {
+          ok: true,
+          indexCount: Array.isArray(ids) ? ids.length : 0,
+          sampleCount: keys.length,
+          returned,
+          bulkType
+        });
+      } catch (e) {
+        return json(500, {
+          ok: false,
+          error: String(e && e.message || e),
+          name: String(e && e.name || 'Error')
+        });
+      }
     }
 
     // ── Public media uploaded by the owner ──
