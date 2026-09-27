@@ -1032,6 +1032,101 @@ async function handleAdminUpload(req, env) {
     return json(500, { ok: false, error: 'upload_failed', message: e.message });
   }
 }
+
+
+export function r2MediaKeyFromUrl(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (value.startsWith('media/')) return value;
+  try {
+    const parsed = new URL(value, 'https://placeholder.invalid');
+    const marker = '/uploads/';
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx === -1) return '';
+    const key = decodeURIComponent(parsed.pathname.slice(idx + marker.length));
+    return key.startsWith('media/') ? key : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function recordUsesMedia(record, mediaUrl) {
+  if (!record || !mediaUrl) return false;
+  if (String(record.photo || '') === mediaUrl || String(record.url || '') === mediaUrl) return true;
+  for (const key of ['gallery', 'photoHistory']) {
+    if (Array.isArray(record[key]) && record[key].some(v => String(v || '') === mediaUrl)) return true;
+  }
+  return false;
+}
+
+async function handleAdminMediaDelete(req, env) {
+  const auth = await adminAuth(req, env);
+  if (!auth.ok) return json(401, { ok: false, error: auth.reason });
+  if (req.method !== 'DELETE') return json(405, { ok: false, error: 'method_not_allowed' });
+
+  const body = await readJson(req);
+  const mediaUrl = String(body && body.url || '').trim();
+  const dogId = String(body && body.dogId || '').trim();
+  if (!mediaUrl || !dogId) return json(400, { ok: false, error: 'url_and_dog_required' });
+
+  const dogKey = ADMIN_KEYS.dogs + ':' + dogId;
+  const dog = await kvGet(env, dogKey);
+  if (!dog) return json(404, { ok: false, error: 'dog_not_found' });
+
+  const updated = {
+    ...dog,
+    photo: String(dog.photo || '') === mediaUrl ? '' : dog.photo,
+    gallery: (Array.isArray(dog.gallery) ? dog.gallery : []).filter(v => String(v || '') !== mediaUrl),
+    photoHistory: (Array.isArray(dog.photoHistory) ? dog.photoHistory : []).filter(v => String(v || '') !== mediaUrl)
+  };
+  await kvPut(env, dogKey, updated);
+
+  const [dogs, puppies, gallery] = await Promise.all([
+    kvList(env, ADMIN_KEYS.dogs + ':'),
+    kvList(env, ADMIN_KEYS.puppies + ':'),
+    kvList(env, ADMIN_KEYS.gallery + ':')
+  ]);
+  const references = [];
+  for (const item of dogs) {
+    if (item.id !== dogId && recordUsesMedia(item, mediaUrl)) references.push({ type: 'dog', id: item.id, name: item.name || item.id });
+  }
+  for (const item of puppies) {
+    if (recordUsesMedia(item, mediaUrl)) references.push({ type: 'puppy', id: item.id, name: item.name || item.id });
+  }
+  for (const item of gallery) {
+    if (recordUsesMedia(item, mediaUrl)) references.push({ type: 'gallery', id: item.id, name: item.caption || item.alt || item.id });
+  }
+
+  const key = r2MediaKeyFromUrl(mediaUrl);
+  let deleted = false;
+  let reason = '';
+  if (references.length) {
+    reason = 'still_in_use';
+  } else if (!key) {
+    reason = 'repository_asset';
+  } else if (!env.UPLOADS) {
+    reason = 'r2_not_configured';
+  } else {
+    await env.UPLOADS.delete(key);
+    deleted = true;
+  }
+
+  await auditLog(env, 'delete', 'image', key || mediaUrl, {
+    dogId,
+    permanent: true,
+    physicalDelete: deleted,
+    reason: reason || null,
+    references
+  });
+
+  return json(200, {
+    ok: true,
+    detached: true,
+    deleted,
+    reason: reason || null,
+    references
+  });
+}
  
 async function handleUploadedMedia(req, env) {
   if (req.method !== 'GET') return json(405, { ok: false, error: 'method_not_allowed' });
@@ -1239,6 +1334,7 @@ export default {
         case 'settings':     return handleAdminSettings(request, env);
         case 'stats':        return handleAdminStats(request, env);
         case 'upload':       return handleAdminUpload(request, env);
+        case 'media-delete': return handleAdminMediaDelete(request, env);
         case 'content':      return handleAdminContent(request, env);
         case 'audit':        return handleAdminAudit(request, env);
         case 'publish':      return handleAdminPublishToggle(request, env);
