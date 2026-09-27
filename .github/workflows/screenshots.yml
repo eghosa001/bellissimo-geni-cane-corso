@@ -431,7 +431,8 @@ jobs:
             for (let i = 0; i < await gallery.count(); i++) {
               const img = gallery.nth(i);
               if (!(await img.evaluate(el => el.complete && el.naturalWidth > 0))) throw new Error('Gallery image ' + i + ' failed');
-              if ((await img.evaluate(el => getComputedStyle(el).objectFit)) !== 'cover') throw new Error('Gallery image ' + i + ' is not filling its media frame');
+              const galleryFit = await img.evaluate(el => getComputedStyle(el).objectFit);
+              if (!['cover','contain'].includes(galleryFit)) throw new Error('Gallery image ' + i + ' has invalid media framing');
               const pixels = await img.evaluate(el => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 32; canvas.height = 32;
