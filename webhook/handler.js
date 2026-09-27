@@ -256,10 +256,11 @@ async function kvList(env, prefix) {
       continue;
     }
 
-    // Compatibility fallback for local/test KV shims that only implement
-    // single-key get(). Real Cloudflare production bindings use the bulk path.
-    const raws = await Promise.all(keys.map(key => env.ADMIN.get(key)));
-    for (const raw of raws) {
+    // Compatibility fallback for local/test KV shims or older runtimes.
+    // Keep concurrency bounded so a large pedigree never fans out into
+    // 100 simultaneous KV operations.
+    for (const key of keys) {
+      const raw = await env.ADMIN.get(key);
       if (!raw) continue;
       try { results.push(JSON.parse(raw)); } catch (_) {}
     }
