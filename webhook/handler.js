@@ -587,10 +587,11 @@ async function handleAdminBootstrap(req, env) {
   const body = await readJson(req);
   if (!body) return json(400, { ok: false, error: 'bad_json' });
 
-  // v4 imports verified repository records once and intelligently reuses manually
-  // created pedigree ancestors by name. This prevents duplicate ancestor records
-  // when the owner already entered part of a pedigree before the bulk import.
-  const bootstrapKey = 'admin:bootstrap:verified-baseline:v4';
+  // v5 imports verified repository records once and intelligently reuses manually
+  // created pedigree ancestors by ID, registration number, or normalized name.
+  // This prevents duplicate ancestor records when the same dog appears on several
+  // pedigrees with different spacing, punctuation, titles, or spelling variants.
+  const bootstrapKey = 'admin:bootstrap:verified-baseline:v5';
   const alreadySeeded = await kvGet(env, bootstrapKey);
   if (alreadySeeded) return json(200, { ok: true, alreadySeeded: true, seeded: {} });
 
@@ -605,18 +606,42 @@ async function handleAdminBootstrap(req, env) {
     .replace(/\s+/g, ' ')
     .trim();
 
+  const registrationKeys = value => {
+    const raw = String(value || '').trim();
+    if (!raw) return [];
+    const pieces = raw.split(/[·;,|]+/).map(v => v.trim()).filter(Boolean);
+    const keys = new Set();
+    for (const piece of [raw, ...pieces]) {
+      const key = piece.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      if (key.length >= 5) keys.add(key);
+    }
+    return [...keys];
+  };
+
   const existingById = new Map(existingDogs.map(d => [d.id, d]));
   const existingByName = new Map();
+  const existingByRegistration = new Map();
   for (const dog of existingDogs) {
     const key = normName(dog.name);
     if (key && !existingByName.has(key)) existingByName.set(key, dog);
+    for (const reg of registrationKeys(dog.registration)) {
+      if (!existingByRegistration.has(reg)) existingByRegistration.set(reg, dog);
+    }
   }
 
   // Map canonical repository IDs to existing CMS IDs where the owner already
-  // created the same dog manually.
+  // created the same dog manually. Registration is checked before name because
+  // it is more reliable when certificate spellings vary.
   const idMap = {};
   for (const input of dogInputs) {
-    const match = existingById.get(input.id) || existingByName.get(normName(input.name));
+    let match = existingById.get(input.id) || null;
+    if (!match) {
+      for (const reg of registrationKeys(input.registration)) {
+        match = existingByRegistration.get(reg) || null;
+        if (match) break;
+      }
+    }
+    if (!match) match = existingByName.get(normName(input.name)) || null;
     idMap[input.id] = match ? match.id : input.id;
   }
 
@@ -713,7 +738,7 @@ async function handleAdminBootstrap(req, env) {
   }
 
   await kvPut(env, bootstrapKey, { completedAt: new Date().toISOString(), seeded });
-  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v4', seeded);
+  await auditLog(env, 'bootstrap', 'site', 'verified-baseline-v5', seeded);
   return json(200, { ok: true, alreadySeeded: false, seeded });
 }
 
