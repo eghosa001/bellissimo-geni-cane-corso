@@ -1,5 +1,5 @@
 name: Verify Live Bellissimo Worker
-# manual-live-check-2026-09-27-3
+# manual-live-check-2026-09-27-4
 
 on:
   workflow_dispatch:
@@ -17,6 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - name: Check Worker version marker
+        run: |
+          set +e
+          curl --silent --show-error --location --max-time 20 "https://bellissimo-geni-cane-corso.aighewieghosa111.workers.dev/webhook/version"
+          echo
+
       - name: Check Worker health
         run: |
           set -euo pipefail
