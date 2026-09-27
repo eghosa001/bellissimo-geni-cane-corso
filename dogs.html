@@ -43,7 +43,34 @@
 @media(max-width:1100px){#current-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.dog-list{grid-template-columns:1fr 1fr}.profile{grid-template-columns:1fr}.profile-media-main{max-height:none}.gallery-strip{grid-template-columns:repeat(3,1fr)}}
 .direct-dog-profile .dogs-intro,.direct-dog-profile .toolbar{display:none}.direct-dog-profile .dogs-page{padding-top:42px}
-@media(max-width:560px){.direct-dog-profile .dogs-page{padding-top:24px}.dogs-page{padding:55px 5vw 82px}.dogs-search-form{grid-template-columns:1fr 1fr}.dogs-search-form input{grid-column:1/-1}.dogs-search-form button{min-height:44px}.dog-list,#current-list{grid-template-columns:1fr}.dog-section-head{display:block}.dog-section-head p{margin-top:10px}.profile{padding:16px;gap:20px}.profile dl{grid-template-columns:112px 1fr}.gallery-strip{grid-template-columns:1fr 1fr}.profile-actions .btn{width:100%;text-align:center}}
+@media(max-width:560px){
+.direct-dog-profile .dogs-page{padding-top:24px}
+.dogs-page{padding:38px 16px 64px}
+.dogs-intro{margin-bottom:24px}
+.dogs-intro h1{font-size:46px;line-height:.9}
+.dogs-intro>p:last-child{font-size:13px;line-height:1.65}
+.toolbar{margin:22px 0 32px}
+.dogs-search-form{grid-template-columns:1fr}
+.dogs-search-form input,.dogs-search-form button{grid-column:1;width:100%;min-width:0;min-height:46px;font-size:16px}
+.dog-list,#current-list{grid-template-columns:1fr}
+.dog-section{margin-top:38px}
+.dog-section-head{display:block;margin-bottom:16px}
+.dog-section-head h2{font-size:40px}
+.dog-section-head p{margin-top:10px;line-height:1.55}
+.dog-card p{min-height:0}
+.dog-card-media{aspect-ratio:auto;min-height:0}
+.dog-card-media img{position:relative;inset:auto;width:100%;height:auto;max-height:none;object-fit:contain;object-position:center;background:#e8e1d5}
+.profile{padding:14px;gap:18px;margin-bottom:40px}
+.profile h2{font-size:42px}
+.profile dl{grid-template-columns:90px minmax(0,1fr)}
+.profile dt,.profile dd{font-size:10px;overflow-wrap:anywhere}
+.profile-placeholder{min-height:260px;padding:22px}
+.gallery-strip{grid-template-columns:1fr}
+.gallery-strip a{aspect-ratio:auto}
+.gallery-strip img{width:100%;height:auto;object-fit:contain;object-position:center}
+.profile-actions .btn{width:100%;text-align:center;min-height:44px}
+.dog-card-links a{min-height:40px;display:inline-flex;align-items:center}
+}
 </style>
 </head>
 <body>
