@@ -1074,6 +1074,8 @@ jobs:
                     .filter(el => {
                       const s = getComputedStyle(el);
                       const r = el.getBoundingClientRect();
+                      const type = (el.getAttribute('type') || '').toLowerCase();
+                      if (['checkbox','radio','hidden'].includes(type)) return false;
                       return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
                     });
                   const tooSmall = controls
