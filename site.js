@@ -317,19 +317,41 @@
       }, []);
     }
 
+    function parentKey(record, role) {
+      var item = parentOf(record, role);
+      if (item) return 'id:' + key(item.record.id);
+      var raw = record && (record[role + 'Id'] || record[role + 'Name'] || record[role]);
+      return raw ? 'raw:' + nameKey(raw) : '';
+    }
+
     function siblingsOf(subject) {
       var subjectItem = resolve(subject);
       if (!subjectItem) return [];
       var record = subjectItem.record;
-      var sire = parentOf(record, 'sire');
-      var dam = parentOf(record, 'dam');
-      if (!sire || !dam) return [];
-      var sireId = key(sire.record.id), damId = key(dam.record.id), selfId = key(record.id);
-      return entries.filter(function (item) {
-        if (key(item.record.id) === selfId) return false;
-        var otherSire = parentOf(item.record, 'sire');
-        var otherDam = parentOf(item.record, 'dam');
-        return otherSire && otherDam && key(otherSire.record.id) === sireId && key(otherDam.record.id) === damId;
+      var selfId = key(record.id);
+      var sireKey = parentKey(record, 'sire');
+      var damKey = parentKey(record, 'dam');
+      if (!sireKey && !damKey) return [];
+
+      return entries.reduce(function (out, item) {
+        if (key(item.record.id) === selfId) return out;
+        var otherSireKey = parentKey(item.record, 'sire');
+        var otherDamKey = parentKey(item.record, 'dam');
+        var sameSire = !!sireKey && !!otherSireKey && sireKey === otherSireKey;
+        var sameDam = !!damKey && !!otherDamKey && damKey === otherDamKey;
+        if (!sameSire && !sameDam) return out;
+
+        out.push({
+          kind: item.kind,
+          record: item.record,
+          relationship: sameSire && sameDam ? 'Full sibling' : 'Half sibling',
+          sharedParents: sameSire && sameDam ? ['sire', 'dam'] : [sameSire ? 'sire' : 'dam']
+        });
+        return out;
+      }, []).sort(function (a, b) {
+        var ar = a.relationship === 'Full sibling' ? 0 : 1;
+        var br = b.relationship === 'Full sibling' ? 0 : 1;
+        return ar - br || String(a.record.name || '').localeCompare(String(b.record.name || ''));
       });
     }
 

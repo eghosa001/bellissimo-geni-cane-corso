@@ -54,7 +54,7 @@
 <section id="pedigree-shell" class="pedigree-shell"></section>
 </main>
 <footer><div class="footer-brand"><span class="brand-mark">BG</span><div><b>ALLEVAMENTO BELLISSIMO GENI</b><small>CANE CORSO • NIGERIA • EST. 2023</small></div></div><div class="foot-nav"><a href="index.html">Home</a><a href="dogs.html">Our Dogs</a><a href="puppies.html">Puppies</a><a href="reserve.html">Reserve</a><a href="contact.html">Contact</a></div><p>© <span data-year>2026</span> ALLEVAMENTO BELLISSIMO GENI.</p></footer>
-<script src="site.js"></script>
+<script src="site.js?v=20260928-siblings3"></script>
 <script>
 window.BG_WEBHOOK_URL=window.BG_WEBHOOK_URL||'';
 (function(){
@@ -124,7 +124,12 @@ function render(start){
   if(start.achievements)recordExtra+='<span><b>Achievements</b>'+BG.esc(start.achievements)+'</span>';
   if(start.health)recordExtra+='<span><b>Health</b>'+BG.esc(start.health)+'</span>';
   var siblings=family?family.siblingsOf(start):[];
-  if(siblings.length)recordExtra+='<span><b>Siblings</b>'+siblings.map(function(rel){var r=rel.record;return '<a href="?dog='+encodeURIComponent(r.id)+'">'+BG.esc(r.name)+'</a>';}).join(' · ')+'</span>';
+  if(siblings.length)recordExtra+='<span><b>Siblings</b>'+siblings.map(function(rel){
+    var r=rel.record;
+    var label=rel.relationship||'Sibling';
+    if(rel.relationship==='Half sibling'&&rel.sharedParents&&rel.sharedParents.length===1)label+=' · same '+rel.sharedParents[0];
+    return '<a href="?dog='+encodeURIComponent(r.id)+'">'+BG.esc(r.name)+'</a> <small>('+BG.esc(label)+')</small>';
+  }).join(' · ')+'</span>';
   result.innerHTML=pic+'<div><p class="eyebrow">DOG RECORD</p><h2><a href="'+profileHref+'">'+BG.esc(start.name)+'</a></h2><p class="dog-meta">'+BG.esc([start.sex,start.colour,start.registration].filter(Boolean).join(' • ')||'Verified pedigree record')+'</p>'+(recordExtra?'<div class="dog-record-extra">'+recordExtra+'</div>':'')+'<p style="margin-top:12px"><a href="'+profileHref+'">Open full profile →</a></p></div>';
   shell.innerHTML='';
   var startKey=String(start.id).toLowerCase();
