@@ -65,10 +65,17 @@ jobs:
             const listing = await request('/admin/api/dogs?status=all');
             const current = Array.isArray(listing.data) ? listing.data : [];
             const byId = new Map(current.map(d => [d.id, d]));
+            const normName = v => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+            const byName = new Map();
+            for (const d of current) {
+              if (d.duplicateOf) continue;
+              const key = normName(d.name);
+              if (key && !byName.has(key)) byName.set(key, d);
+            }
             let created = 0, updated = 0;
 
             for (const seed of targets) {
-              const existing = byId.get(seed.id);
+              const existing = byId.get(seed.id) || byName.get(normName(seed.name));
 
               if (!existing) {
                 const payload = { ...seed };
