@@ -1,0 +1,42 @@
+name: Cache-bust Admin pedigree fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cache-bust-admin-pedigree.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Force fresh Admin helper script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("admin.html")
+          s = p.read_text()
+          old = '<script src="assets/admin-visits.js"></script>'
+          new = '<script src="assets/admin-visits.js?v=20260928-linebreeding-2"></script>'
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif new not in s:
+              raise SystemExit("admin script tag not found")
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet -- admin.html; then
+            echo "No change needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html
+          git commit -m "Force fresh Admin pedigree dedupe script"
+          git push
