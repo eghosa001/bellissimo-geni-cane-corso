@@ -455,7 +455,8 @@
       <div class="nav-item" data-page="dog-photos">Dog Photos</div>
       <div class="nav-item" data-page="add-dog">Add Dog</div>
       <div class="nav-section">Puppies</div>
-      <div class="nav-item" data-page="puppies">All Puppies<span class="count" id="pupCount">0</span></div>
+      <div class="nav-item" data-page="puppies">Current Puppies<span class="count" id="pupCount">0</span></div>
+      <div class="nav-item" data-page="past-production">Past Production<span class="count" id="pastPupCount">0</span></div>
       <div class="nav-item" data-page="litters">Litters</div>
       <div class="nav-item" data-page="add-puppy">Add Puppy</div>
       <div class="nav-section">Sales</div>
@@ -766,7 +767,8 @@ async function loadRepositoryFallback() {
   storageFallbackMode = true;
 
   document.getElementById('dogCount').textContent = currentDogs.length;
-  document.getElementById('pupCount').textContent = currentPups.length;
+  document.getElementById('pupCount').textContent = currentPups.filter(p => !isPastProductionPuppy(p)).length;
+  document.getElementById('pastPupCount').textContent = currentPups.filter(isPastProductionPuppy).length;
   document.getElementById('resCount').textContent = '—';
 }
 
@@ -794,7 +796,8 @@ async function loadAllData(options = {}) {
     currentPuppyCatalog = pups.map(p => p.id);
     currentPups = pups;
     document.getElementById('dogCount').textContent = currentDogs.length;
-    document.getElementById('pupCount').textContent = pups.length;
+    document.getElementById('pupCount').textContent = pups.filter(p => !isPastProductionPuppy(p)).length;
+    document.getElementById('pastPupCount').textContent = pups.filter(isPastProductionPuppy).length;
     document.getElementById('resCount').textContent = (resRes.data||[]).length;
 
     await renderPage('dashboard');
@@ -853,6 +856,9 @@ async function renderPage(page) {
       case 'puppies':
         area.innerHTML = renderPuppiesList();
         await refreshPuppies();
+        break;
+      case 'past-production':
+        area.innerHTML = await renderPastProduction();
         break;
       case 'litters':     area.innerHTML = await renderLittersList(); break;
       case 'add-puppy':   area.innerHTML = await renderPuppyForm(null); break;
@@ -1305,86 +1311,171 @@ window.moveDogPhotoToHistory = async function(dogId) {
 };
 
 // ── Puppies List ────────────────────────────────────────────────────────────
+function isPastProductionPuppy(p) {
+  return !!p && (p.status === 'SOLD' || p.group === 'past-production');
+}
+
+function updatePuppyNavCounts() {
+  const currentCount = (currentPups||[]).filter(p => !isPastProductionPuppy(p)).length;
+  const pastCount = (currentPups||[]).filter(isPastProductionPuppy).length;
+  const currentEl = document.getElementById('pupCount');
+  const pastEl = document.getElementById('pastPupCount');
+  if (currentEl) currentEl.textContent = currentCount;
+  if (pastEl) pastEl.textContent = pastCount;
+}
+
+function puppyAdminActions(p) {
+  const archived = isPastProductionPuppy(p);
+  const moveAction = archived
+    ? `<button class="btn btn-sm btn-ghost" onclick="restorePuppyAvailable('${p.id}')">Restore to Available</button>`
+    : `<button class="btn btn-sm btn-gold" onclick="movePuppyToPastProduction('${p.id}')">Sold → Past Production</button>`;
+  return `<div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editPuppy('${p.id}')">Edit</button>${moveAction}<button class="btn btn-sm btn-del" onclick="deletePuppy('${p.id}')">Delete</button></div>`;
+}
+
+function puppyAdminRow(p, includeSoldDate) {
+  const cls = String(p.status||'').toLowerCase().replace(/ /g,'-');
+  const sire = currentDogs.find(d=>d.id===p.sireId);
+  const soldDate = p.soldAt ? new Date(p.soldAt).toLocaleDateString() : '—';
+  return `<tr>
+    <td class="name">${esc(p.name||'—')}</td>
+    <td><span class="pill ${cls}">${esc(p.status||'—')}</span></td>
+    <td class="muted">${esc(p.colour||'—')}</td>
+    <td class="muted">${esc(p.sex||'—')}</td>
+    <td class="muted">${esc(sire?sire.name:(p.sireId||'—'))}</td>
+    ${includeSoldDate ? `<td class="muted">${esc(soldDate)}</td>` : `<td class="muted">${p.priceNote?esc(p.priceNote):(p.priceNGN?'₦'+Number(p.priceNGN).toLocaleString():'—')}</td>`}
+    <td>${puppyAdminActions(p)}</td>
+  </tr>`;
+}
+
 function renderPuppiesList() {
-  const litters = []; // loaded inline
   return `
     <div class="toolbar">
-      <input id="pupSearch" placeholder="Search puppies…" oninput="filterPups(this.value)">
+      <input id="pupSearch" placeholder="Search current puppies…" oninput="filterPups(this.value)">
       <select id="pupStatusFilter" onchange="filterPups()">
-        <option value="">All Statuses</option>
+        <option value="">All Current Statuses</option>
         <option value="AVAILABLE">Available</option>
         <option value="RESERVED">Reserved</option>
-        <option value="SOLD">Sold</option>
         <option value="COMING SOON">Coming Soon</option>
         <option value="PAYMENT PENDING">Payment Pending</option>
+        <option value="UNAVAILABLE">Unavailable</option>
       </select>
       <button class="btn btn-gold" onclick="navigate('add-puppy')">+ Add Puppy</button>
+      <button class="btn" onclick="navigate('past-production')">Past Production</button>
       <button class="btn" onclick="navigate('litters')">Manage Litters</button>
+    </div>
+    <div class="panel" style="border-color:rgba(199,163,90,.45)">
+      <div class="panel-body" style="padding:14px 18px">
+        <strong>Sale workflow</strong>
+        <div class="muted" style="margin-top:4px">When a puppy is sold, use <b>Sold → Past Production</b>. The puppy is removed from current availability without deleting its pedigree, photos, litter or notes.</div>
+      </div>
     </div>
     <div id="puppiesContent"><p class="muted" style="padding:20px">Loading…</p></div>`;
 }
+
 window.filterPups = function(term) {
   const status = document.getElementById('pupStatusFilter')?.value || '';
   term = (term||'').toLowerCase();
   const filtered = (currentPups||[]).filter(p => {
+    if(isPastProductionPuppy(p)) return false;
     if(status && p.status !== status) return false;
     if(term && !(p.name||'').toLowerCase().includes(term) && !(p.colour||'').toLowerCase().includes(term)) return false;
     return true;
   });
   const tbody = document.getElementById('pupTableBody');
   if(!tbody) return;
-  tbody.innerHTML = filtered.map(p => {
-    const cls = p.status.toLowerCase().replace(/ /g,'-');
-    const dog = currentDogs.find(d=>d.id===p.sireId);
-    return `<tr>
-      <td class="name">${esc(p.name||'—')}</td>
-      <td><span class="pill ${cls}">${p.status}</span></td>
-      <td class="muted">${esc(p.colour||'—')}</td>
-      <td class="muted">${esc(p.sex||'—')}</td>
-      <td class="muted">${esc(dog?dog.name:(p.sireId||'—'))}</td>
-      <td class="muted">${p.priceNote?esc(p.priceNote):(p.priceNGN?'₦'+Number(p.priceNGN).toLocaleString():'—')}</td>
-      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editPuppy('${p.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deletePuppy('${p.id}','${esc(p.name)}')">Delete</button></div></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="7" class="muted" style="text-align:center">No puppies found</td></tr>';
+  tbody.innerHTML = filtered.map(p => puppyAdminRow(p, false)).join('') || '<tr><td colspan="7" class="muted" style="text-align:center">No current puppies found</td></tr>';
+  enhanceAdminTables(document.getElementById('puppiesContent'));
 };
 
 let currentPups = [];
-async function refreshPuppies() {
-  const j = await apiFetch('/admin/api/puppies');
-  currentPups = j.data || [];
-  const litters = j.litters || [];
-  // build litter options
-  const litterOpt = (litters||[]).map(l=>`<option value="${l.id}" ${currentPups[0]?.litterId===l.id?'selected':''}>${esc(l.name||l.id)}</option>`).join('');
-  const rows = (currentPups||[]).map(p => {
-    const cls = p.status.toLowerCase().replace(/ /g,'-');
-    const dog = currentDogs.find(d=>d.id===p.sireId);
-    return `<tr>
-      <td class="name">${esc(p.name||'—')}</td>
-      <td><span class="pill ${cls}">${p.status}</span></td>
-      <td class="muted">${esc(p.colour||'—')}</td>
-      <td class="muted">${esc(p.sex||'—')}</td>
-      <td class="muted">${esc(dog?dog.name:(p.sireId||'—'))}</td>
-      <td class="muted">${p.priceNote?esc(p.priceNote):(p.priceNGN?'₦'+Number(p.priceNGN).toLocaleString():'—')}</td>
-      <td><div class="btn-group"><button class="btn btn-sm btn-ghost" onclick="editPuppy('${p.id}')">Edit</button><button class="btn btn-sm btn-del" onclick="deletePuppy('${p.id}','${esc(p.name)}')">Delete</button></div></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="7" class="muted" style="text-align:center">No puppies registered yet</td></tr>';
 
-  document.getElementById('puppiesContent').innerHTML = `
+async function fetchPuppiesAdminData() {
+  const j = await apiFetch('/admin/api/puppies');
+  if(!j.ok) throw new Error(j.error || 'Could not load puppies');
+  currentPups = j.data || [];
+  updatePuppyNavCounts();
+  return j;
+}
+
+async function refreshPuppies() {
+  await fetchPuppiesAdminData();
+  const rows = (currentPups||[])
+    .filter(p => !isPastProductionPuppy(p))
+    .map(p => puppyAdminRow(p, false))
+    .join('') || '<tr><td colspan="7" class="muted" style="text-align:center">No current puppies registered yet</td></tr>';
+
+  const container = document.getElementById('puppiesContent');
+  if(!container) return;
+  container.innerHTML = `
     <div class="panel"><div class="panel-body" style="padding:0;overflow-x:auto">
       <table class="datatable"><thead><tr><th>Name</th><th>Status</th><th>Colour</th><th>Sex</th><th>Sire</th><th>Price</th><th>Actions</th></tr></thead><tbody id="pupTableBody">${rows}</tbody></table>
     </div></div>`;
-  document.getElementById('pupCount').textContent = currentPups.length;
 }
+
+async function renderPastProduction() {
+  await fetchPuppiesAdminData();
+  const archived = (currentPups||[])
+    .filter(isPastProductionPuppy)
+    .sort((a,b) => String(b.soldAt||'').localeCompare(String(a.soldAt||'')) || String(a.name||'').localeCompare(String(b.name||'')));
+  const rows = archived.map(p => puppyAdminRow(p, true)).join('') || '<tr><td colspan="7" class="muted" style="text-align:center;padding:40px">No past production puppies yet.</td></tr>';
+  return `
+    <div class="toolbar">
+      <button class="btn btn-ghost" onclick="navigate('puppies')">← Current Puppies</button>
+      <button class="btn btn-gold" onclick="navigate('add-puppy')">+ Add Puppy</button>
+    </div>
+    <div class="panel" style="border-color:rgba(199,163,90,.45)">
+      <div class="panel-header"><h3>Past Production</h3><span class="pill sold">${archived.length} sold</span></div>
+      <div class="panel-body" style="padding:14px 18px">
+        <p class="muted">Sold puppies are archived here instead of being deleted. Their pedigree links, litter history, photos and notes remain available for kennel records and the public Past Production section.</p>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-body" style="padding:0;overflow-x:auto">
+      <table class="datatable"><thead><tr><th>Name</th><th>Status</th><th>Colour</th><th>Sex</th><th>Sire</th><th>Sold</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+    </div></div>`;
+}
+
+window.movePuppyToPastProduction = async function(id) {
+  const pup = (currentPups||[]).find(p=>p.id===id);
+  if(!pup) return toast('Puppy not found','err');
+  if(!confirm('Mark ' + (pup.name||'this puppy') + ' as SOLD and move it to Past Production? All pedigree, photos and litter details will be kept.')) return;
+  const j = await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id), {
+    method:'POST',
+    body:JSON.stringify({ status:'SOLD', group:'past-production', soldAt:new Date().toISOString() })
+  });
+  if(!j.ok) return toast(j.error||'Could not move puppy','err');
+  toast((pup.name||'Puppy') + ' moved to Past Production');
+  const page = document.querySelector('.nav-item.active')?.dataset.page || 'puppies';
+  await renderPage(page === 'past-production' ? 'past-production' : 'puppies');
+};
+
+window.restorePuppyAvailable = async function(id) {
+  const pup = (currentPups||[]).find(p=>p.id===id);
+  if(!pup) return toast('Puppy not found','err');
+  if(!confirm('Restore ' + (pup.name||'this puppy') + ' to AVAILABLE?')) return;
+  const j = await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id), {
+    method:'POST',
+    body:JSON.stringify({ status:'AVAILABLE', group:'current', soldAt:null })
+  });
+  if(!j.ok) return toast(j.error||'Could not restore puppy','err');
+  toast((pup.name||'Puppy') + ' restored to Available');
+  const page = document.querySelector('.nav-item.active')?.dataset.page || 'past-production';
+  await renderPage(page === 'past-production' ? 'past-production' : 'puppies');
+};
 
 window.editPuppy = async function(id) {
   const j = await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id));
   if(!j.ok){toast('Puppy not found','err');return;}
   openModal('Edit Puppy', await renderPuppyForm(j.data));
 };
-window.deletePuppy = async function(id, name) {
-  if(!confirm('Delete '+name+'?'))return;
-  await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id),{method:'DELETE'});
-  toast('Puppy deleted'); refreshPuppies();
+
+window.deletePuppy = async function(id) {
+  const pup = (currentPups||[]).find(p=>p.id===id);
+  if(!confirm('Delete ' + (pup?.name||'this puppy') + '? This cannot be undone.'))return;
+  const j = await apiFetch('/admin/api/puppies?id='+encodeURIComponent(id),{method:'DELETE'});
+  if(!j.ok) return toast(j.error||'Delete failed','err');
+  toast('Puppy deleted');
+  const page = document.querySelector('.nav-item.active')?.dataset.page || 'puppies';
+  await renderPage(page === 'past-production' ? 'past-production' : 'puppies');
 };
 
 function renderPuppyForm(pup) {
@@ -1406,7 +1497,7 @@ function renderPuppyForm(pup) {
             <div class="field"><label>Sire</label><select name="sireId"><option value="">None</option>${dogOpts}</select></div>
             <div class="field"><label>Dam</label><select name="damId"><option value="">None</option>${dogOpts}</select></div>
             <div class="field"><label>Litter ID</label><input name="litterId" value="${esc(pup?.litterId||'')}" placeholder="litter-2026-a"></div>
-            <div class="field"><label>Status</label><select name="status">${statusOpts}</select></div>
+            <div class="field"><label>Status</label><select name="status">${statusOpts}</select><span class="hint">Setting SOLD automatically archives this puppy under Past Production.</span></div>
             <div class="field"><label>Price (NGN)</label><input name="priceNGN" type="number" value="${pup?.priceNGN||''}" placeholder="Leave empty for price-on-enquiry"></div>
             <div class="field"><label>Price Note</label><input name="priceNote" value="${esc(pup?.priceNote||'')}" placeholder="e.g. N5,000,000"></div>
             <div class="field"><label>Publish Status</label><select name="publishStatus"><option value="published" ${pup?.publishStatus!=='draft'?'selected':''}>Published</option><option value="draft" ${pup?.publishStatus==='draft'?'selected':''}>Draft</option></select><span class="hint">Draft hides from public site</span></div>
@@ -1436,10 +1527,22 @@ async function savePuppy(e, id) {
   if(!body.publishStatus) body.publishStatus = 'published';
   body.gallery = String(f.galleryText?.value || '').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
   if(body.priceNGN) body.priceNGN = Number(body.priceNGN) || null;
+  const previous = id ? (currentPups||[]).find(p=>p.id===id) : null;
+  if(body.status === 'SOLD') {
+    body.group = 'past-production';
+    body.soldAt = previous?.soldAt || new Date().toISOString();
+  } else {
+    body.group = 'current';
+    body.soldAt = null;
+  }
   const url = id ? '/admin/api/puppies?id='+encodeURIComponent(id) : '/admin/api/puppies';
   const j = await apiFetch(url, { method:'POST', body: JSON.stringify(body) });
-  if(j.ok) { toast(id?'Puppy updated':'Puppy created'); closeModal(); refreshPuppies(); }
-  else toast(j.error||'Failed','err');
+  if(j.ok) {
+    toast(id?'Puppy updated':'Puppy created');
+    closeModal();
+    const page = document.querySelector('.nav-item.active')?.dataset.page || 'puppies';
+    await renderPage(page === 'past-production' ? 'past-production' : 'puppies');
+  } else toast(j.error||'Failed','err');
 }
 
 // ── Litters ─────────────────────────────────────────────────────────────────

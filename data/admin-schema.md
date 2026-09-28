@@ -98,12 +98,16 @@ DELETE /admin/api/puppies?id={id} → delete
   "priceNGN": 4500000,
   "priceNote": "₦4,500,000",
   "status": "AVAILABLE",
+  "group": "current",
+  "soldAt": null,
   "registration": "",
   "notes": ""
 }
 ```
 
 **Status values:** `AVAILABLE` | `PAYMENT PENDING` | `RESERVED` | `SOLD` | `COMING SOON` | `UNAVAILABLE`
+
+**Production placement:** current puppies use `group: "current"`. When a puppy is sold, Admin writes `status: "SOLD"`, `group: "past-production"` and `soldAt`; the public Puppies page then moves that record into the Past Production archive without deleting pedigree, litter or media data.
 
 ---
 
