@@ -113,7 +113,7 @@ jobs:
                 if (seed.bio) payload.bio = seed.bio;
               }
 
-              await request('/admin/api/dogs?id=' + encodeURIComponent(seed.id), {
+              await request('/admin/api/dogs?id=' + encodeURIComponent(existing.id), {
                 method: 'POST',
                 body: JSON.stringify(payload)
               });
