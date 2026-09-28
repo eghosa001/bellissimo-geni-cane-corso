@@ -120,7 +120,11 @@ jobs:
               updated++;
             }
 
-            console.log(JSON.stringify({ ok: true, created, updated, targets: targets.length }));
+            const duplicateGroups = [...new Map(current.map(d => [normName(d.name), []])).keys()]
+              .map(k => current.filter(d => normName(d.name) === k))
+              .filter(g => g.length > 1)
+              .map(g => g.map(d => ({ id:d.id, name:d.name, registration:d.registration||'', sireId:d.sireId||'', damId:d.damId||'' })));
+            console.log(JSON.stringify({ ok: true, created, updated, targets: targets.length, duplicateGroups }));
           })().catch(err => {
             console.error(err);
             process.exit(1);
