@@ -11,6 +11,14 @@
 <link rel="canonical" href="https://bellissimogeni.com/puppies.html">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="site.css">
+<style>
+.puppy-siblings{margin:14px 0;display:grid;gap:10px}
+.puppy-sibling-group{padding:10px 12px;border:1px solid var(--line);background:#f8f4ed}
+.puppy-sibling-group>strong{display:block;margin-bottom:6px;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--gold)}
+.puppy-sibling-links{display:flex;flex-wrap:wrap;gap:6px}
+.puppy-sibling-links a{font-size:10px;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:560px){.puppy-sibling-links{display:grid;grid-template-columns:1fr}.puppy-sibling-links a{padding:3px 0}}
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -54,13 +62,22 @@ function parentLine(p,role,label){
 function siblingLine(p){
   var siblings=family?family.siblingsOf(p):[];
   if(!siblings.length)return '';
-  return '<strong>Related siblings:</strong> '+siblings.map(function(rel){
-    var d=rel.record;
-    var href=rel.kind==='puppy'?'puppies.html?puppy='+encodeURIComponent(d.id):'dogs.html?dog='+encodeURIComponent(d.id);
-    var label=rel.relationship||'Sibling';
-    if(rel.relationship==='Half sibling'&&rel.sharedParents&&rel.sharedParents.length===1)label+=' · same '+rel.sharedParents[0];
-    return '<a href="'+href+'">'+BG.esc(d.name)+'</a> <small>('+BG.esc(label)+')</small>';
-  }).join(' · ');
+  var full=siblings.filter(function(rel){return rel.relationship==='Full sibling';});
+  var sireHalf=siblings.filter(function(rel){return rel.relationship==='Half sibling'&&rel.sharedParents&&rel.sharedParents.indexOf('sire')>=0;});
+  var damHalf=siblings.filter(function(rel){return rel.relationship==='Half sibling'&&rel.sharedParents&&rel.sharedParents.indexOf('dam')>=0;});
+  function group(title,items){
+    if(!items.length)return '';
+    return '<div class="puppy-sibling-group"><strong>'+BG.esc(title)+' ('+items.length+')</strong><div class="puppy-sibling-links">'+items.map(function(rel){
+      var d=rel.record;
+      var href=rel.kind==='puppy'?'puppies.html?puppy='+encodeURIComponent(d.id):'dogs.html?dog='+encodeURIComponent(d.id);
+      return '<a href="'+href+'">'+BG.esc(d.name)+'</a>';
+    }).join('')+'</div></div>';
+  }
+  return '<div class="puppy-siblings">'+
+    group('Full siblings',full)+
+    group('Half siblings — sire side',sireHalf)+
+    group('Half siblings — dam side',damHalf)+
+  '</div>';
 }
 function focusRequested(){
   var id=new URLSearchParams(location.search).get('puppy');
@@ -103,7 +120,7 @@ function render(data){
       pill(p.status)+'<h3>'+BG.esc(p.name)+'</h3><span class="meta">'+BG.esc([p.sex,p.colour].filter(Boolean).join(' • '))+'</span>'+
       (dob?'<p class="puppy-fact"><strong>DOB:</strong> '+BG.esc(dob)+'</p>':'')+
       (parents.length?'<p class="puppy-parents">'+parents.join('<br>')+'</p>':'')+
-      (siblings?'<p class="puppy-parents">'+siblings+'</p>':'')+
+      (siblings?siblings:'')+
       '<p>'+BG.esc(p.notes||'')+'</p>'+galleryHtml+price+action+'</article>';
   }).join(''):'<div class="testi-empty"><h3>No verified puppy listing right now</h3><p>Availability changes. Contact Bellissimo Geni or follow the verified social channels for the next published litter.</p><div class="row" style="justify-content:center;margin-top:18px"><a class="btn gold" href="contact.html">Make an enquiry</a><a class="btn ghost" href="social.html">Social updates</a></div></div>';
   var litters=data.litters||[];
