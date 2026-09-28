@@ -179,6 +179,32 @@ async function publicEdgeCached(request, ctx, handler) {
   return response;
 }
 
+async function invalidatePublicApiCache(request, paths) {
+  const cache = globalThis.caches && globalThis.caches.default;
+  if (!cache || typeof cache.delete !== 'function') return;
+  const origin = new URL(request.url).origin;
+  await Promise.all((paths || []).map(path =>
+    cache.delete(new Request(new URL(path, origin).toString(), { method: 'GET' })).catch(() => false)
+  ));
+}
+
+async function archivePuppyForSale(env, puppyId, soldAt) {
+  const id = String(puppyId || '').trim();
+  if (!id) return null;
+  const key = ADMIN_KEYS.puppies + ':' + id;
+  const puppy = await kvGet(env, key);
+  if (!puppy) return null;
+  const updated = {
+    ...puppy,
+    status: STATUS.SOLD,
+    group: 'past-production',
+    soldAt: puppy.soldAt || soldAt || new Date().toISOString()
+  };
+  ensurePublishStatus(updated);
+  await kvPut(env, key, updated);
+  return updated;
+}
+
 async function readJson(request) {
   try { return await request.json(); } catch (e) { return null; }
 }
@@ -983,6 +1009,7 @@ async function handleAdminPuppies(req, env) {
       };
       ensurePublishStatus(updated);
       await kvPut(env, ADMIN_KEYS.puppies + ':' + id, updated);
+      await invalidatePublicApiCache(req, ['/api/puppies']);
       await auditLog(env, 'update', 'puppy', id, { name: updated.name, status: updated.status, publishStatus: updated.publishStatus });
       return json(200, { ok: true, data: updated });
     }
@@ -990,6 +1017,7 @@ async function handleAdminPuppies(req, env) {
     const puppy = { id: newId, sireId: body.sireId || null, damId: body.damId || null, litterId: body.litterId || '', photoHistory: [], ...body };
     ensurePublishStatus(puppy);
     await kvPut(env, ADMIN_KEYS.puppies + ':' + newId, puppy);
+    await invalidatePublicApiCache(req, ['/api/puppies']);
     await auditLog(env, 'create', 'puppy', newId, { name: puppy.name, status: puppy.status });
     return json(201, { ok: true, data: puppy });
   }
@@ -998,6 +1026,7 @@ async function handleAdminPuppies(req, env) {
     const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
     const pup = pups.find(p => p.id === id);
     await kvDelete(env, ADMIN_KEYS.puppies + ':' + id);
+    await invalidatePublicApiCache(req, ['/api/puppies']);
     if (pup) await auditLog(env, 'delete', 'puppy', id, { name: pup.name });
     return json(200, { ok: true });
   }
@@ -1080,7 +1109,20 @@ async function handleAdminReservations(req, env) {
       if ([STATUS.RESERVED, STATUS.SOLD].includes(status)) {
         await lockClient(env, rec.puppy, id, 0, 'mark', status);
       }
-      return json(200, { ok: true, data: updated });
+      let archivedPuppy = null;
+      if (status === STATUS.SOLD) {
+        archivedPuppy = await archivePuppyForSale(env, rec.puppy, updated.updated_at);
+        if (archivedPuppy) {
+          await invalidatePublicApiCache(req, ['/api/puppies']);
+          await auditLog(env, 'update', 'puppy', archivedPuppy.id, {
+            name: archivedPuppy.name,
+            status: archivedPuppy.status,
+            group: archivedPuppy.group,
+            source: 'reservation'
+          });
+        }
+      }
+      return json(200, { ok: true, data: updated, puppyArchived: !!archivedPuppy });
     }
 
     if (action === 'add-note') {
@@ -1618,7 +1660,7 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname === '/webhook/version') {
-      return json(200, { ok: true, version: '2026-09-28-public-cache-v5' });
+      return json(200, { ok: true, version: '2026-09-28-past-production-v6' });
     }
 
 

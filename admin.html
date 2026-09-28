@@ -1667,8 +1667,11 @@ async function doUpdateResStatus(e, ref) {
   e.preventDefault();
   const status = e.target.status.value;
   const j = await apiFetch('/admin/api/reservations?id='+encodeURIComponent(ref)+'&action=update-status',{method:'POST',body:JSON.stringify({status})});
-  if(j.ok) { toast('Status updated'); closeModal(); renderPage('reservations'); }
-  else toast(j.error||'Failed','err');
+  if(j.ok) {
+    toast(status === 'SOLD' && j.puppyArchived ? 'Status updated; puppy moved to Past Production' : 'Status updated');
+    closeModal();
+    renderPage('reservations');
+  } else toast(j.error||'Failed','err');
 }
 window.deleteRes = async function(ref, name) {
   if(!confirm('Delete reservation '+ref+' ('+name+')?'))return;

@@ -71,6 +71,33 @@ test('puppy lock decisions', () => {
   assert.deepEqual(lockDecision({ status: STATUS.PAYMENT_PENDING, ref: 'BG-2026-X5', until: now - 1000 }, now).granted, true);
 });
 
+test('marking a reservation SOLD archives its puppy', async () => {
+  const store = new Map([
+    ['reservation:BG-2026-SALE', JSON.stringify({ ref:'BG-2026-SALE', puppy:'puppy-sale', status:STATUS.RESERVED })],
+    ['admin:puppies:puppy-sale', JSON.stringify({ id:'puppy-sale', name:'Sale Pup', status:'AVAILABLE', group:'current' })]
+  ]);
+  const env = {
+    ADMIN_PASSWORD:'secret',
+    ADMIN:{
+      get:async key=>store.get(key)||null,
+      put:async (key,value)=>store.set(key,String(value)),
+      delete:async key=>store.delete(key),
+      list:async()=>({keys:[],cursor:null,list_complete:true})
+    }
+  };
+  const res = await worker.fetch(new Request('https://worker.example/admin/api/reservations?id=BG-2026-SALE&action=update-status', {
+    method:'POST',
+    headers:{Authorization:'Bearer secret','Content-Type':'application/json'},
+    body:JSON.stringify({status:'SOLD'})
+  }), env);
+  const body = await res.json();
+  const puppy = JSON.parse(store.get('admin:puppies:puppy-sale'));
+  assert.equal(body.puppyArchived, true);
+  assert.equal(puppy.status, 'SOLD');
+  assert.equal(puppy.group, 'past-production');
+  assert.ok(puppy.soldAt);
+});
+
 test('remote admin CORS is present on preflight and JSON responses', async () => {
   const preflight = await worker.fetch(new Request('https://worker.example/admin/api/login', {
     method: 'OPTIONS',
