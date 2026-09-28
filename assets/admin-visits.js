@@ -47,6 +47,7 @@
 /* Keep line-bred pedigree dogs as one Admin record while allowing the same
    canonical dog to appear in multiple pedigree positions. */
 (() => {
+  if (typeof window.fetch !== 'function') return;
   const nativeFetch = window.fetch.bind(window);
   let uniqueDogCount = null;
 
