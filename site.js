@@ -214,10 +214,22 @@
     return live && Object.keys(live).length ? live : fallback;
   }
 
+  function hideDraftRecords(payload) {
+    var out = Object.assign({}, payload || {});
+    ['dogs', 'puppies', 'litters', 'gallery', 'testimonials', 'data'].forEach(function(key) {
+      if (Array.isArray(out[key])) {
+        out[key] = out[key].filter(function(record) {
+          return record && record.publishStatus !== 'draft';
+        });
+      }
+    });
+    return out;
+  }
+
   function loadAdminJSON(path, fallbackPath) {
     var fallbackPromise = fallbackPath
       ? fetch(fallbackPath, { cache: 'no-store' })
-          .then(function(r) { return r.ok ? r.json() : {}; })
+          .then(function(r) { return r.ok ? r.json().then(hideDraftRecords) : {}; })
           .catch(function() { return {}; })
       : Promise.resolve({});
 

@@ -677,7 +677,7 @@ async function handleAdminBootstrap(req, env) {
   // created pedigree ancestors by ID, registration number, or normalized name.
   // This prevents duplicate ancestor records when the same dog appears on several
   // pedigrees with different spacing, punctuation, titles, or spelling variants.
-  const bootstrapKey = 'admin:bootstrap:verified-baseline:v5';
+  const bootstrapKey = 'admin:bootstrap:verified-baseline:v6';
   const alreadySeeded = await kvGet(env, bootstrapKey);
   if (alreadySeeded) return json(200, { ok: true, alreadySeeded: true, seeded: {} });
 
@@ -751,6 +751,17 @@ async function handleAdminBootstrap(req, env) {
 
     const merged = { ...existing };
     let changed = false;
+
+    if (mapped.group === 'ancestor' && mapped.name && merged.name && mapped.name !== merged.name) {
+      const seededName = normName(mapped.name);
+      const existingName = normName(merged.name);
+      const isClearExpansion = seededName.startsWith(existingName + ' ') || existingName.startsWith(seededName + ' ');
+      if (isClearExpansion) {
+        merged.name = mapped.name;
+        changed = true;
+      }
+    }
+
     const fillIfBlank = [
       'sex','dateOfBirth','colour','registration','bloodline','bio',
       'sireId','damId','health','achievements','owner'
@@ -782,7 +793,13 @@ async function handleAdminBootstrap(req, env) {
       if (merged.group !== 'ancestor') { merged.group = 'ancestor'; changed = true; }
       if (merged.status !== 'Pedigree ancestor') { merged.status = 'Pedigree ancestor'; changed = true; }
     }
-    if (!merged.publishStatus) { merged.publishStatus = 'published'; changed = true; }
+    if (mapped.publishStatus === 'draft' && merged.publishStatus !== 'draft') {
+      merged.publishStatus = 'draft';
+      changed = true;
+    } else if (!merged.publishStatus) {
+      merged.publishStatus = 'published';
+      changed = true;
+    }
 
     if (changed) {
       await kvPut(env, key, merged, { invalidateSnapshot: false });
