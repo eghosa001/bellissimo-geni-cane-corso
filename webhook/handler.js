@@ -159,6 +159,26 @@ function publicJson(status, payload) {
   });
 }
 
+async function publicEdgeCached(request, ctx, handler) {
+  if (request.method !== 'GET') return handler();
+  const cache = globalThis.caches && globalThis.caches.default;
+  if (!cache) return handler();
+
+  const cacheKey = new Request(request.url, { method: 'GET' });
+  try {
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+  } catch (_) {}
+
+  const response = await handler();
+  if (!response || !response.ok) return response;
+
+  const write = cache.put(cacheKey, response.clone()).catch(() => {});
+  if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(write);
+  else await write;
+  return response;
+}
+
 async function readJson(request) {
   try { return await request.json(); } catch (e) { return null; }
 }
@@ -1582,7 +1602,7 @@ function canonicalPublicApiRedirect(url) {
 
 // ─── Main fetch ──────────────────────────────────────────────────────────────
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -1598,7 +1618,7 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname === '/webhook/version') {
-      return json(200, { ok: true, version: '2026-09-28-public-cache-v4' });
+      return json(200, { ok: true, version: '2026-09-28-public-cache-v5' });
     }
 
 
@@ -1613,12 +1633,18 @@ export default {
       if (canonicalRedirect) return canonicalRedirect;
       const rest = url.pathname.replace('/api/', '');
       switch (rest) {
-        case 'dogs':          return handlePublicDogs(request, env);
-        case 'puppies':       return handlePublicPuppies(request, env);
-        case 'gallery':       return handlePublicGallery(request, env);
-        case 'testimonials':  return handlePublicTestimonials(request, env);
-        case 'content':       return handlePublicContent(request, env);
-        default:              return json(404, { ok: false, error: 'not_found' });
+        case 'dogs':
+          return publicEdgeCached(request, ctx, () => handlePublicDogs(request, env));
+        case 'puppies':
+          return publicEdgeCached(request, ctx, () => handlePublicPuppies(request, env));
+        case 'gallery':
+          return publicEdgeCached(request, ctx, () => handlePublicGallery(request, env));
+        case 'testimonials':
+          return publicEdgeCached(request, ctx, () => handlePublicTestimonials(request, env));
+        case 'content':
+          return publicEdgeCached(request, ctx, () => handlePublicContent(request, env));
+        default:
+          return json(404, { ok: false, error: 'not_found' });
       }
     }
 

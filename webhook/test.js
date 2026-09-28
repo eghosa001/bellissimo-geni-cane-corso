@@ -147,6 +147,40 @@ test('uploaded R2 media is served through the Worker', async () => {
 });
 
 
+test('public API edge cache avoids repeat KV reads', async () => {
+  const oldCaches = globalThis.caches;
+  let getCalls = 0;
+  const cacheStore = new Map();
+  globalThis.caches = {
+    default: {
+      async match(req) { return cacheStore.get(req.url)?.clone() || undefined; },
+      async put(req, res) { cacheStore.set(req.url, res.clone()); }
+    }
+  };
+  const env = {
+    ADMIN: {
+      async get(key) {
+        getCalls++;
+        if (key === 'admin:snapshot:admin-dogs') {
+          return JSON.stringify([{ id: 'dog-1', name: 'Dog One', publishStatus: 'published' }]);
+        }
+        return null;
+      },
+      async put() {},
+      async delete() {}
+    }
+  };
+  try {
+    const first = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
+    const second = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
+    assert.equal(first.status, 200);
+    assert.equal(second.status, 200);
+    assert.equal(getCalls, 1);
+  } finally {
+    globalThis.caches = oldCaches;
+  }
+});
+
 test('public APIs are cacheable and cache-busting query strings do not touch KV', async () => {
   let getCalls = 0;
   const env = {
