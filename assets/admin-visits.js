@@ -42,3 +42,102 @@
     return renderPage('visits');
   };
 })();
+
+
+/* Keep line-bred pedigree dogs as one Admin record while allowing the same
+   canonical dog to appear in multiple pedigree positions. */
+(() => {
+  const nativeFetch = window.fetch.bind(window);
+  let uniqueDogCount = null;
+
+  const nameKey = value => String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const regKey = value => String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+
+  const richness = dog => [
+    'registration','photo','dateOfBirth','colour','bloodline',
+    'health','achievements','bio','owner','sireId','damId'
+  ].reduce((n, key) => n + (String(dog && dog[key] || '').trim() ? 1 : 0), 0);
+
+  function uniqueDogs(rows) {
+    const source = Array.isArray(rows) ? rows.filter(Boolean) : [];
+    const byId = new Map();
+    for (const dog of source) {
+      if (!dog.id) continue;
+      const prior = byId.get(dog.id);
+      if (!prior || richness(dog) > richness(prior)) byId.set(dog.id, dog);
+    }
+
+    const groups = new Map();
+    for (const dog of byId.values()) {
+      const key = nameKey(dog.name) || ('id:' + dog.id);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(dog);
+    }
+
+    const out = [];
+    for (const group of groups.values()) {
+      if (group.length === 1) {
+        out.push(group[0]);
+        continue;
+      }
+      const registrations = [...new Set(group.map(d => regKey(d.registration)).filter(Boolean))];
+      if (registrations.length > 1) {
+        out.push(...group);
+        continue;
+      }
+      out.push([...group].sort((a, b) => richness(b) - richness(a))[0]);
+    }
+
+    return out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  }
+
+  function jsonResponse(response, payload) {
+    const headers = new Headers(response.headers);
+    headers.set('content-type', 'application/json; charset=utf-8');
+    return new Response(JSON.stringify(payload), {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
+  window.fetch = async function(input, init) {
+    const response = await nativeFetch(input, init);
+    const method = String((init && init.method) || 'GET').toUpperCase();
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+
+    if (method !== 'GET' || !response.ok || !/\/admin\/api\/(dogs|puppies|stats)(?:\?|$)/.test(url)) {
+      return response;
+    }
+
+    try {
+      const payload = await response.clone().json();
+
+      if (/\/admin\/api\/dogs(?:\?|$)/.test(url) && Array.isArray(payload.data) && !/[?&]id=/.test(url)) {
+        payload.data = uniqueDogs(payload.data);
+        uniqueDogCount = payload.data.length;
+        return jsonResponse(response, payload);
+      }
+
+      if (/\/admin\/api\/puppies(?:\?|$)/.test(url) && Array.isArray(payload.dogs)) {
+        payload.dogs = uniqueDogs(payload.dogs);
+        return jsonResponse(response, payload);
+      }
+
+      if (/\/admin\/api\/stats(?:\?|$)/.test(url) && payload.stats && Number.isInteger(uniqueDogCount)) {
+        payload.stats.totalDogs = uniqueDogCount;
+        return jsonResponse(response, payload);
+      }
+    } catch (_) {
+      return response;
+    }
+
+    return response;
+  };
+})();
