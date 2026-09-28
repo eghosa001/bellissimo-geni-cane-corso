@@ -317,11 +317,28 @@
       }, []);
     }
 
+    function siblingsOf(subject) {
+      var subjectItem = resolve(subject);
+      if (!subjectItem) return [];
+      var record = subjectItem.record;
+      var sire = parentOf(record, 'sire');
+      var dam = parentOf(record, 'dam');
+      if (!sire || !dam) return [];
+      var sireId = key(sire.record.id), damId = key(dam.record.id), selfId = key(record.id);
+      return entries.filter(function (item) {
+        if (key(item.record.id) === selfId) return false;
+        var otherSire = parentOf(item.record, 'sire');
+        var otherDam = parentOf(item.record, 'dam');
+        return otherSire && otherDam && key(otherSire.record.id) === sireId && key(otherDam.record.id) === damId;
+      });
+    }
+
     return {
       entries: entries,
       resolve: resolve,
       parentOf: parentOf,
-      childrenOf: childrenOf
+      childrenOf: childrenOf,
+      siblingsOf: siblingsOf
     };
   }
 
