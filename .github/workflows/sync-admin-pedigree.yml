@@ -1,0 +1,121 @@
+name: Sync Bellissimo Pedigree Drafts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/dogs.json"
+      - ".github/workflows/sync-admin-pedigree.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ADMIN_PASSWORD: ${{ secrets.BELLISSIMO_ADMIN_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate admin credential
+        run: |
+          test -n "$ADMIN_PASSWORD" || { echo "Missing BELLISSIMO_ADMIN_PASSWORD"; exit 1; }
+
+      - name: Sync draft pedigree records to Admin
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+
+          const config = JSON.parse(fs.readFileSync('site-config.json', 'utf8'));
+          const base = String(config.backendUrl || '').replace(/\/+$/, '');
+          if (!/^https:\/\/[^/]+\.workers\.dev$/i.test(base)) {
+            throw new Error('Invalid backendUrl in site-config.json: ' + base);
+          }
+
+          const source = JSON.parse(fs.readFileSync('data/dogs.json', 'utf8'));
+          const seeds = Array.isArray(source.dogs) ? source.dogs : [];
+          const enrichExisting = new Set(['hermes', 'sforza-ludovico']);
+          const targets = seeds.filter(d => d && d.id && (d.publishStatus === 'draft' || enrichExisting.has(d.id)));
+
+          const headers = {
+            Authorization: 'Bearer ' + process.env.ADMIN_PASSWORD,
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          };
+
+          async function request(path, options = {}) {
+            const res = await fetch(base + path, { ...options, headers: { ...headers, ...(options.headers || {}) } });
+            const text = await res.text();
+            let body = {};
+            try { body = text ? JSON.parse(text) : {}; } catch (_) {}
+            if (!res.ok) throw new Error(path + ' failed: ' + res.status + ' ' + text);
+            return body;
+          }
+
+          (async () => {
+            const listing = await request('/admin/api/dogs?status=all');
+            const current = Array.isArray(listing.data) ? listing.data : [];
+            const byId = new Map(current.map(d => [d.id, d]));
+            let created = 0, updated = 0;
+
+            for (const seed of targets) {
+              const existing = byId.get(seed.id);
+
+              if (!existing) {
+                const payload = { ...seed };
+                if (seed.publishStatus === 'draft') payload.publishStatus = 'draft';
+                await request('/admin/api/dogs', { method: 'POST', body: JSON.stringify(payload) });
+                created++;
+                continue;
+              }
+
+              let payload;
+              if (seed.publishStatus === 'draft') {
+                payload = {
+                  name: seed.name,
+                  sex: seed.sex,
+                  dateOfBirth: seed.dateOfBirth,
+                  colour: seed.colour,
+                  registration: seed.registration,
+                  status: 'Pedigree ancestor',
+                  group: 'ancestor',
+                  publishStatus: 'draft',
+                  sireId: seed.sireId || null,
+                  damId: seed.damId || null,
+                  bloodline: seed.bloodline || '',
+                  health: seed.health || '',
+                  achievements: seed.achievements || '',
+                  bio: seed.bio || ''
+                };
+              } else {
+                payload = {
+                  name: seed.name,
+                  sireId: seed.sireId || null,
+                  damId: seed.damId || null
+                };
+                if (seed.health) payload.health = seed.health;
+                if (seed.bio) payload.bio = seed.bio;
+              }
+
+              await request('/admin/api/dogs?id=' + encodeURIComponent(seed.id), {
+                method: 'POST',
+                body: JSON.stringify(payload)
+              });
+              updated++;
+            }
+
+            console.log(JSON.stringify({ ok: true, created, updated, targets: targets.length }));
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          EOF
