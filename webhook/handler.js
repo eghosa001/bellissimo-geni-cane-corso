@@ -207,7 +207,17 @@ async function kvReadSnapshot(env, prefix) {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : null;
+    if (!Array.isArray(parsed)) return null;
+    const seen = new Set();
+    return parsed.filter(record => {
+      if (!record || typeof record !== 'object') return false;
+      const identity = record.id || record.ref || null;
+      if (!identity) return true;
+      const key = String(identity);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   } catch (_) {
     return null;
   }
@@ -218,7 +228,9 @@ async function kvIndexIds(env, prefix) {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    return Array.isArray(parsed)
+      ? Array.from(new Set(parsed.map(String).filter(Boolean)))
+      : [];
   } catch (_) {
     return [];
   }
