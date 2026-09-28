@@ -123,6 +123,8 @@ function render(start){
   var recordExtra='';
   if(start.achievements)recordExtra+='<span><b>Achievements</b>'+BG.esc(start.achievements)+'</span>';
   if(start.health)recordExtra+='<span><b>Health</b>'+BG.esc(start.health)+'</span>';
+  var siblings=family?family.siblingsOf(start):[];
+  if(siblings.length)recordExtra+='<span><b>Siblings</b>'+siblings.map(function(rel){var r=rel.record;return '<a href="?dog='+encodeURIComponent(r.id)+'">'+BG.esc(r.name)+'</a>';}).join(' · ')+'</span>';
   result.innerHTML=pic+'<div><p class="eyebrow">DOG RECORD</p><h2><a href="'+profileHref+'">'+BG.esc(start.name)+'</a></h2><p class="dog-meta">'+BG.esc([start.sex,start.colour,start.registration].filter(Boolean).join(' • ')||'Verified pedigree record')+'</p>'+(recordExtra?'<div class="dog-record-extra">'+recordExtra+'</div>':'')+'<p style="margin-top:12px"><a href="'+profileHref+'">Open full profile →</a></p></div>';
   shell.innerHTML='';
   var startKey=String(start.id).toLowerCase();
