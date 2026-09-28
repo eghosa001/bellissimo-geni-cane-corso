@@ -147,6 +147,35 @@ test('uploaded R2 media is served through the Worker', async () => {
 });
 
 
+test('public APIs are cacheable and cache-busting query strings do not touch KV', async () => {
+  let getCalls = 0;
+  const env = {
+    ADMIN: {
+      async get(key) {
+        getCalls++;
+        if (key === 'admin:snapshot:admin-dogs') {
+          return JSON.stringify([{ id: 'dog-1', name: 'Dog One', publishStatus: 'published' }]);
+        }
+        return null;
+      },
+      async put() {},
+      async delete() {}
+    }
+  };
+
+  const clean = await worker.fetch(new Request('https://worker.example/api/dogs'), env);
+  assert.equal(clean.status, 200);
+  assert.equal(clean.headers.get('Cache-Control'), 'public, max-age=300, stale-if-error=86400');
+  assert.equal(getCalls, 1);
+
+  const beforeRedirect = getCalls;
+  const redirected = await worker.fetch(new Request('https://worker.example/api/dogs?cachebust=123'), env);
+  assert.equal(redirected.status, 308);
+  assert.equal(redirected.headers.get('Location'), 'https://worker.example/api/dogs');
+  assert.equal(getCalls, beforeRedirect);
+});
+
+
 test('admin content query route reaches the content handler', async () => {
   const env = {
     ADMIN_PASSWORD: 'test-password',

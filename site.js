@@ -159,8 +159,7 @@
     return resolveApiBase().then(function(apiBase) {
       if (!apiBase) return null;
       return fetch(apiBase + '/api/content?page=' + encodeURIComponent(page), {
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-store'
+        headers: { 'Accept': 'application/json' }
       }).then(function(r) { return r.ok ? r.json() : null; });
     }).then(function(payload) {
       var html = payload && payload.data && String(payload.data.html || '').trim();
@@ -228,8 +227,7 @@
       if (!apiBase) return fallback;
 
       return fetch(apiBase + '/api/' + path, {
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-store'
+        headers: { 'Accept': 'application/json' }
       })
         .then(function(r) {
           if (!r.ok) throw new Error('public_fail');

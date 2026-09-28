@@ -135,6 +135,7 @@ const CORS_HEADERS = Object.freeze({
   'Access-Control-Allow-Headers': 'Authorization, Content-Type',
   'Access-Control-Max-Age': '86400'
 });
+const PUBLIC_CACHE_CONTROL = 'public, max-age=300, stale-if-error=86400';
 
 function json(status, payload) {
   return new Response(JSON.stringify(payload), {
@@ -143,6 +144,17 @@ function json(status, payload) {
       ...CORS_HEADERS,
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store'
+    }
+  });
+}
+
+function publicJson(status, payload) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      ...CORS_HEADERS,
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': PUBLIC_CACHE_CONTROL
     }
   });
 }
@@ -369,7 +381,7 @@ async function adminAuth(request, env) {
 async function handlePublicDogs(req, env) {
   const dogs = await kvList(env, ADMIN_KEYS.dogs + ':');
   const published = dogs.filter(d => d && d.publishStatus !== 'draft');
-  return json(200, { ok: true, dogs: published.sort((a, b) => String(a && a.name || '').localeCompare(String(b && b.name || ''))) });
+  return publicJson(200, { ok: true, dogs: published.sort((a, b) => String(a && a.name || '').localeCompare(String(b && b.name || ''))) });
 }
 async function handlePublicPuppies(req, env) {
   const pups = await kvList(env, ADMIN_KEYS.puppies + ':');
@@ -380,17 +392,17 @@ async function handlePublicPuppies(req, env) {
   const publishedLitters = litters.filter(l => l.publishStatus !== 'draft');
   const publishedDogs = dogs.filter(d => d.publishStatus !== 'draft');
   const publishedGallery = gallery.filter(g => g.publishStatus !== 'draft');
-  return json(200, { ok: true, puppies: publishedPups, litters: publishedLitters, dogs: publishedDogs, gallery: publishedGallery });
+  return publicJson(200, { ok: true, puppies: publishedPups, litters: publishedLitters, dogs: publishedDogs, gallery: publishedGallery });
 }
 async function handlePublicGallery(req, env) {
   const items = await kvList(env, ADMIN_KEYS.gallery + ':');
   const published = items.filter(g => g.publishStatus !== 'draft').sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
-  return json(200, { ok: true, photos: published });
+  return publicJson(200, { ok: true, photos: published });
 }
 async function handlePublicTestimonials(req, env) {
   const items = await kvList(env, ADMIN_KEYS.testimonials + ':');
   const approved = items.filter(t => t.approved && t.publishStatus !== 'draft');
-  return json(200, { ok: true, testimonials: approved.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
+  return publicJson(200, { ok: true, testimonials: approved.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) });
 }
 async function handlePublicContent(req, env) {
   const url = new URL(req.url);
@@ -400,7 +412,7 @@ async function handlePublicContent(req, env) {
   const raw = await kvGet(env, CONTENT_PREFIX + page);
   // Only serve content that has been explicitly published by the owner
   if (raw && raw.publishStatus !== 'published') return json(404, { ok: false, error: 'not_published' });
-  return json(200, { ok: true, data: raw || { html: '', publishStatus: 'published' } });
+  return publicJson(200, { ok: true, data: raw || { html: '', publishStatus: 'published' } });
 }
 
 // ─── Audit logging ───────────────────────────────────────────────────────────
@@ -1522,6 +1534,23 @@ async function handleAdminAnalytics(request, env) {
   }
 }
 
+function canonicalPublicApiRedirect(url) {
+  const canonical = new URL(url.origin + url.pathname);
+  if (url.pathname === '/api/content') {
+    const page = url.searchParams.get('page');
+    if (page) canonical.searchParams.set('page', page);
+  }
+  if (canonical.href === url.href) return null;
+  return new Response(null, {
+    status: 308,
+    headers: {
+      ...CORS_HEADERS,
+      Location: canonical.href,
+      'Cache-Control': 'public, max-age=86400'
+    }
+  });
+}
+
 // ─── Main fetch ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -1540,7 +1569,7 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname === '/webhook/version') {
-      return json(200, { ok: true, version: '2026-09-27-kv-snapshot-v3' });
+      return json(200, { ok: true, version: '2026-09-28-public-cache-v4' });
     }
 
 
@@ -1551,6 +1580,8 @@ export default {
 
     // ── Public read-only API (no auth, published records only) ──
     if (url.pathname.startsWith('/api/')) {
+      const canonicalRedirect = canonicalPublicApiRedirect(url);
+      if (canonicalRedirect) return canonicalRedirect;
       const rest = url.pathname.replace('/api/', '');
       switch (rest) {
         case 'dogs':          return handlePublicDogs(request, env);

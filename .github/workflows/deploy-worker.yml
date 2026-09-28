@@ -2,6 +2,14 @@ name: Deploy Bellissimo Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "webhook/handler.js"
+      - "webhook/wrangler.toml"
+      - "wrangler.toml"
+      - ".github/workflows/deploy-worker.yml"
 
 permissions:
   contents: write
@@ -101,6 +109,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
           git add site-config.json
+          if git diff --cached --quiet; then
+            echo "site-config.json already points at $url; no configuration PR is needed."
+            exit 0
+          fi
           git commit -m "Configure public CMS backend"
           git push origin "$branch"
           gh pr create --base main --head "$branch" --title "Configure Bellissimo CMS backend" --body "Connects the public website and admin panel to the Worker deployed by run ${GITHUB_RUN_ID}. The Worker URL is public configuration, not a secret."

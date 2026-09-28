@@ -3,6 +3,9 @@ main = "webhook/handler.js"
 compatibility_date = "2024-12-01"
 workers_dev = true
 
+[cache]
+enabled = true
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["PuppyLock"]
