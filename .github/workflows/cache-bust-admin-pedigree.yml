@@ -1,10 +1,6 @@
 name: Cache-bust Admin pedigree fix
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/cache-bust-admin-pedigree.yml"
   workflow_dispatch:
 
 permissions:
