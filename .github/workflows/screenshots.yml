@@ -1,40 +1,6 @@
 name: Website Screenshots
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/screenshots.yml"
-      - "index.html"
-      - "home-restored.css"
-      - "dogs.html"
-      - "pedigree.html"
-      - "data/dogs.json"
-      - "site.js"
-      - "site.css"
-      - "social.html"
-      - "contact.html"
-      - "about.html"
-      - "gallery.html"
-      - "puppies.html"
-      - "reserve.html"
-      - "breeding.html"
-      - "socialization.html"
-      - "standards.html"
-      - "testimonials.html"
-      - "data/puppies.json"
-      - "assets/**"
-      - "admin.html"
-      - "webhook/**"
-      - "CNAME"
-      - "robots.txt"
-      - "sitemap.xml"
-      - "scripts/set-production-domain.mjs"
-      - ".github/workflows/activate-domain.yml"
-      - ".github/workflows/deploy-worker.yml"
-      - "site-config.json"
-  workflow_run:
-    workflows: ["GitHub Pages"]
-    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -42,7 +8,6 @@ permissions:
 
 jobs:
   capture:
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
